@@ -9,7 +9,7 @@ namespace ez
 {
 	const char* GetReadableBytes(uint64_t bytes)
 	{
-		char *suffix[] = { "B", "KB", "MB", "GB", "TB" };
+		const char suffix[5][3] = { "B", "KB", "MB", "GB", "TB" };
 		char length = sizeof(suffix) / sizeof(suffix[0]);
 
 		int i = 0;

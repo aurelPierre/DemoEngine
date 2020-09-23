@@ -24,5 +24,5 @@ endif()
 
 # Incluez les sous-projets.
 add_subdirectory ("Lib")
-add_subdirectory ("Utils")
+#add_subdirectory ("Utils")
 add_subdirectory ("EzUtils")

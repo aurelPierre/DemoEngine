@@ -893,7 +893,7 @@ VulkanWindow* VulkanRendererSystem::CreateVulkanWindow(const GLFWWindowData* win
 
 	uint32_t type = UINT32_MAX;
 	for (uint32_t i = 0; i < _deviceData._memoryProperties.memoryTypeCount; i++) {
-		if ((memRequirements.memoryTypeBits & (1 << i)) && (_deviceData._memoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
+		if ((memRequirements.memoryTypeBits & (1 << i)) && (_deviceData._memoryProperties.memoryTypes[i].propertyFlags & (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) == (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
 			type = i;
 		}
 	}
@@ -1433,7 +1433,7 @@ void VulkanRendererSystem::LoadTexture()
 
 		uint32_t type = UINT32_MAX;
 		for (uint32_t i = 0; i < _deviceData._memoryProperties.memoryTypeCount; i++) {
-			if ((memRequirements.memoryTypeBits & (1 << i)) && (_deviceData._memoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
+			if ((memRequirements.memoryTypeBits & (1 << i)) && (_deviceData._memoryProperties.memoryTypes[i].propertyFlags & (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) == (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
 				type = i;
 			}
 		}
@@ -1614,7 +1614,7 @@ void VulkanRendererSystem::Debug()
 			ImGui::Text("%s", _deviceData._properties.deviceName); ImGui::NextColumn();
 
 			ImGui::Text("pipelineCacheUUID"); ImGui::NextColumn();
-			ImGui::Text("%u", _deviceData._properties.pipelineCacheUUID); ImGui::NextColumn();
+			ImGui::Text("%s", _deviceData._properties.pipelineCacheUUID); ImGui::NextColumn();
 
 			ImGui::Columns(1);
 			ImGui::Indent();
@@ -1858,25 +1858,25 @@ void VulkanRendererSystem::Debug()
 			if (ImGui::CollapsingHeader((std::string("_frames ") + std::to_string(i)).c_str()))
 			{
 				ImGui::Columns(2);
-				ImGui::Text("_commandBuffer", i); ImGui::NextColumn();
+				ImGui::Text("_commandBuffer"); ImGui::NextColumn();
 				ImGui::Text("0x%p", _windowData._frames[i]._commandBuffer); ImGui::NextColumn();
 
-				ImGui::Text("_image", i); ImGui::NextColumn();
+				ImGui::Text("_image"); ImGui::NextColumn();
 				ImGui::Text("0x%p", _windowData._frames[i]._image); ImGui::NextColumn();
 
-				ImGui::Text("_imageView", i); ImGui::NextColumn();
+				ImGui::Text("_imageView"); ImGui::NextColumn();
 				ImGui::Text("0x%p", _windowData._frames[i]._imageView); ImGui::NextColumn();
 
-				ImGui::Text("_framebuffer", i); ImGui::NextColumn();
+				ImGui::Text("_framebuffer"); ImGui::NextColumn();
 				ImGui::Text("0x%p", _windowData._frames[i]._framebuffer); ImGui::NextColumn();
 
-				ImGui::Text("_fence", i); ImGui::NextColumn();
+				ImGui::Text("_fence"); ImGui::NextColumn();
 				ImGui::Text("0x%p", _windowData._frames[i]._fence); ImGui::NextColumn();
 
-				ImGui::Text("_presentComplete", i); ImGui::NextColumn();
+				ImGui::Text("_presentComplete"); ImGui::NextColumn();
 				ImGui::Text("0x%p", _windowData._frames[i]._presentComplete); ImGui::NextColumn();
 
-				ImGui::Text("_renderComplete", i); ImGui::NextColumn();
+				ImGui::Text("_renderComplete"); ImGui::NextColumn();
 				ImGui::Text("0x%p", _windowData._frames[i]._renderComplete); ImGui::NextColumn();
 			}
 		}

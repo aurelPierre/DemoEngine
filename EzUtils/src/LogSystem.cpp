@@ -60,7 +60,9 @@ namespace ez
 	std::string Log::Text()
 	{
 		std::stringstream ss;
-		ss << std::put_time(std::localtime(&_logTimestamp), "%T");
+		struct tm newtime;
+		localtime_s(&newtime, &_logTimestamp);
+		ss << std::put_time(&newtime, "%T");
 		return ss.str() + ' ' + Header() + ' ' + _logText;
 	}
 
