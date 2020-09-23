@@ -219,5 +219,13 @@ LogicalDevice	CreateLogicalDevice(const Context& kContext, const Device& kDevice
 
 void DestroyLogicalDevice(const Context& kContext, const LogicalDevice& kLogicalDevice)
 {
+	vkDestroyCommandPool(kLogicalDevice._device, kLogicalDevice._graphicsQueue._commandPool, kContext._allocator);
+
+	if (kLogicalDevice._computeQueue._indice != kLogicalDevice._graphicsQueue._indice)
+		vkDestroyCommandPool(kLogicalDevice._device, kLogicalDevice._computeQueue._commandPool, kContext._allocator);
+
+	if (kLogicalDevice._transferQueue._indice != kLogicalDevice._graphicsQueue._indice && kLogicalDevice._transferQueue._indice != kLogicalDevice._computeQueue._indice)
+		vkDestroyCommandPool(kLogicalDevice._device, kLogicalDevice._transferQueue._commandPool, kContext._allocator);
+
 	vkDestroyDevice(kLogicalDevice._device, kContext._allocator);
 }

@@ -280,12 +280,22 @@ void	CreateFrame(const Context& kContext, const LogicalDevice& kLogicalDevice,
 	}
 }
 
-void	DestroyFrame(const Context& kContext, const Frame& kFrame)
+void	DestroyFrame(const Context& kContext, const LogicalDevice& kLogicalDevice, const Frame& kFrame)
 {
+	vkDestroySemaphore(kLogicalDevice._device, kFrame._presentComplete, kContext._allocator);
+	vkDestroySemaphore(kLogicalDevice._device, kFrame._renderComplete, kContext._allocator);
 
+	vkDestroyFence(kLogicalDevice._device, kFrame._fence, kContext._allocator);
+	vkDestroyFramebuffer(kLogicalDevice._device, kFrame._framebuffer, kContext._allocator);
+	vkDestroyImageView(kLogicalDevice._device, kFrame._imageView, kContext._allocator);
+	vkDestroySampler(kLogicalDevice._device, kFrame._sampler, kContext._allocator);
 }
 
-void	DestroySwapchain(const Context& kContext, const Swapchain& swapchain)
+void	DestroySwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain)
 {
+	for (uint32_t i = 0; i < kSwapchain._frames.size(); ++i)
+		DestroyFrame(kContext, kLogicalDevice, kSwapchain._frames[i]);
 
+	vkDestroyRenderPass(kLogicalDevice._device, kSwapchain._renderPass, kContext._allocator);
+	vkDestroySwapchainKHR(kLogicalDevice._device, kSwapchain._swapchain, kContext._allocator);
 }

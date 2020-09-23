@@ -29,6 +29,8 @@ struct Swapchain
 	VkPresentModeKHR		_presentMode		= VK_PRESENT_MODE_MAX_ENUM_KHR;
 	uint32_t				_imageCount			= 0; // ie. _frames.size() ???
 	uint32_t				_currentFrame		= 0;
+
+	// GO TO VIEWPORT
 	std::vector<Frame>		_frames;
 	VkExtent2D				_size;
 	VkRenderPass			_renderPass			= VK_NULL_HANDLE;
@@ -40,5 +42,5 @@ Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogical
 void		CreateFrames(const Context& kContext, const LogicalDevice& kLogicalDevice,
 						const Surface& kSurface, Swapchain& swapchain);
 
-void	DestroyFrame(const Context& kContext, const Frame& kFrame);
-void	DestroySwapchain(const Context& kContext, const Swapchain& kSwapchain);
+void	DestroyFrame(const Context& kContext, const LogicalDevice& kLogicalDevice, const Frame& kFrame);
+void	DestroySwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain);
