@@ -8,8 +8,9 @@
 
 struct Queue
 {
-	uint32_t	_indice		= 0;
-	VkQueue		_queue		= VK_NULL_HANDLE;
+	uint32_t		_indice			= 0;
+	VkQueue			_queue			= VK_NULL_HANDLE;
+	VkCommandPool	_commandPool	= VK_NULL_HANDLE;
 };
 
 struct Device

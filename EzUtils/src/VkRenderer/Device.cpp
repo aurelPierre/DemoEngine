@@ -177,6 +177,43 @@ LogicalDevice	CreateLogicalDevice(const Context& kContext, const Device& kDevice
 	vkGetDeviceQueue(newLogicalDevice._device, newLogicalDevice._computeQueue._indice, 0, &newLogicalDevice._computeQueue._queue);
 	vkGetDeviceQueue(newLogicalDevice._device, newLogicalDevice._transferQueue._indice, 0, &newLogicalDevice._transferQueue._queue);
 
+	VkCommandPoolCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	info.queueFamilyIndex = newLogicalDevice._graphicsQueue._indice;
+	err = vkCreateCommandPool(newLogicalDevice._device, &info, kContext._allocator, &newLogicalDevice._graphicsQueue._commandPool);
+	check_vk_result(err);
+
+	if (newLogicalDevice._computeQueue._indice != newLogicalDevice._graphicsQueue._indice)
+	{
+		VkCommandPoolCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		info.queueFamilyIndex = newLogicalDevice._computeQueue._indice;
+		err = vkCreateCommandPool(newLogicalDevice._device, &info, kContext._allocator, &newLogicalDevice._computeQueue._commandPool);
+		check_vk_result(err);
+	}
+	else
+		newLogicalDevice._computeQueue._commandPool = newLogicalDevice._graphicsQueue._commandPool;
+	
+	if (newLogicalDevice._transferQueue._indice == newLogicalDevice._graphicsQueue._indice)
+	{
+		newLogicalDevice._transferQueue._commandPool = newLogicalDevice._graphicsQueue._commandPool;
+	}
+	else if (newLogicalDevice._transferQueue._indice == newLogicalDevice._computeQueue._indice)
+	{
+		newLogicalDevice._transferQueue._commandPool = newLogicalDevice._computeQueue._commandPool;
+	}
+	else
+	{
+		VkCommandPoolCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		info.queueFamilyIndex = newLogicalDevice._transferQueue._indice;
+		err = vkCreateCommandPool(newLogicalDevice._device, &info, kContext._allocator, &newLogicalDevice._transferQueue._commandPool);
+		check_vk_result(err);
+	}
+
 	return newLogicalDevice;
 }
 

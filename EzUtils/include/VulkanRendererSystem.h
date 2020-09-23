@@ -23,9 +23,9 @@ struct GLFWWindowData;
 *--------------------------------------------------------------------------------------
 *	- CreateInstance				***		CONTEXT		***			--> DONE
 *	- SetupDebug					***		CONTEXT		***			--> DONE
-*	- CreateSurface					***		WINDOW		***			--> 
 *	- PickPhysicalDevice			***		DEVICE		***			--> 
 *	- CreateLogicalDevice			***		DEVICE		***			--> 
+*	- CreateSurface					***		WINDOW		***			--> 
 *	- CreateSwapchain				***		WINDOW		***			--> 
 *	- CreateImageViews				***		FRAME		***			--> 
 *	- CreateRenderPass				***		WINDOW		***			--> 
