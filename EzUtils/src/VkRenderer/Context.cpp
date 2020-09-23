@@ -82,12 +82,12 @@ Context CreateContext()
 	return context;
 }
 
-void DestroyContext(Context context)
+void DestroyContext(const Context& kContext)
 {
-	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context._instance, "vkDestroyDebugUtilsMessengerEXT");
+	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(kContext._instance, "vkDestroyDebugUtilsMessengerEXT");
 	if (func != nullptr) {
-		func(context._instance, context._debugMessenger, context._allocator);
+		func(kContext._instance, kContext._debugMessenger, kContext._allocator);
 	}
 
-	vkDestroyInstance(context._instance, context._allocator);
+	vkDestroyInstance(kContext._instance, kContext._allocator);
 }

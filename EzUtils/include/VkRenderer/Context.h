@@ -16,4 +16,4 @@ struct Context
 };
 
 Context CreateContext();
-void	DestroyContext(Context context);
+void	DestroyContext(const Context& kContext);
