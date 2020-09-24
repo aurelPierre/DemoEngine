@@ -1,0 +1,24 @@
+#pragma once
+
+#include <vulkan/vulkan.h>
+
+#include "Context.h"
+#include "Device.h"
+
+struct Viewport
+{
+	VkCommandBuffer			_commandBuffer	= VK_NULL_HANDLE;
+	VkDeviceMemory			_imageMemory	= VK_NULL_HANDLE;
+	VkImage					_image			= VK_NULL_HANDLE;
+	VkImageView				_imageView		= VK_NULL_HANDLE;
+	VkFramebuffer			_framebuffer	= VK_NULL_HANDLE;
+	VkSampler				_sampler		= VK_NULL_HANDLE;
+
+	VkExtent2D				_size;
+	VkRenderPass			_renderPass		= VK_NULL_HANDLE;
+};
+
+Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDevice,
+							const Device& kDevice, const VkFormat kFormat);
+
+void	DestroyViewport(const Context& kContext, const LogicalDevice& kLogicalDevice, const Viewport& kViewport);

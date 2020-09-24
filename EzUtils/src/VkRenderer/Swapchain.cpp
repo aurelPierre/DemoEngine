@@ -173,7 +173,7 @@ Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogical
 	return swapchain;
 }
 
-void	CreateFrame(const Context& kContext, const LogicalDevice& kLogicalDevice,
+void	CreateFrames(const Context& kContext, const LogicalDevice& kLogicalDevice,
 						const Surface& kSurface, Swapchain& swapchain)
 {
 	VkResult err = vkGetSwapchainImagesKHR(kLogicalDevice._device, swapchain._swapchain, &swapchain._imageCount, NULL);
@@ -212,28 +212,6 @@ void	CreateFrame(const Context& kContext, const LogicalDevice& kLogicalDevice,
 		err = vkCreateImageView(kLogicalDevice._device, &colorAttachmentView, kContext._allocator,
 								&swapchain._frames[i]._imageView);
 		check_vk_result(err);
-
-		VkSamplerCreateInfo samplerInfo{};
-		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerInfo.magFilter = VK_FILTER_LINEAR;
-		samplerInfo.minFilter = VK_FILTER_LINEAR;
-		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.anisotropyEnable = VK_FALSE;
-		samplerInfo.maxAnisotropy = 16.0f;
-		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-		samplerInfo.unnormalizedCoordinates = VK_FALSE;
-		samplerInfo.compareEnable = VK_FALSE;
-		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		samplerInfo.mipLodBias = 0.0f;
-		samplerInfo.minLod = 0.0f;
-		samplerInfo.maxLod = 0.0f;
-
-		if (vkCreateSampler(kLogicalDevice._device, &samplerInfo, kContext._allocator, &swapchain._frames[i]._sampler) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create texture sampler!");
-		}
 
 		VkImageView attachment[1];
 		attachment[0] = swapchain._frames[i]._imageView;
@@ -288,7 +266,6 @@ void	DestroyFrame(const Context& kContext, const LogicalDevice& kLogicalDevice, 
 	vkDestroyFence(kLogicalDevice._device, kFrame._fence, kContext._allocator);
 	vkDestroyFramebuffer(kLogicalDevice._device, kFrame._framebuffer, kContext._allocator);
 	vkDestroyImageView(kLogicalDevice._device, kFrame._imageView, kContext._allocator);
-	vkDestroySampler(kLogicalDevice._device, kFrame._sampler, kContext._allocator);
 }
 
 void	DestroySwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain)
