@@ -29,6 +29,8 @@ struct LogicalDevice
 	Queue				_graphicsQueue;
 	Queue				_computeQueue;
 	Queue				_transferQueue;
+
+	VkDescriptorPool	_descriptorPool		= VK_NULL_HANDLE;
 };
 
 uint32_t	RateDeviceSuitability(const VkPhysicalDevice& kDevice);

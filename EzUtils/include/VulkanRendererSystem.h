@@ -200,15 +200,6 @@ static std::vector<char> readFile(const std::string& filename)
 	return buffer;
 }
 
-// todo, change with assert
-static void check_vk_result(const VkResult err)
-{
-	if (err == VK_SUCCESS) 
-		return;
-
-	throw std::runtime_error("VkResult " + std::to_string((int)err));
-}
-
 class VulkanRendererSystem
 {
 	VulkanContext		_contextData;

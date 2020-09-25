@@ -21,4 +21,6 @@ struct Viewport
 Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDevice,
 							const Device& kDevice, const VkFormat kFormat);
 
+void	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport);
+
 void	DestroyViewport(const Context& kContext, const LogicalDevice& kLogicalDevice, const Viewport& kViewport);

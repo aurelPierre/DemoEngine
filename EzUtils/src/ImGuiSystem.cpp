@@ -1,9 +1,11 @@
 #include "ImGuiSystem.h"
 
 #include "GLFWWindowSystem.h"
-#include "VulkanRendererSystem.h"
+#include "Swapchain.h"
+#include "Core.h"
 
-void ImGuiSystem::Init(const GLFWWindowData const * windowData, const VulkanContext const * vkContext, const VulkanDevice const * vkDevice, const VulkanWindow const * vkWindow)
+void ImGuiSystem::Init(const GLFWWindowData const * windowData, const Context& kContext, const Device& kDevice,
+						const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain)
 {
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -31,18 +33,18 @@ void ImGuiSystem::Init(const GLFWWindowData const * windowData, const VulkanCont
 	// Setup Platform/Renderer bindings
 	ImGui_ImplGlfw_InitForVulkan(windowData->_window, true);
 	ImGui_ImplVulkan_InitInfo init_info = {};
-	init_info.Instance = vkContext->_instance;
-	init_info.PhysicalDevice = vkDevice->_physicalDevice;
-	init_info.Device = vkDevice->_device;
-	init_info.QueueFamily = vkDevice->_queueFamilyIndices._graphics; // SURE ?
-	init_info.Queue = vkDevice->_graphicsQueue;
-	init_info.PipelineCache = vkWindow->_pipelineCache;
-	init_info.DescriptorPool = vkDevice->_descriptorPool;
-	init_info.Allocator = vkContext->_allocator;
-	init_info.MinImageCount = vkWindow->_imageCount; // Sure ?
-	init_info.ImageCount = vkWindow->_imageCount;
+	init_info.Instance = kContext._instance;
+	init_info.PhysicalDevice = kDevice._physicalDevice;
+	init_info.Device = kLogicalDevice._device;
+	init_info.QueueFamily = kLogicalDevice._graphicsQueue._indice; // SURE ?
+	init_info.Queue = kLogicalDevice._graphicsQueue._queue;
+	init_info.PipelineCache = VK_NULL_HANDLE;
+	init_info.DescriptorPool = kLogicalDevice._descriptorPool;
+	init_info.Allocator = kContext._allocator;
+	init_info.MinImageCount = kSwapchain._imageCount; // Sure ?
+	init_info.ImageCount = kSwapchain._imageCount;
 	init_info.CheckVkResultFn = check_vk_result;
-	ImGui_ImplVulkan_Init(&init_info, vkWindow->_renderPass);
+	ImGui_ImplVulkan_Init(&init_info, kSwapchain._renderPass);
 
 	// Load Fonts
 	// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -66,10 +68,10 @@ void ImGuiSystem::Init(const GLFWWindowData const * windowData, const VulkanCont
 
 		VkCommandBufferAllocateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		info.commandPool = vkWindow->_commandPool;
+		info.commandPool = kLogicalDevice._graphicsQueue._commandPool;
 		info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		info.commandBufferCount = 1;
-		VkResult err = vkAllocateCommandBuffers(vkDevice->_device, &info, &command_buffer);
+		VkResult err = vkAllocateCommandBuffers(kLogicalDevice._device, &info, &command_buffer);
 		check_vk_result(err);
 
 		VkCommandBufferBeginInfo begin_info = {};
@@ -86,13 +88,13 @@ void ImGuiSystem::Init(const GLFWWindowData const * windowData, const VulkanCont
 		end_info.pCommandBuffers = &command_buffer;
 		err = vkEndCommandBuffer(command_buffer);
 		check_vk_result(err);
-		err = vkQueueSubmit(vkDevice->_graphicsQueue, 1, &end_info, VK_NULL_HANDLE);
+		err = vkQueueSubmit(kLogicalDevice._graphicsQueue._queue, 1, &end_info, VK_NULL_HANDLE);
 		check_vk_result(err);
 
-		err = vkDeviceWaitIdle(vkDevice->_device);
+		err = vkDeviceWaitIdle(kLogicalDevice._device);
 		check_vk_result(err);
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
-		vkFreeCommandBuffers(vkDevice->_device, vkWindow->_commandPool, 1, &command_buffer);
+		vkFreeCommandBuffers(kLogicalDevice._device, kLogicalDevice._graphicsQueue._commandPool, 1, &command_buffer);
 		check_vk_result(err);
 	}
 }

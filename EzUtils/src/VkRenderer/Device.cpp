@@ -214,11 +214,37 @@ LogicalDevice	CreateLogicalDevice(const Context& kContext, const Device& kDevice
 		check_vk_result(err);
 	}
 
+	{
+		VkDescriptorPoolSize pool_sizes[] =
+		{
+			{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+		};
+		VkDescriptorPoolCreateInfo pool_info = {};
+		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+		pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
+		pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
+		pool_info.pPoolSizes = pool_sizes;
+		err = vkCreateDescriptorPool(newLogicalDevice._device, &pool_info, kContext._allocator, &newLogicalDevice._descriptorPool);
+		check_vk_result(err);
+	}
+
 	return newLogicalDevice;
 }
 
 void DestroyLogicalDevice(const Context& kContext, const LogicalDevice& kLogicalDevice)
 {
+	vkDestroyDescriptorPool(kLogicalDevice._device, kLogicalDevice._descriptorPool, kContext._allocator);
 	vkDestroyCommandPool(kLogicalDevice._device, kLogicalDevice._graphicsQueue._commandPool, kContext._allocator);
 
 	if (kLogicalDevice._computeQueue._indice != kLogicalDevice._graphicsQueue._indice)

@@ -259,19 +259,33 @@ void	CreateFrames(const Context& kContext, const LogicalDevice& kLogicalDevice,
 	}
 }
 
-void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
+void	AddViewport(const Viewport& viewport, Swapchain& swapchain)
+{
+	swapchain._viewports.emplace_back(viewport);
+}
+
+void	ResizeSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice,
+	const Device& kDevice, const Surface& kSurface,
+	const GLFWWindowData* windowData, Swapchain& swapchain)
+{
+	vkDeviceWaitIdle(kLogicalDevice._device);
+	DestroySwapchain(kContext, kLogicalDevice, swapchain);
+	swapchain = CreateSwapchain(kContext, kLogicalDevice, kDevice, kSurface, windowData);
+}
+
+bool	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 {
 	vkWaitForFences(kLogicalDevice._device, 1, &swapchain._frames[swapchain._currentFrame]._fence, VK_TRUE, UINT64_MAX);
 
 	VkResult err = vkAcquireNextImageKHR(kLogicalDevice._device, swapchain._swapchain, UINT64_MAX,
 											swapchain._frames[swapchain._currentFrame]._presentComplete,
 											VK_NULL_HANDLE, &swapchain._currentFrame);
-	/*if (err == VK_ERROR_OUT_OF_DATE_KHR || swapchain.swapchain->_shouldUpdate)
-	{
-		ResetVulkanWindow();
-		return VK_NULL_HANDLE;
-	}*/
+	if (err == VK_ERROR_OUT_OF_DATE_KHR)
+		return false;
 	check_vk_result(err);
+
+	for (int i = 0; i < swapchain._viewports.size(); ++i)
+		Draw(kLogicalDevice, swapchain._viewports[i]);
 
 	VkCommandBufferBeginInfo commandBeginInfo = {};
 	commandBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -295,7 +309,8 @@ void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 	vkCmdSetViewport(swapchain._frames[swapchain._currentFrame]._commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(swapchain._frames[swapchain._currentFrame]._commandBuffer, 0, 1, &scissor);
 
-	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+	VkClearValue clearColor{};
+	clearColor.color = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	VkRenderPassBeginInfo renderPassBeginInfo = {};
 	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -321,8 +336,10 @@ void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 
 	vkCmdEndRenderPass(swapchain._frames[swapchain._currentFrame]._commandBuffer);
 
-	VkResult err = vkEndCommandBuffer(swapchain._frames[swapchain._currentFrame]._commandBuffer);
+	err = vkEndCommandBuffer(swapchain._frames[swapchain._currentFrame]._commandBuffer);
 	check_vk_result(err);
+
+	return true;
 }
 
 void	Render(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
@@ -354,7 +371,7 @@ void	Render(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 	check_vk_result(err);
 }
 
-void	Present(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
+bool	Present(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 {
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -371,12 +388,14 @@ void	Present(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 
 	VkResult err = vkQueuePresentKHR(kLogicalDevice._graphicsQueue._queue, &presentInfo);
 
-	/*if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR || swapchain.swapchain->_shouldUpdate)
-		ResetVulkanWindow();
-	else */if (err != VK_SUCCESS)
+	swapchain._currentFrame = (swapchain._currentFrame + 1) % swapchain._frames.size();
+	
+	if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR)
+		return false;
+	else if (err != VK_SUCCESS)
 		check_vk_result(err);
 
-	swapchain._currentFrame = (swapchain._currentFrame + 1) % swapchain._frames.size();
+	return true;
 }
 
 void	DestroyFrame(const Context& kContext, const LogicalDevice& kLogicalDevice, const Frame& kFrame)

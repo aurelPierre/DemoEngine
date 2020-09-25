@@ -138,6 +138,55 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 	return viewport;
 }
 
+void	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
+{
+	VkCommandBufferBeginInfo commandBeginInfo = {};
+	commandBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	commandBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	VkResult err = vkBeginCommandBuffer(viewport._commandBuffer, &commandBeginInfo);
+	check_vk_result(err);
+
+	VkViewport vkViewport = {};
+	vkViewport.x = 0.0f;
+	vkViewport.y = 0.0f;
+	vkViewport.width = viewport._size.width;
+	vkViewport.height = viewport._size.height;
+	vkViewport.minDepth = 0.0f;
+	vkViewport.maxDepth = 1.0f;
+
+	VkRect2D scissor = {};
+	scissor.offset = { 0, 0 };
+	scissor.extent = { viewport._size.width, viewport._size.height };
+
+	vkCmdSetViewport(viewport._commandBuffer, 0, 1, &vkViewport);
+	vkCmdSetScissor(viewport._commandBuffer, 0, 1, &scissor);
+
+	VkClearValue clearColor{};
+	clearColor.color = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	VkRenderPassBeginInfo renderPassBeginInfo = {};
+	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassBeginInfo.renderPass = viewport._renderPass;
+	renderPassBeginInfo.framebuffer = viewport._framebuffer;
+	renderPassBeginInfo.renderArea.extent.width = viewport._size.width;
+	renderPassBeginInfo.renderArea.extent.height = viewport._size.height;
+	renderPassBeginInfo.clearValueCount = 1;
+	renderPassBeginInfo.pClearValues = &clearColor;
+	vkCmdBeginRenderPass(viewport._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	/**********************************************/
+	/* Foreach objects in this renderpass to draw */
+	/**********************************************/
+
+
+	vkCmdEndRenderPass(viewport._commandBuffer);
+
+	err = vkEndCommandBuffer(viewport._commandBuffer);
+	check_vk_result(err);
+
+}
+
 void	DestroyViewport(const Context& kContext, const LogicalDevice& kLogicalDevice, const Viewport& kViewport)
 {
 	vkDestroySampler(kLogicalDevice._device, kViewport._sampler, kContext._allocator);

@@ -17,4 +17,4 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData);
 
-void check_vk_result(const VkResult& err);
+void check_vk_result(const VkResult err);

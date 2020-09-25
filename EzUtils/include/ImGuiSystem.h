@@ -7,9 +7,10 @@
 
 struct GLFWWindowData;
 
-struct VulkanContext;
-struct VulkanDevice;
-struct VulkanWindow;
+struct Context;
+struct Device;
+struct LogicalDevice;
+struct Swapchain;
 
 struct ImGuiData
 {
@@ -20,7 +21,8 @@ class ImGuiSystem
 {
 public:
 
-	void Init(const GLFWWindowData const *, const VulkanContext const *, const VulkanDevice const *, const VulkanWindow const *);
+	void Init(const GLFWWindowData const *, const Context&, const Device&,
+			const LogicalDevice&, const Swapchain&);
 
 	void StartFrame();
 	void Draw(VkCommandBuffer command);

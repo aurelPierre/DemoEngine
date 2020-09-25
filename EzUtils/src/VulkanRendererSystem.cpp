@@ -13,38 +13,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-const std::vector<const char*> validationLayers = {
-	"VK_LAYER_LUNARG_standard_validation",
-	"VK_LAYER_KHRONOS_validation"
-};
-
-static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-	VkDebugUtilsMessageTypeFlagsEXT messageType,
-	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-	void* pUserData) {
-
-	switch (messageSeverity)
-	{
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-		LOG(ez::INFO, std::string("validation layer: ") + pCallbackData->pMessage)
-		break;
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-		LOG(ez::INFO, std::string("validation layer: ") + pCallbackData->pMessage)
-		break;
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-		LOG(ez::WARNING, std::string("validation layer: ") + pCallbackData->pMessage)
-		break;
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-		LOG(ez::ERROR, std::string("validation layer: ") + pCallbackData->pMessage)
-		break;
-	default:
-		LOG(ez::CRITICAL, std::string("validation layer: ") + pCallbackData->pMessage)
-		break;
-	}
-
-	return VK_FALSE;
-}
+#include "Core.h"
 
 void VulkanRendererSystem::CreateInstance()
 {
@@ -84,7 +53,7 @@ void VulkanRendererSystem::CreateInstance()
 	}
 
 	createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-    createInfo.ppEnabledLayerNames = validationLayers.data();
+	createInfo.ppEnabledLayerNames = validationLayers.data();
 
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
@@ -326,7 +295,7 @@ void VulkanRendererSystem::CreateSurface(const GLFWWindowData* windowData)
 	if (res != VK_TRUE)
 	{
 		LOG(ez::ERROR, std::string("Error no WSI support on physical device 0"))
-		exit(-1);
+			exit(-1);
 	}
 
 	// Get list of supported surface formats
@@ -517,7 +486,7 @@ void VulkanRendererSystem::CreateRenderPass()
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &final_attachment;
-	
+
 	VkSubpassDependency dependency = {};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependency.dstSubpass = 0;
@@ -595,7 +564,7 @@ void VulkanRendererSystem::CreateGraphicsPipeline()
 	pipelineDepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 	pipelineDepthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
 
-	
+
 
 	VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo{};
 	pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -646,9 +615,9 @@ void VulkanRendererSystem::CreateGraphicsPipeline()
 		VkVertexInputBindingDescription{0, vertexLayout.stride(), VK_VERTEX_INPUT_RATE_VERTEX }
 	};
 	std::vector<VkVertexInputAttributeDescription> vertexInputAttributes = {
-		VkVertexInputAttributeDescription{0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0},					// Location 0: Position		
-		VkVertexInputAttributeDescription{0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3},	// Location 1: Normal		
-		VkVertexInputAttributeDescription{0, 2, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 6},	// Location 2: Color		
+		VkVertexInputAttributeDescription{0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0},					// Location 0: Position
+		VkVertexInputAttributeDescription{0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3},	// Location 1: Normal
+		VkVertexInputAttributeDescription{0, 2, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 6},	// Location 2: Color
 	};*/
 
 	VkPipelineCacheCreateInfo pipelineCacheCreateInfo{};
@@ -751,7 +720,7 @@ void VulkanRendererSystem::CreateImageViews()
 void VulkanRendererSystem::CreateFramebuffers()
 {
 	VkResult err;
-	
+
 	{
 		VkCommandPoolCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -765,7 +734,7 @@ void VulkanRendererSystem::CreateFramebuffers()
 	{
 		VkImageView attachment[1];
 		attachment[0] = _windowData._frames[i]._imageView;
-		
+
 		VkFramebufferCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		info.renderPass = _windowData._renderPass;
@@ -779,7 +748,7 @@ void VulkanRendererSystem::CreateFramebuffers()
 			err = vkCreateFramebuffer(_deviceData._device, &info, _contextData._allocator, &_windowData._frames[i]._framebuffer);
 			check_vk_result(err);
 		}
-		
+
 		{
 			VkCommandBufferAllocateInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -1086,7 +1055,7 @@ void VulkanRendererSystem::Render()
 {
 	TRACE("VulkanRendererSystem::Render")
 
-	VkSubmitInfo submitInfo = {};
+		VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
 	VkSemaphore waitSemaphores[] = { _windowData._frames[_windowData._currentFrame]._presentComplete };
@@ -1115,7 +1084,7 @@ void VulkanRendererSystem::Present()
 {
 	TRACE("VulkanRendererSystem::Present")
 
-	VkPresentInfoKHR presentInfo = {};
+		VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
 	presentInfo.waitSemaphoreCount = 1;
@@ -1267,7 +1236,7 @@ void VulkanRendererSystem::copyBufferToImage(VkBuffer buffer, VkImage image, uin
 void VulkanRendererSystem::CreateSceneRendering()
 {
 	// Color attachment
-	VkImageCreateInfo image {};
+	VkImageCreateInfo image{};
 	image.imageType = VK_IMAGE_TYPE_2D;
 	image.format = VK_FORMAT_R8G8B8A8_SRGB;
 	image.extent.width = 512;
@@ -1281,11 +1250,11 @@ void VulkanRendererSystem::CreateSceneRendering()
 	image.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
 	check_vk_result(vkCreateImage(_deviceData._device, &image, nullptr, &_windowData._scene._image));
-	
+
 	VkMemoryAllocateInfo memAlloc{};
 	VkMemoryRequirements memReqs;
 	vkGetImageMemoryRequirements(_deviceData._device, _windowData._scene._image, &memReqs);
-	
+
 	memAlloc.allocationSize = memReqs.size;
 
 	uint32_t type = UINT32_MAX;
@@ -1823,7 +1792,7 @@ void VulkanRendererSystem::Debug()
 		ImGui::Columns(1);
 		ImGui::Spacing();
 	}
-	
+
 	if (ImGui::CollapsingHeader("Vulkan window"))
 	{
 		ImGui::Separator();
@@ -1895,6 +1864,6 @@ void VulkanRendererSystem::Debug()
 
 		ImGui::Columns(1);
 	}
-	
+
 	ImGui::End();
 }

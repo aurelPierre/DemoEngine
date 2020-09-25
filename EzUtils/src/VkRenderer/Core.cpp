@@ -28,7 +28,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	return VK_FALSE;
 }
 
-void check_vk_result(const VkResult& err)
+void check_vk_result(const VkResult err)
 {
 	if (err == VK_SUCCESS)
 		return;

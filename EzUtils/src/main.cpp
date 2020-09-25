@@ -1,75 +1,64 @@
-﻿#include "VulkanRendererSystem.h"
-#include "GLFWWindowSystem.h"
+﻿#include "GLFWWindowSystem.h"
 #include "ImGuiSystem.h"
 #include "LogSystem.h"
 #include "Utils.h"
 
+#include "Swapchain.h"
+
 int main(int, char**)
 {
-	/****************/
-	/***** INIT *****/
-	/****************/
 	GLFWWindowSystem		glfwWindow;
-	VulkanRendererSystem	vulkanRenderer;
 	ImGuiSystem				imGui;
+	GLFWWindowData*			windowData	= glfwWindow.CreateWindow();
 
-	GLFWWindowData*			windowData		= glfwWindow.CreateWindow();
-	VulkanContext*			contextData		= vulkanRenderer.CreateVulkanContext();
-	VulkanDevice*			deviceData		= vulkanRenderer.CreateVulkanDevice();
-	VulkanWindow*			vkWindowData	= vulkanRenderer.CreateVulkanWindow(windowData);
+	Context context = CreateContext();
+	Device device = CreateDevice(context);
+	LogicalDevice logicalDevice = CreateLogicalDevice(context, device);
+	Surface surface = CreateSurface(context, logicalDevice, device, windowData);
+	Swapchain swapchain = CreateSwapchain(context, logicalDevice, device, surface, windowData);
 
-	imGui.Init(windowData, contextData, deviceData, vkWindowData);
+	imGui.Init(windowData, context, device, logicalDevice, swapchain);
 
-	vulkanRenderer.CreateSceneRendering();
 
-	/****************/
-	/***** LOOP *****/
-	/****************/
-	while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
-	{
-		// Clear
-		imGui.StartFrame();
-		vulkanRenderer.Clear();
-		
-		// Update
-
-		// Draw
-		VkCommandBuffer command = vulkanRenderer.PrepareDraw();
-		if (command == VK_NULL_HANDLE) // Resize
+		/****************/
+		/***** LOOP *****/
+		/****************/
+		while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
 		{
-			imGui.Draw(command);
+			// Clear
+			imGui.StartFrame();
+
+			// Update
+
+
+			// Draw
+			ez::LogSystem::Draw();
+			ez::ProfileSystem::Draw();
+			if (!Draw(logicalDevice, swapchain))
+			{
+				ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
+				continue;
+			}
+
+			Render(logicalDevice, swapchain);
+			if(!Present(logicalDevice, swapchain))
+				ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
+
 			imGui.EndFrame();
-			continue;
 		}
 
-		ez::LogSystem::Draw();
-		ez::ProfileSystem::Draw();
-		vulkanRenderer.Debug();
+		/*****************/
+		/***** CLEAR *****/
+		/*****************/
+		imGui.Clear();
 
-		imGui.Draw(command);
+		DestroySwapchain(context, logicalDevice, swapchain);
+		DestroySurface(context, surface);
+		DestroyLogicalDevice(context, logicalDevice);
+		DestroyContext(context);
 
-		vulkanRenderer.SubmitDraw();
+		glfwWindow.DeleteWindow();
 
-		// Render
-		vulkanRenderer.Render();
+		return EXIT_SUCCESS;
 
-		// Present
-		vulkanRenderer.Present();
-		
-		imGui.EndFrame();
-	}
-
-	/*****************/
-	/***** CLEAR *****/
-	/*****************/
-	vulkanRenderer.DeleteVulkanWindow();
-
-	imGui.Clear();
-	
-	vulkanRenderer.DeleteVulkanDevice();
-	vulkanRenderer.DeleteVulkanContext();
-
-	glfwWindow.DeleteWindow();
-
-	return EXIT_SUCCESS;
 }

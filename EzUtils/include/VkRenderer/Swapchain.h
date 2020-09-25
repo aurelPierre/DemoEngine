@@ -41,11 +41,16 @@ Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogical
 							const Device& kDevice, const Surface& kSurface,
 							const GLFWWindowData* windowData);
 void		CreateFrames(const Context& kContext, const LogicalDevice& kLogicalDevice,
-						const Surface& kSurface, Swapchain& viewport);
+						const Surface& kSurface, Swapchain& swapchain);
 
-void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
+void	AddViewport(const Viewport& viewport, Swapchain& swapchain);
+void	ResizeSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice,
+						const Device& kDevice, const Surface& kSurface,
+						const GLFWWindowData* windowData, Swapchain& swapchain);
+
+bool	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
 void	Render(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
-void	Present(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
+bool	Present(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
 
 void	DestroyFrame(const Context& kContext, const LogicalDevice& kLogicalDevice, const Frame& kFrame);
 void	DestroySwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain);
