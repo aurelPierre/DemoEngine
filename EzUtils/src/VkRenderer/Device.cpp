@@ -181,7 +181,8 @@ LogicalDevice	CreateLogicalDevice(const Context& kContext, const Device& kDevice
 	info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	info.queueFamilyIndex = newLogicalDevice._graphicsQueue._indice;
-	err = vkCreateCommandPool(newLogicalDevice._device, &info, kContext._allocator, &newLogicalDevice._graphicsQueue._commandPool);
+	err = vkCreateCommandPool(newLogicalDevice._device, &info, kContext._allocator, 
+								&newLogicalDevice._graphicsQueue._commandPool);
 	check_vk_result(err);
 
 	if (newLogicalDevice._computeQueue._indice != newLogicalDevice._graphicsQueue._indice)

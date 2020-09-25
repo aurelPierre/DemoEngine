@@ -2,10 +2,14 @@
 
 #include "Core.h"
 
+#include <imgui_impl_vulkan.h>
+
 Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDevice,
-							const Device& kDevice, const VkFormat kFormat)
+							const Device& kDevice, const VkFormat kFormat, const VkExtent2D kExtent)
 {
 	Viewport viewport{};
+
+	viewport._size = kExtent;
 
 	VkAttachmentDescription attachment = {};
 	attachment.format = kFormat;
@@ -15,7 +19,7 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	VkAttachmentReference final_attachment = {};
 	final_attachment.attachment = 0;
@@ -49,10 +53,11 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 	{
 		// Color attachment
 		VkImageCreateInfo image{};
+		image.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		image.imageType = VK_IMAGE_TYPE_2D;
-		image.format = VK_FORMAT_R8G8B8A8_SRGB;
-		image.extent.width = 512;
-		image.extent.height = 512;
+		image.format = kFormat;
+		image.extent.width = viewport._size.width;
+		image.extent.height = viewport._size.height;
 		image.extent.depth = 1;
 		image.mipLevels = 1;
 		image.arrayLayers = 1;
@@ -67,6 +72,7 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 		VkMemoryRequirements memReqs;
 		vkGetImageMemoryRequirements(kLogicalDevice._device, viewport._image, &memReqs);
 
+		memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memAlloc.allocationSize = memReqs.size;
 
 		uint32_t type = UINT32_MAX;
@@ -107,6 +113,21 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 			&viewport._imageView);
 		check_vk_result(err);
 
+		VkSamplerCreateInfo samplerInfo{};
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerInfo.magFilter = VK_FILTER_LINEAR;
+		samplerInfo.minFilter = VK_FILTER_LINEAR;
+		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeV = samplerInfo.addressModeU;
+		samplerInfo.addressModeW = samplerInfo.addressModeU;
+		samplerInfo.mipLodBias = 0.0f;
+		samplerInfo.maxAnisotropy = 1.0f;
+		samplerInfo.minLod = 0.0f;
+		samplerInfo.maxLod = 1.0f;
+		samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+		check_vk_result(vkCreateSampler(kLogicalDevice._device, &samplerInfo, kContext._allocator, &viewport._sampler));
+
 		VkImageView attachment[1];
 		attachment[0] = viewport._imageView;
 
@@ -135,11 +156,49 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 		}
 	}
 
+	viewport._set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(viewport._sampler, viewport._imageView,					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
 	return viewport;
 }
 
-void	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
+void	ResizeViewport(const Context& kContext, const LogicalDevice& kLogicalDevice,
+						const Device& kDevice, const VkFormat kFormat, Viewport& viewport)
 {
+	vkDeviceWaitIdle(kLogicalDevice._device);
+
+	ImVec2 vMin = ImGui::GetWindowContentRegionMin();
+	ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+
+	vMin.x += ImGui::GetWindowPos().x;
+	vMin.y += ImGui::GetWindowPos().y;
+	vMax.x += ImGui::GetWindowPos().x;
+	vMax.y += ImGui::GetWindowPos().y;
+
+	ImVec2 size = { vMax.x - vMin.x, vMax.y - vMin.y };
+	DestroyViewport(kContext, kLogicalDevice, viewport);
+	viewport = CreateViewport(kContext, kLogicalDevice, kDevice, kFormat, { (uint32_t)size.x, (uint32_t)size.y });
+	ImGui::End();
+}
+
+bool	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
+{
+	ImGui::Begin("Viewport");
+
+	ImVec2 vMin = ImGui::GetWindowContentRegionMin();
+	ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+
+	vMin.x += ImGui::GetWindowPos().x;
+	vMin.y += ImGui::GetWindowPos().y;
+	vMax.x += ImGui::GetWindowPos().x;
+	vMax.y += ImGui::GetWindowPos().y;
+
+	ImVec2 size = { vMax.x - vMin.x, vMax.y - vMin.y };
+	if (size.x != viewport._size.width || size.y != viewport._size.height)
+		return false;
+
+	ImGui::Image(viewport._set, size);
+	ImGui::End();
+
 	VkCommandBufferBeginInfo commandBeginInfo = {};
 	commandBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	commandBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -163,7 +222,7 @@ void	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
 	vkCmdSetScissor(viewport._commandBuffer, 0, 1, &scissor);
 
 	VkClearValue clearColor{};
-	clearColor.color = { 0.0f, 0.0f, 0.0f, 0.0f };
+	clearColor.color = { 0.0f, 0.0f, 1.f, 1.0f };
 
 	VkRenderPassBeginInfo renderPassBeginInfo = {};
 	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -179,16 +238,19 @@ void	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
 	/* Foreach objects in this renderpass to draw */
 	/**********************************************/
 
-
 	vkCmdEndRenderPass(viewport._commandBuffer);
 
 	err = vkEndCommandBuffer(viewport._commandBuffer);
 	check_vk_result(err);
 
+	return true;
 }
 
 void	DestroyViewport(const Context& kContext, const LogicalDevice& kLogicalDevice, const Viewport& kViewport)
 {
+	vkFreeCommandBuffers(kLogicalDevice._device, kLogicalDevice._graphicsQueue._commandPool, 1, &kViewport._commandBuffer);
+	vkFreeDescriptorSets(kLogicalDevice._device, kLogicalDevice._descriptorPool, 1, &kViewport._set);
+
 	vkDestroySampler(kLogicalDevice._device, kViewport._sampler, kContext._allocator);
 	vkDestroyFramebuffer(kLogicalDevice._device, kViewport._framebuffer, kContext._allocator);
 	vkDestroyImageView(kLogicalDevice._device, kViewport._imageView, kContext._allocator);

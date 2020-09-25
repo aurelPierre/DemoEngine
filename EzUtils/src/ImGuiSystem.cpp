@@ -170,6 +170,7 @@ void ImGuiSystem::Draw(VkCommandBuffer command)
 
 void ImGuiSystem::EndFrame()
 {
+	ImGui::EndFrame();
 	ImGui::UpdatePlatformWindows();
 }
 

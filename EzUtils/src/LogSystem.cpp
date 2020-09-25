@@ -116,7 +116,7 @@ namespace ez
 		if (copy)
 			ImGui::LogToClipboard();
 
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 5));
 
 		ImGui::PushTextWrapPos();
 

@@ -19,46 +19,50 @@ int main(int, char**)
 
 	imGui.Init(windowData, context, device, logicalDevice, swapchain);
 
+	Viewport viewport = CreateViewport(context, logicalDevice, device, surface._colorFormat, { 512, 512 });
+	AddViewport(viewport, swapchain);
 
-		/****************/
-		/***** LOOP *****/
-		/****************/
-		while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
+	while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
+	{
+		// Clear
+		imGui.StartFrame();
+
+		// Update
+
+
+		// Draw
+		ez::LogSystem::Draw();
+		ez::ProfileSystem::Draw();
+
+		if(!AcquireNextImage(logicalDevice, swapchain))
 		{
-			// Clear
-			imGui.StartFrame();
-
-			// Update
-
-
-			// Draw
-			ez::LogSystem::Draw();
-			ez::ProfileSystem::Draw();
-			if (!Draw(logicalDevice, swapchain))
-			{
-				ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
-				continue;
-			}
-
-			Render(logicalDevice, swapchain);
-			if(!Present(logicalDevice, swapchain))
-				ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
-
+			ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
 			imGui.EndFrame();
+			continue;
 		}
 
-		/*****************/
-		/***** CLEAR *****/
-		/*****************/
-		imGui.Clear();
+		for (int i = 0; i < swapchain._viewports.size(); ++i)
+		{
+			if (!Draw(logicalDevice, swapchain._viewports[i]))
+				ResizeViewport(context, logicalDevice, device, surface._colorFormat, swapchain._viewports[i]);
+		}
 
-		DestroySwapchain(context, logicalDevice, swapchain);
-		DestroySurface(context, surface);
-		DestroyLogicalDevice(context, logicalDevice);
-		DestroyContext(context);
+		Draw(logicalDevice, swapchain);
+		Render(logicalDevice, swapchain);
+		if(!Present(logicalDevice, swapchain))
+			ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
 
-		glfwWindow.DeleteWindow();
+		imGui.EndFrame();
+	}
 
-		return EXIT_SUCCESS;
+	imGui.Clear();
 
+	DestroySwapchain(context, logicalDevice, swapchain);
+	DestroySurface(context, surface);
+	DestroyLogicalDevice(context, logicalDevice);
+	DestroyContext(context);
+
+	glfwWindow.DeleteWindow();
+
+	return EXIT_SUCCESS;
 }

@@ -48,7 +48,8 @@ void	ResizeSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevic
 						const Device& kDevice, const Surface& kSurface,
 						const GLFWWindowData* windowData, Swapchain& swapchain);
 
-bool	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
+bool	AcquireNextImage(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
+void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
 void	Render(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
 bool	Present(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
 

@@ -269,29 +269,35 @@ void	ResizeSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevic
 	const GLFWWindowData* windowData, Swapchain& swapchain)
 {
 	vkDeviceWaitIdle(kLogicalDevice._device);
+
+	std::vector<Viewport> viewports = swapchain._viewports;
 	DestroySwapchain(kContext, kLogicalDevice, swapchain);
 	swapchain = CreateSwapchain(kContext, kLogicalDevice, kDevice, kSurface, windowData);
+	swapchain._viewports = viewports;
 }
 
-bool	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
+bool	AcquireNextImage(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 {
 	vkWaitForFences(kLogicalDevice._device, 1, &swapchain._frames[swapchain._currentFrame]._fence, VK_TRUE, UINT64_MAX);
 
 	VkResult err = vkAcquireNextImageKHR(kLogicalDevice._device, swapchain._swapchain, UINT64_MAX,
-											swapchain._frames[swapchain._currentFrame]._presentComplete,
-											VK_NULL_HANDLE, &swapchain._currentFrame);
+		swapchain._frames[swapchain._currentFrame]._presentComplete,
+		VK_NULL_HANDLE, &swapchain._currentFrame);
+
 	if (err == VK_ERROR_OUT_OF_DATE_KHR)
 		return false;
+
 	check_vk_result(err);
+	return true;
+}
 
-	for (int i = 0; i < swapchain._viewports.size(); ++i)
-		Draw(kLogicalDevice, swapchain._viewports[i]);
-
+void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
+{
 	VkCommandBufferBeginInfo commandBeginInfo = {};
 	commandBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	commandBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	err = vkBeginCommandBuffer(swapchain._frames[swapchain._currentFrame]._commandBuffer, &commandBeginInfo);
+	VkResult err = vkBeginCommandBuffer(swapchain._frames[swapchain._currentFrame]._commandBuffer, &commandBeginInfo);
 	check_vk_result(err);
 
 	VkViewport viewport = {};
@@ -338,8 +344,6 @@ bool	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 
 	err = vkEndCommandBuffer(swapchain._frames[swapchain._currentFrame]._commandBuffer);
 	check_vk_result(err);
-
-	return true;
 }
 
 void	Render(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
@@ -400,6 +404,8 @@ bool	Present(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 
 void	DestroyFrame(const Context& kContext, const LogicalDevice& kLogicalDevice, const Frame& kFrame)
 {
+	vkFreeCommandBuffers(kLogicalDevice._device, kLogicalDevice._graphicsQueue._commandPool, 1, &kFrame._commandBuffer);
+
 	vkDestroySemaphore(kLogicalDevice._device, kFrame._presentComplete, kContext._allocator);
 	vkDestroySemaphore(kLogicalDevice._device, kFrame._renderComplete, kContext._allocator);
 
@@ -410,6 +416,9 @@ void	DestroyFrame(const Context& kContext, const LogicalDevice& kLogicalDevice, 
 
 void	DestroySwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain)
 {
+	for (uint32_t i = 0; i < kSwapchain._viewports.size(); ++i)
+		DestroyViewport(kContext, kLogicalDevice, kSwapchain._viewports[i]);
+
 	for (uint32_t i = 0; i < kSwapchain._frames.size(); ++i)
 		DestroyFrame(kContext, kLogicalDevice, kSwapchain._frames[i]);
 
