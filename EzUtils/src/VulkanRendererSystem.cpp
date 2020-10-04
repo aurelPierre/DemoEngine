@@ -510,7 +510,7 @@ void VulkanRendererSystem::CreateRenderPass()
 
 void VulkanRendererSystem::CreateGraphicsPipeline()
 {
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+	/*VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 0; // Optional
 	pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
@@ -611,14 +611,14 @@ void VulkanRendererSystem::CreateGraphicsPipeline()
 	pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
 	pipelineCreateInfo.pStages = shaderStages.data();
 
-	/*std::vector<VkVertexInputBindingDescription> vertexInputBindings = {
+	std::vector<VkVertexInputBindingDescription> vertexInputBindings = {
 		VkVertexInputBindingDescription{0, vertexLayout.stride(), VK_VERTEX_INPUT_RATE_VERTEX }
 	};
 	std::vector<VkVertexInputAttributeDescription> vertexInputAttributes = {
 		VkVertexInputAttributeDescription{0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0},					// Location 0: Position
 		VkVertexInputAttributeDescription{0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3},	// Location 1: Normal
 		VkVertexInputAttributeDescription{0, 2, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 6},	// Location 2: Color
-	};*/
+	};
 
 	VkPipelineCacheCreateInfo pipelineCacheCreateInfo{};
 	pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
@@ -645,7 +645,7 @@ void VulkanRendererSystem::CreateGraphicsPipeline()
 
 
 	vkDestroyShaderModule(_deviceData._device, vertShaderModule, _contextData._allocator);
-	vkDestroyShaderModule(_deviceData._device, fragShaderModule, _contextData._allocator);
+	vkDestroyShaderModule(_deviceData._device, fragShaderModule, _contextData._allocator);*/
 }
 
 void VulkanRendererSystem::CreateImageViews()
@@ -847,7 +847,7 @@ VulkanWindow* VulkanRendererSystem::CreateVulkanWindow(const GLFWWindowData* win
 	CreateGraphicsPipeline();
 	CreateFramebuffers();
 
-	VkBufferCreateInfo bufferInfo{};
+	/*VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = sizeof(_objects.vertices[0]) * _objects.vertices.size();
 	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
@@ -878,7 +878,7 @@ VulkanWindow* VulkanRendererSystem::CreateVulkanWindow(const GLFWWindowData* win
 		throw std::runtime_error("failed to allocate vertex buffer memory!");
 	}
 
-	vkBindBufferMemory(_deviceData._device, _objects._buffer, _objects._memory, 0);
+	vkBindBufferMemory(_deviceData._device, _objects._buffer, _objects._memory, 0);*/
 
 	return &_windowData;
 }
@@ -887,8 +887,8 @@ void VulkanRendererSystem::DeleteVulkanWindow()
 {
 	vkDeviceWaitIdle(_deviceData._device);
 
-	vkFreeMemory(_deviceData._device, _objects._memory, nullptr);
-	vkDestroyBuffer(_deviceData._device, _objects._buffer, nullptr);
+	/*vkFreeMemory(_deviceData._device, _objects._memory, nullptr);
+	vkDestroyBuffer(_deviceData._device, _objects._buffer, nullptr);*/
 
 	// Frames
 	for (uint32_t i = 0; i < _windowData._frames.size(); i++)
@@ -906,8 +906,8 @@ void VulkanRendererSystem::DeleteVulkanWindow()
 
 	// Pipeline
 	vkDestroyPipelineCache(_deviceData._device, _windowData._pipelineCache, _contextData._allocator);
-	vkDestroyPipeline(_deviceData._device, _objects._pipeline, _contextData._allocator);
-	vkDestroyPipelineLayout(_deviceData._device, _objects._pipelineLayout, _contextData._allocator);
+	//vkDestroyPipeline(_deviceData._device, _objects._pipeline, _contextData._allocator);
+	//vkDestroyPipelineLayout(_deviceData._device, _objects._pipelineLayout, _contextData._allocator);
 	vkDestroyRenderPass(_deviceData._device, _windowData._renderPass, _contextData._allocator);
 
 	// Window
@@ -973,7 +973,7 @@ VkCommandBuffer VulkanRendererSystem::PrepareDraw()
 		renderPassBeginInfo.pClearValues = &clearColor;
 		vkCmdBeginRenderPass(_windowData._scene._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBindPipeline(_windowData._scene._commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _objects._pipeline);
+		/*vkCmdBindPipeline(_windowData._scene._commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _objects._pipeline);
 
 		ImGui::Begin("Demo");
 
@@ -997,7 +997,7 @@ VkCommandBuffer VulkanRendererSystem::PrepareDraw()
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(_windowData._scene._commandBuffer, 0, 1, vertexBuffers, offsets);
 
-		vkCmdDraw(_windowData._scene._commandBuffer, _objects.vertices.size(), 1, 0, 0);
+		vkCmdDraw(_windowData._scene._commandBuffer, _objects.vertices.size(), 1, 0, 0);*/
 
 		vkCmdEndRenderPass(_windowData._scene._commandBuffer);
 		VkResult err = vkEndCommandBuffer(_windowData._scene._commandBuffer);
