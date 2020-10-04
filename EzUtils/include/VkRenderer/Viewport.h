@@ -5,6 +5,8 @@
 #include "Context.h"
 #include "Device.h"
 
+class Mesh;
+
 struct Viewport
 {
 	VkFence					_fence			= VK_NULL_HANDLE;
@@ -19,6 +21,8 @@ struct Viewport
 
 	VkExtent2D				_size;
 	VkRenderPass			_renderPass		= VK_NULL_HANDLE;
+
+	std::vector<Mesh*>		_meshs;
 };
 
 Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDevice,

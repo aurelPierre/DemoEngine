@@ -37,6 +37,8 @@ Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, co
 	}
 
 	vkBindBufferMemory(kLogicalDevice._device, mesh._buffer, mesh._memory, 0);
+
+	return mesh;
 }
 
 void	DestroyMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, const Mesh& kMesh)

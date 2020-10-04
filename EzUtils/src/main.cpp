@@ -4,6 +4,7 @@
 #include "Utils.h"
 
 #include "Swapchain.h"
+#include "Mesh.h"
 
 int main(int, char**)
 {
@@ -21,6 +22,15 @@ int main(int, char**)
 
 	Viewport viewport = CreateViewport(context, logicalDevice, device, surface._colorFormat, { 512, 512 });
 	AddViewport(viewport, swapchain);
+
+	Material mat = CreateMaterial(context, logicalDevice, swapchain._viewports[0],
+		"D:/Personal project/EzUtils/shaders/bin/shader.vert.spv", "D:/Personal project/EzUtils/shaders/bin/shader.frag.spv");
+
+	Mesh mesh = CreateMesh(context, logicalDevice, device);
+	mesh._material = &mat;
+
+	swapchain._viewports[0]._meshs.emplace_back(&mesh);
+
 
 	while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
 	{
@@ -64,6 +74,11 @@ int main(int, char**)
 	}
 
 	imGui.Clear();
+
+	DestroyMesh(context, logicalDevice, mesh);
+	DestroyMaterial(context, logicalDevice, mat);
+
+	DestroyViewport(context, logicalDevice, swapchain._viewports[0]);
 
 	DestroySwapchain(context, logicalDevice, swapchain);
 	DestroySurface(context, surface);
