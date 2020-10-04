@@ -27,6 +27,12 @@ int main(int, char**)
 		// Clear
 		imGui.StartFrame();
 
+		if (windowData->_shouldUpdate)
+		{
+			ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
+			windowData->_shouldUpdate = false;
+		}
+
 		// Update
 
 
@@ -36,7 +42,7 @@ int main(int, char**)
 
 		if(!AcquireNextImage(logicalDevice, swapchain))
 		{
-			ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
+			windowData->_shouldUpdate = true;
 			imGui.EndFrame();
 			continue;
 		}
@@ -45,12 +51,14 @@ int main(int, char**)
 		{
 			if (!Draw(logicalDevice, swapchain._viewports[i]))
 				ResizeViewport(context, logicalDevice, device, surface._colorFormat, swapchain._viewports[i]);
+			else
+				Render(logicalDevice, swapchain._viewports[i]);
 		}
 
 		Draw(logicalDevice, swapchain);
 		Render(logicalDevice, swapchain);
 		if(!Present(logicalDevice, swapchain))
-			ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
+			windowData->_shouldUpdate = true;
 
 		imGui.EndFrame();
 	}

@@ -152,10 +152,11 @@ Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogical
 	VkSubpassDependency dependency = {};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
+	dependency.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	VkRenderPassCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -271,8 +272,12 @@ void	ResizeSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevic
 	vkDeviceWaitIdle(kLogicalDevice._device);
 
 	std::vector<Viewport> viewports = swapchain._viewports;
+	for (uint16_t i = 0; i < viewports.size(); ++i)
+		DestroyViewport(kContext, kLogicalDevice, viewports[i]);
 	DestroySwapchain(kContext, kLogicalDevice, swapchain);
 	swapchain = CreateSwapchain(kContext, kLogicalDevice, kDevice, kSurface, windowData);
+	for (uint16_t i = 0; i < viewports.size(); ++i)
+		viewports[i] = CreateViewport(kContext, kLogicalDevice, kDevice, kSurface._colorFormat, { 512, 512 });
 	swapchain._viewports = viewports;
 }
 
@@ -357,10 +362,8 @@ void	Render(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 
-	std::vector<VkCommandBuffer> commands(swapchain._viewports.size() + 1);
+	std::vector<VkCommandBuffer> commands(1);
 	commands[0] = swapchain._frames[swapchain._currentFrame]._commandBuffer;
-	for(int i = 0; i < swapchain._viewports.size(); ++i)
-		commands[i + 1] = swapchain._viewports[i]._commandBuffer;
 
 	submitInfo.commandBufferCount = commands.size();
 	submitInfo.pCommandBuffers = commands.data();
@@ -416,9 +419,6 @@ void	DestroyFrame(const Context& kContext, const LogicalDevice& kLogicalDevice, 
 
 void	DestroySwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain)
 {
-	for (uint32_t i = 0; i < kSwapchain._viewports.size(); ++i)
-		DestroyViewport(kContext, kLogicalDevice, kSwapchain._viewports[i]);
-
 	for (uint32_t i = 0; i < kSwapchain._frames.size(); ++i)
 		DestroyFrame(kContext, kLogicalDevice, kSwapchain._frames[i]);
 

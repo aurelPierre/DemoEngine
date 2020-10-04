@@ -7,6 +7,8 @@
 
 struct Viewport
 {
+	VkFence					_fence			= VK_NULL_HANDLE;
+
 	VkCommandBuffer			_commandBuffer	= VK_NULL_HANDLE;
 	VkDeviceMemory			_imageMemory	= VK_NULL_HANDLE;
 	VkImage					_image			= VK_NULL_HANDLE;
@@ -26,5 +28,6 @@ void	ResizeViewport(const Context& kContext, const LogicalDevice& kLogicalDevice
 						const Device& kDevice, const VkFormat kFormat, Viewport& viewport);
 
 bool	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport);
+void	Render(const LogicalDevice& kLogicalDevice, Viewport& viewport);
 
 void	DestroyViewport(const Context& kContext, const LogicalDevice& kLogicalDevice, const Viewport& kViewport);

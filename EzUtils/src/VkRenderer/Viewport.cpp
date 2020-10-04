@@ -1,6 +1,7 @@
 #include "Viewport.h"
 
 #include "Core.h"
+#include <array>
 
 #include <imgui_impl_vulkan.h>
 
@@ -30,13 +31,24 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &final_attachment;
 
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	// Use subpass dependencies for layout transitions
+	std::array<VkSubpassDependency, 2> dependencies;
+
+	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass = 0;
+	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	dependencies[1].srcSubpass = 0;
+	dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	VkRenderPassCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -44,8 +56,8 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 	info.pAttachments = &attachment;
 	info.subpassCount = 1;
 	info.pSubpasses = &subpass;
-	info.dependencyCount = 1;
-	info.pDependencies = &dependency;
+	info.dependencyCount = dependencies.size();
+	info.pDependencies = dependencies.data();
 
 	VkResult err = vkCreateRenderPass(kLogicalDevice._device, &info, kContext._allocator, &viewport._renderPass);
 	check_vk_result(err);
@@ -156,7 +168,15 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 		}
 	}
 
-	viewport._set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(viewport._sampler, viewport._imageView,					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	viewport._set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(viewport._sampler, viewport._imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	{
+		VkFenceCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+		err = vkCreateFence(kLogicalDevice._device, &info, kContext._allocator, &viewport._fence);
+		check_vk_result(err);
+	}
 
 	return viewport;
 }
@@ -165,7 +185,7 @@ void	ResizeViewport(const Context& kContext, const LogicalDevice& kLogicalDevice
 						const Device& kDevice, const VkFormat kFormat, Viewport& viewport)
 {
 	vkDeviceWaitIdle(kLogicalDevice._device);
-
+	
 	ImVec2 vMin = ImGui::GetWindowContentRegionMin();
 	ImVec2 vMax = ImGui::GetWindowContentRegionMax();
 
@@ -174,9 +194,9 @@ void	ResizeViewport(const Context& kContext, const LogicalDevice& kLogicalDevice
 	vMax.x += ImGui::GetWindowPos().x;
 	vMax.y += ImGui::GetWindowPos().y;
 
-	ImVec2 size = { vMax.x - vMin.x, vMax.y - vMin.y };
+	VkExtent2D size = { (uint32_t)vMax.x - (uint32_t)vMin.x, (uint32_t)vMax.y - (uint32_t)vMin.y };
 	DestroyViewport(kContext, kLogicalDevice, viewport);
-	viewport = CreateViewport(kContext, kLogicalDevice, kDevice, kFormat, { (uint32_t)size.x, (uint32_t)size.y });
+	viewport = CreateViewport(kContext, kLogicalDevice, kDevice, kFormat, size);
 	ImGui::End();
 }
 
@@ -199,11 +219,14 @@ bool	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
 	ImGui::Image(viewport._set, size);
 	ImGui::End();
 
+	VkResult err = vkWaitForFences(kLogicalDevice._device, 1, &viewport._fence, VK_TRUE, UINT64_MAX);
+	check_vk_result(err);
+
 	VkCommandBufferBeginInfo commandBeginInfo = {};
 	commandBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	commandBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	VkResult err = vkBeginCommandBuffer(viewport._commandBuffer, &commandBeginInfo);
+	err = vkBeginCommandBuffer(viewport._commandBuffer, &commandBeginInfo);
 	check_vk_result(err);
 
 	VkViewport vkViewport = {};
@@ -246,10 +269,33 @@ bool	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
 	return true;
 }
 
+void	Render(const LogicalDevice& kLogicalDevice, Viewport& viewport)
+{
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
+	submitInfo.waitSemaphoreCount = 0;
+	submitInfo.pWaitDstStageMask = waitStages;
+
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &viewport._commandBuffer;
+
+	submitInfo.signalSemaphoreCount = 0;
+
+	VkResult err = vkResetFences(kLogicalDevice._device, 1, &viewport._fence);
+	check_vk_result(err);
+	err = vkQueueSubmit(kLogicalDevice._graphicsQueue._queue, 1, &submitInfo, viewport._fence);
+	check_vk_result(err);
+}
+
 void	DestroyViewport(const Context& kContext, const LogicalDevice& kLogicalDevice, const Viewport& kViewport)
 {
+	vkDestroyFence(kLogicalDevice._device, kViewport._fence, kContext._allocator);
+
 	vkFreeCommandBuffers(kLogicalDevice._device, kLogicalDevice._graphicsQueue._commandPool, 1, &kViewport._commandBuffer);
-	vkFreeDescriptorSets(kLogicalDevice._device, kLogicalDevice._descriptorPool, 1, &kViewport._set);
+	VkResult err = vkFreeDescriptorSets(kLogicalDevice._device, kLogicalDevice._descriptorPool, 1, &kViewport._set);
+	check_vk_result(err);
 
 	vkDestroySampler(kLogicalDevice._device, kViewport._sampler, kContext._allocator);
 	vkDestroyFramebuffer(kLogicalDevice._device, kViewport._framebuffer, kContext._allocator);
