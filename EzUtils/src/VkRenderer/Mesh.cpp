@@ -41,6 +41,11 @@ Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, co
 	return mesh;
 }
 
+void	Draw(const LogicalDevice& kLogicalDevice, const Mesh& kMesh)
+{
+	
+}
+
 void	DestroyMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, const Mesh& kMesh)
 {
 	vkFreeMemory(kLogicalDevice._device, kMesh._memory, kContext._allocator);

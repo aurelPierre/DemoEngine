@@ -199,16 +199,13 @@ void	ResizeViewport(const Context& kContext, const LogicalDevice& kLogicalDevice
 
 	VkExtent2D size = { (uint32_t)vMax.x - (uint32_t)vMin.x, (uint32_t)vMax.y - (uint32_t)vMin.y };
 
-	std::vector<Mesh*> mesh = viewport._meshs;
-
 	DestroyViewport(kContext, kLogicalDevice, viewport);
 	viewport = CreateViewport(kContext, kLogicalDevice, kDevice, kFormat, size);
-	viewport._meshs = mesh;
 
 	ImGui::End();
 }
 
-bool	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
+bool	UpdateViewportSize(Viewport& viewport)
 {
 	ImGui::Begin("Viewport");
 
@@ -227,6 +224,11 @@ bool	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
 	ImGui::Image(viewport._set, size);
 	ImGui::End();
 
+	return true;
+}
+
+void	StartDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
+{
 	VkResult err = vkWaitForFences(kLogicalDevice._device, 1, &viewport._fence, VK_TRUE, UINT64_MAX);
 	check_vk_result(err);
 
@@ -264,43 +266,24 @@ bool	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
 	renderPassBeginInfo.clearValueCount = 1;
 	renderPassBeginInfo.pClearValues = &clearColor;
 	vkCmdBeginRenderPass(viewport._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
 
-	/**********************************************/
-	/* Foreach objects in this renderpass to draw */
-	/**********************************************/
-	for (int i = 0; i < viewport._meshs.size(); ++i)
-	{
-		vkCmdBindPipeline(viewport._commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, viewport._meshs[i]->_material->_pipeline);
-
-		ImGui::Begin("Demo");
-
-		ImGui::InputFloat2("Vertex0 pos", (float*)&viewport._meshs[i]->vertices[0].pos);
-		ImGui::ColorEdit3("Vertex0 color", (float*)&viewport._meshs[i]->vertices[0].color);
-
-		ImGui::InputFloat2("Vertex1 pos", (float*)&viewport._meshs[i]->vertices[1].pos);
-		ImGui::ColorEdit3("Vertex1 color", (float*)&viewport._meshs[i]->vertices[1].color);
-
-		ImGui::InputFloat2("Vertex2 pos", (float*)&viewport._meshs[i]->vertices[2].pos);
-		ImGui::ColorEdit3("Vertex2 color", (float*)&viewport._meshs[i]->vertices[2].color);
-
-		ImGui::End();
-
-		void* data;
-		vkMapMemory(kLogicalDevice._device, viewport._meshs[i]->_memory, 0, sizeof(viewport._meshs[i]->vertices[0]) * viewport._meshs[i]->vertices.size(), 0, &data);
-		memcpy(data, viewport._meshs[i]->vertices.data(), (size_t)sizeof(viewport._meshs[i]->vertices[0]) * viewport._meshs[i]->vertices.size());
-		vkUnmapMemory(kLogicalDevice._device, viewport._meshs[i]->_memory);
-
-		VkBuffer vertexBuffers[] = { viewport._meshs[i]->_buffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(viewport._commandBuffer, 0, 1, vertexBuffers, offsets);
-
-		vkCmdDraw(viewport._commandBuffer, viewport._meshs[i]->vertices.size(), 1, 0, 0);
-	}
-
+void	EndDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
+{
 	vkCmdEndRenderPass(viewport._commandBuffer);
 
-	err = vkEndCommandBuffer(viewport._commandBuffer);
+	VkResult err = vkEndCommandBuffer(viewport._commandBuffer);
 	check_vk_result(err);
+}
+
+bool	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
+{
+	if (!UpdateViewportSize(viewport))
+		return false;
+
+	StartDraw(kLogicalDevice, viewport);
+
+	EndDraw(kLogicalDevice, viewport);
 
 	return true;
 }

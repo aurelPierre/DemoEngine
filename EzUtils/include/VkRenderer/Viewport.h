@@ -21,8 +21,6 @@ struct Viewport
 
 	VkExtent2D				_size;
 	VkRenderPass			_renderPass		= VK_NULL_HANDLE;
-
-	std::vector<Mesh*>		_meshs;
 };
 
 Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDevice,
@@ -30,6 +28,11 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 
 void	ResizeViewport(const Context& kContext, const LogicalDevice& kLogicalDevice,
 						const Device& kDevice, const VkFormat kFormat, Viewport& viewport);
+
+bool	UpdateViewportSize(Viewport& viewport);
+
+void	StartDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport);
+void	EndDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport);
 
 bool	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport);
 void	Render(const LogicalDevice& kLogicalDevice, Viewport& viewport);

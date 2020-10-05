@@ -5,6 +5,7 @@
 
 #include "Swapchain.h"
 #include "Mesh.h"
+#include "Scene.h"
 
 int main(int, char**)
 {
@@ -29,8 +30,9 @@ int main(int, char**)
 	Mesh mesh = CreateMesh(context, logicalDevice, device);
 	mesh._material = &mat;
 
-	swapchain._viewports[0]._meshs.emplace_back(&mesh);
-
+	Scene scene{};
+	scene._viewports.emplace_back(&swapchain._viewports[0]);
+	scene._mesh.emplace_back(&mesh);
 
 	while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
 	{
@@ -40,13 +42,16 @@ int main(int, char**)
 		if (windowData->_shouldUpdate)
 		{
 			ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
+			scene._viewports[0] = &swapchain._viewports[0];
 			windowData->_shouldUpdate = false;
 		}
 
 		// Update
-
+		
 
 		// Draw
+		Draw(logicalDevice, scene);
+
 		ez::LogSystem::Draw();
 		ez::ProfileSystem::Draw();
 
@@ -59,12 +64,12 @@ int main(int, char**)
 
 		for (int i = 0; i < swapchain._viewports.size(); ++i)
 		{
-			if (!Draw(logicalDevice, swapchain._viewports[i]))
+			if (!UpdateViewportSize(swapchain._viewports[i]))
 				ResizeViewport(context, logicalDevice, device, surface._colorFormat, swapchain._viewports[i]);
 			else
 				Render(logicalDevice, swapchain._viewports[i]);
 		}
-
+		
 		Draw(logicalDevice, swapchain);
 		Render(logicalDevice, swapchain);
 		if(!Present(logicalDevice, swapchain))

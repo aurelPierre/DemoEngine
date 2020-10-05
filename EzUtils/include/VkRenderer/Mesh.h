@@ -24,4 +24,6 @@ struct Mesh
 
 Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice);
 
+void	Draw(const LogicalDevice& kLogicalDevice, const Mesh& kMesh);
+
 void	DestroyMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, const Mesh& kMesh);
