@@ -7,7 +7,6 @@
 #include "Context.h"
 #include "Device.h"
 #include "Surface.h"
-#include "Viewport.h"
 
 struct GLFWWindowData;
 
@@ -34,7 +33,6 @@ struct Swapchain
 	VkRenderPass			_renderPass			= VK_NULL_HANDLE;
 
 	std::vector<Frame>		_frames;
-	std::vector<Viewport>	_viewports;
 };
 
 Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice,
@@ -43,7 +41,6 @@ Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogical
 void		CreateFrames(const Context& kContext, const LogicalDevice& kLogicalDevice,
 						const Surface& kSurface, Swapchain& swapchain);
 
-void	AddViewport(const Viewport& viewport, Swapchain& swapchain);
 void	ResizeSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice,
 						const Device& kDevice, const Surface& kSurface,
 						const GLFWWindowData* windowData, Swapchain& swapchain);

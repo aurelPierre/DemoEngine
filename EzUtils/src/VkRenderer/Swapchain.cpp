@@ -260,25 +260,14 @@ void	CreateFrames(const Context& kContext, const LogicalDevice& kLogicalDevice,
 	}
 }
 
-void	AddViewport(const Viewport& viewport, Swapchain& swapchain)
-{
-	swapchain._viewports.emplace_back(viewport);
-}
-
 void	ResizeSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice,
 	const Device& kDevice, const Surface& kSurface,
 	const GLFWWindowData* windowData, Swapchain& swapchain)
 {
 	vkDeviceWaitIdle(kLogicalDevice._device);
 
-	std::vector<Viewport> viewports = swapchain._viewports;
-	for (uint16_t i = 0; i < viewports.size(); ++i)
-		DestroyViewport(kContext, kLogicalDevice, viewports[i]);
 	DestroySwapchain(kContext, kLogicalDevice, swapchain);
 	swapchain = CreateSwapchain(kContext, kLogicalDevice, kDevice, kSurface, windowData);
-	for (uint16_t i = 0; i < viewports.size(); ++i)
-		viewports[i] = CreateViewport(kContext, kLogicalDevice, kDevice, kSurface._colorFormat, { 512, 512 });
-	swapchain._viewports = viewports;
 }
 
 bool	AcquireNextImage(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)

@@ -22,16 +22,15 @@ int main(int, char**)
 	imGui.Init(windowData, context, device, logicalDevice, swapchain);
 
 	Viewport viewport = CreateViewport(context, logicalDevice, device, surface._colorFormat, { 512, 512 });
-	AddViewport(viewport, swapchain);
 
-	Material mat = CreateMaterial(context, logicalDevice, swapchain._viewports[0],
+	Material mat = CreateMaterial(context, logicalDevice, viewport,
 		"D:/Personal project/EzUtils/shaders/bin/shader.vert.spv", "D:/Personal project/EzUtils/shaders/bin/shader.frag.spv");
 
 	Mesh mesh = CreateMesh(context, logicalDevice, device);
 	mesh._material = &mat;
 
 	Scene scene{};
-	scene._viewports.emplace_back(&swapchain._viewports[0]);
+	scene._viewports.emplace_back(&viewport);
 	scene._mesh.emplace_back(&mesh);
 
 	while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
@@ -42,7 +41,11 @@ int main(int, char**)
 		if (windowData->_shouldUpdate)
 		{
 			ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
-			scene._viewports[0] = &swapchain._viewports[0];
+			for (int i = 0; i < scene._viewports.size(); ++i)
+			{
+				if (!UpdateViewportSize(*scene._viewports[i]))
+					ResizeViewport(context, logicalDevice, device, surface._colorFormat, *scene._viewports[i]);
+			}
 			windowData->_shouldUpdate = false;
 		}
 
@@ -62,12 +65,12 @@ int main(int, char**)
 			continue;
 		}
 
-		for (int i = 0; i < swapchain._viewports.size(); ++i)
+		for (int i = 0; i < scene._viewports.size(); ++i)
 		{
-			if (!UpdateViewportSize(swapchain._viewports[i]))
-				ResizeViewport(context, logicalDevice, device, surface._colorFormat, swapchain._viewports[i]);
+			if (!UpdateViewportSize(*scene._viewports[i]))
+				ResizeViewport(context, logicalDevice, device, surface._colorFormat, *scene._viewports[i]);
 			else
-				Render(logicalDevice, swapchain._viewports[i]);
+				Render(logicalDevice, *scene._viewports[i]);
 		}
 		
 		Draw(logicalDevice, swapchain);
@@ -83,7 +86,7 @@ int main(int, char**)
 	DestroyMesh(context, logicalDevice, mesh);
 	DestroyMaterial(context, logicalDevice, mat);
 
-	DestroyViewport(context, logicalDevice, swapchain._viewports[0]);
+	DestroyViewport(context, logicalDevice, viewport);
 
 	DestroySwapchain(context, logicalDevice, swapchain);
 	DestroySurface(context, surface);
