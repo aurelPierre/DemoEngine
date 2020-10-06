@@ -2,10 +2,18 @@
 
 #include <vulkan/vulkan.h>
 
+#include <glm/glm.hpp>
+
 #include "Context.h"
 #include "Device.h"
 
 class Mesh;
+
+struct UniformBufferObject {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
 
 struct Viewport
 {
@@ -34,7 +42,6 @@ bool	UpdateViewportSize(Viewport& viewport);
 void	StartDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport);
 void	EndDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport);
 
-bool	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport);
 void	Render(const LogicalDevice& kLogicalDevice, Viewport& viewport);
 
 void	DestroyViewport(const Context& kContext, const LogicalDevice& kLogicalDevice, const Viewport& kViewport);

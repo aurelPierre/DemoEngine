@@ -309,8 +309,9 @@ void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 	vkCmdSetViewport(swapchain._frames[swapchain._currentFrame]._commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(swapchain._frames[swapchain._currentFrame]._commandBuffer, 0, 1, &scissor);
 
-	VkClearValue clearColor{};
-	clearColor.color = { 0.0f, 0.0f, 0.0f, 0.0f };
+	VkClearValue clearValues[2];
+	clearValues[0].color = { 0.0f, 0.0f, 0.f, 0.0f };;
+	clearValues[1].depthStencil = { 1.0f, 0 };
 
 	VkRenderPassBeginInfo renderPassBeginInfo = {};
 	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -318,8 +319,8 @@ void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 	renderPassBeginInfo.framebuffer = swapchain._frames[swapchain._currentFrame]._framebuffer;
 	renderPassBeginInfo.renderArea.extent.width = swapchain._size.width;
 	renderPassBeginInfo.renderArea.extent.height = swapchain._size.height;
-	renderPassBeginInfo.clearValueCount = 1;
-	renderPassBeginInfo.pClearValues = &clearColor;
+	renderPassBeginInfo.clearValueCount = 2;
+	renderPassBeginInfo.pClearValues = clearValues;
 	vkCmdBeginRenderPass(swapchain._frames[swapchain._currentFrame]._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	/**********************************************/

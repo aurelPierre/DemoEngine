@@ -229,8 +229,11 @@ bool	UpdateViewportSize(Viewport& viewport)
 
 void	StartDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
 {
+
 	VkResult err = vkWaitForFences(kLogicalDevice._device, 1, &viewport._fence, VK_TRUE, UINT64_MAX);
 	check_vk_result(err);
+
+	/**********************************************************************************************/
 
 	VkCommandBufferBeginInfo commandBeginInfo = {};
 	commandBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -254,17 +257,18 @@ void	StartDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
 	vkCmdSetViewport(viewport._commandBuffer, 0, 1, &vkViewport);
 	vkCmdSetScissor(viewport._commandBuffer, 0, 1, &scissor);
 
-	VkClearValue clearColor{};
-	clearColor.color = { 0.0f, 0.0f, 1.f, 1.0f };
-
+	VkClearValue clearValues[2];
+	clearValues[0].color = { 0.0f, 0.0f, 0.2f, 1.0f };;
+	clearValues[1].depthStencil = { 1.0f, 0 };
+	
 	VkRenderPassBeginInfo renderPassBeginInfo = {};
 	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassBeginInfo.renderPass = viewport._renderPass;
 	renderPassBeginInfo.framebuffer = viewport._framebuffer;
 	renderPassBeginInfo.renderArea.extent.width = viewport._size.width;
 	renderPassBeginInfo.renderArea.extent.height = viewport._size.height;
-	renderPassBeginInfo.clearValueCount = 1;
-	renderPassBeginInfo.pClearValues = &clearColor;
+	renderPassBeginInfo.clearValueCount = 2;
+	renderPassBeginInfo.pClearValues = clearValues;
 	vkCmdBeginRenderPass(viewport._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
@@ -274,18 +278,6 @@ void	EndDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
 
 	VkResult err = vkEndCommandBuffer(viewport._commandBuffer);
 	check_vk_result(err);
-}
-
-bool	Draw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
-{
-	if (!UpdateViewportSize(viewport))
-		return false;
-
-	StartDraw(kLogicalDevice, viewport);
-
-	EndDraw(kLogicalDevice, viewport);
-
-	return true;
 }
 
 void	Render(const LogicalDevice& kLogicalDevice, Viewport& viewport)

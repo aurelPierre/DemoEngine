@@ -31,15 +31,92 @@ VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShad
 	return shaderStageInfo;
 }
 
-Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice, const Viewport& kViewport,
-						const std::string kVertextShaderPath, const std::string kFragmentShaderPath)
+Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice,
+						const Viewport& kViewport, const std::string kVertextShaderPath,
+						const std::string kFragmentShaderPath)
 {
 	Material material{};
+	
+	{
+		VkBufferCreateInfo bufferInfo{};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = sizeof(UniformBufferObject);
+		bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		VkResult err = vkCreateBuffer(kLogicalDevice._device, &bufferInfo, kContext._allocator, &material._ubo);
+		check_vk_result(err);
+
+		VkMemoryRequirements memRequirements;
+		vkGetBufferMemoryRequirements(kLogicalDevice._device, material._ubo, &memRequirements);
+
+		uint32_t type = UINT32_MAX;
+		for (uint32_t i = 0; i < kDevice._memoryProperties.memoryTypeCount; i++) {
+			if ((memRequirements.memoryTypeBits & (1 << i)) && (kDevice._memoryProperties.memoryTypes[i].propertyFlags & (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) == (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
+				type = i;
+			}
+		}
+		if (type == UINT32_MAX)
+			throw;
+
+		VkMemoryAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = type;
+
+		err = vkAllocateMemory(kLogicalDevice._device, &allocInfo, kContext._allocator, &material._uboMemory);
+		check_vk_result(err);
+
+		err = vkBindBufferMemory(kLogicalDevice._device, material._ubo, material._uboMemory, 0);
+		check_vk_result(err);
+	}
+
+	// ubo set
+	{
+		VkDescriptorSetLayoutBinding uboLayoutBinding{};
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.binding = 0;
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		uboLayoutBinding.descriptorCount = 1;
+
+		VkDescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = 1;
+		layoutInfo.pBindings = &uboLayoutBinding;
+
+		VkResult err = vkCreateDescriptorSetLayout(kLogicalDevice._device, &layoutInfo,
+													kContext._allocator, &material._uboLayout);
+		check_vk_result(err);
+
+		VkDescriptorSetAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = kLogicalDevice._descriptorPool;
+		allocInfo.descriptorSetCount = 1;
+		allocInfo.pSetLayouts = &material._uboLayout;
+		err = vkAllocateDescriptorSets(kLogicalDevice._device, &allocInfo, &material._uboSet);
+		check_vk_result(err);
+
+		VkDescriptorBufferInfo bufferInfo{};
+		bufferInfo.buffer = material._ubo;
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(UniformBufferObject);
+
+		VkWriteDescriptorSet descriptorWrite{};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = material._uboSet;
+		descriptorWrite.dstBinding = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pBufferInfo = &bufferInfo;
+		vkUpdateDescriptorSets(kLogicalDevice._device, 1, &descriptorWrite, 0, nullptr);
+	}
+
+	/******************************************************************************************************/
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0; // Optional
-	pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+	pipelineLayoutInfo.setLayoutCount = 1; // Optional
+	pipelineLayoutInfo.pSetLayouts = &material._uboLayout; // Optional
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
@@ -56,7 +133,7 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 	VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo{};
 	pipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	pipelineRasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-	pipelineRasterizationStateCreateInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
+	pipelineRasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
 	pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pipelineRasterizationStateCreateInfo.flags = 0;
 	pipelineRasterizationStateCreateInfo.depthClampEnable = VK_FALSE;
@@ -64,7 +141,7 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 
 	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState{};
 	pipelineColorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	pipelineColorBlendAttachmentState.blendEnable = VK_TRUE;
+	pipelineColorBlendAttachmentState.blendEnable = VK_FALSE;
 	pipelineColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	pipelineColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	pipelineColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
@@ -147,7 +224,7 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 	pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
 	pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = &Vertex::getBindingDescription();
-	pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = 2;
+	pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = 3;
 	pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = Vertex::getAttributeDescriptions().data();
 
 	pipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
@@ -169,6 +246,12 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 
 void	DestroyMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice,  const Material& kMaterial)
 {
+	vkFreeDescriptorSets(kLogicalDevice._device, kLogicalDevice._descriptorPool, 1, &kMaterial._uboSet);
+	vkDestroyDescriptorSetLayout(kLogicalDevice._device, kMaterial._uboLayout, kContext._allocator);
+
+	vkDestroyBuffer(kLogicalDevice._device, kMaterial._ubo, kContext._allocator);
+	vkFreeMemory(kLogicalDevice._device, kMaterial._uboMemory, kContext._allocator);
+
 	vkDestroyPipeline(kLogicalDevice._device, kMaterial._pipeline, kContext._allocator);
 	vkDestroyPipelineLayout(kLogicalDevice._device, kMaterial._pipelineLayout, kContext._allocator);
 }

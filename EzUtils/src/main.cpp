@@ -23,10 +23,11 @@ int main(int, char**)
 
 	Viewport viewport = CreateViewport(context, logicalDevice, device, surface._colorFormat, { 512, 512 });
 
-	Material mat = CreateMaterial(context, logicalDevice, viewport,
-		"D:/Personal project/EzUtils/shaders/bin/shader.vert.spv", "D:/Personal project/EzUtils/shaders/bin/shader.frag.spv");
+	Material mat = CreateMaterial(context, logicalDevice, device, viewport,
+		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
+		"D:/Personal project/DemoEngine/shaders/bin/shader.frag.spv");
 
-	Mesh mesh = CreateMesh(context, logicalDevice, device);
+	Mesh mesh = CreateMesh(context, logicalDevice, device, "D:/Personal project/DemoEngine/Resources/Mesh/vikingRoom.obj");
 	mesh._material = &mat;
 
 	Scene scene{};
