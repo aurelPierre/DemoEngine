@@ -33,7 +33,7 @@ VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShad
 
 Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice,
 						const Viewport& kViewport, const std::string kVertextShaderPath,
-						const std::string kFragmentShaderPath)
+						const std::string kFragmentShaderPath, const Texture& kTexture)
 {
 	Material material{};
 	
@@ -50,19 +50,11 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 		VkMemoryRequirements memRequirements;
 		vkGetBufferMemoryRequirements(kLogicalDevice._device, material._ubo, &memRequirements);
 
-		uint32_t type = UINT32_MAX;
-		for (uint32_t i = 0; i < kDevice._memoryProperties.memoryTypeCount; i++) {
-			if ((memRequirements.memoryTypeBits & (1 << i)) && (kDevice._memoryProperties.memoryTypes[i].propertyFlags & (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) == (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
-				type = i;
-			}
-		}
-		if (type == UINT32_MAX)
-			throw;
-
 		VkMemoryAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = type;
+		allocInfo.memoryTypeIndex = findMemoryType(kDevice._memoryProperties, memRequirements.memoryTypeBits, 
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		err = vkAllocateMemory(kLogicalDevice._device, &allocInfo, kContext._allocator, &material._uboMemory);
 		check_vk_result(err);
@@ -73,16 +65,21 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 
 	// ubo set
 	{
-		VkDescriptorSetLayoutBinding uboLayoutBinding{};
-		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBinding.binding = 0;
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		uboLayoutBinding.descriptorCount = 1;
+		VkDescriptorSetLayoutBinding layoutBinding[2]{};
+		layoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		layoutBinding[0].binding = 0;
+		layoutBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		layoutBinding[0].descriptorCount = 1;
+
+		layoutBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		layoutBinding[1].binding = 1;
+		layoutBinding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		layoutBinding[1].descriptorCount = 1;
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = 1;
-		layoutInfo.pBindings = &uboLayoutBinding;
+		layoutInfo.bindingCount = 2;
+		layoutInfo.pBindings = layoutBinding;
 
 		VkResult err = vkCreateDescriptorSetLayout(kLogicalDevice._device, &layoutInfo,
 													kContext._allocator, &material._uboLayout);
@@ -101,14 +98,27 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 
-		VkWriteDescriptorSet descriptorWrite{};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = material._uboSet;
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pBufferInfo = &bufferInfo;
-		vkUpdateDescriptorSets(kLogicalDevice._device, 1, &descriptorWrite, 0, nullptr);
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = kTexture._imageView;
+		imageInfo.sampler = kTexture._sampler;
+
+		VkWriteDescriptorSet descriptorWrite[2]{};
+		descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite[0].dstSet = material._uboSet;
+		descriptorWrite[0].dstBinding = 0;
+		descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite[0].descriptorCount = 1;
+		descriptorWrite[0].pBufferInfo = &bufferInfo;
+		
+		descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite[1].dstSet = material._uboSet;
+		descriptorWrite[1].dstBinding = 1;
+		descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrite[1].descriptorCount = 1;
+		descriptorWrite[1].pImageInfo = &imageInfo;
+		
+		vkUpdateDescriptorSets(kLogicalDevice._device, 2, descriptorWrite, 0, nullptr);
 	}
 
 	/******************************************************************************************************/

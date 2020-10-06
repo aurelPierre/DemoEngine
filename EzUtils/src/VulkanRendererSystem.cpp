@@ -10,9 +10,6 @@
 #include <array>
 #include <map>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #include "Core.h"
 
 void VulkanRendererSystem::CreateInstance()
@@ -1376,12 +1373,12 @@ void VulkanRendererSystem::LoadTexture()
 {
 
 	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load("D:/Personal project/EzUtils/Resources/Textures/chat.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
+	/*stbi_uc* pixels = stbi_load("D:/Personal project/EzUtils/Resources/Textures/chat.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 	if (!pixels) {
 		throw std::runtime_error("failed to load texture image!");
-	}
+	}*/
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1423,10 +1420,10 @@ void VulkanRendererSystem::LoadTexture()
 
 	void* data;
 	vkMapMemory(_deviceData._device, stagingBufferMemory, 0, imageSize, 0, &data);
-	memcpy(data, pixels, static_cast<size_t>(imageSize));
+	//smemcpy(data, pixels, static_cast<size_t>(imageSize));
 	vkUnmapMemory(_deviceData._device, stagingBufferMemory);
 
-	stbi_image_free(pixels);
+	//stbi_image_free(pixels);
 
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

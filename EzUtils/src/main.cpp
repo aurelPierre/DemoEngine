@@ -5,6 +5,7 @@
 
 #include "Swapchain.h"
 #include "Mesh.h"
+#include "Texture.h"
 #include "Scene.h"
 
 int main(int, char**)
@@ -23,12 +24,17 @@ int main(int, char**)
 
 	Viewport viewport = CreateViewport(context, logicalDevice, device, surface._colorFormat, { 512, 512 });
 
+	Texture text = CreateTexture(context, logicalDevice, device,
+		"D:/Personal project/DemoEngine/Resources/Textures/vikingRoom.png");
+	
 	Material mat = CreateMaterial(context, logicalDevice, device, viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
-		"D:/Personal project/DemoEngine/shaders/bin/shader.frag.spv");
+		"D:/Personal project/DemoEngine/shaders/bin/shader.frag.spv",
+		text);
 
 	Mesh mesh = CreateMesh(context, logicalDevice, device, "D:/Personal project/DemoEngine/Resources/Mesh/vikingRoom.obj");
 	mesh._material = &mat;
+
 
 	Scene scene{};
 	scene._viewports.emplace_back(&viewport);
@@ -84,6 +90,7 @@ int main(int, char**)
 
 	imGui.Clear();
 
+	DestroyTexture(context, logicalDevice, text);
 	DestroyMesh(context, logicalDevice, mesh);
 	DestroyMaterial(context, logicalDevice, mat);
 

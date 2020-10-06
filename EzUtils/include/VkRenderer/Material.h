@@ -13,6 +13,7 @@
 #include "Context.h"
 #include "Device.h"
 #include "Viewport.h"
+#include "Texture.h"
 
 struct Vertex
 {
@@ -83,6 +84,6 @@ VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShad
 
 Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice,
 						const Viewport& kViewport, const std::string kVertextShaderPath,
-						const std::string kFragmentShaderPath);
+						const std::string kFragmentShaderPath, const Texture& kTexture);
 
 void	DestroyMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice, const Material& kMaterial);
