@@ -130,9 +130,15 @@ Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, co
 
 void	Draw(const LogicalDevice& kLogicalDevice, const Mesh& kMesh, VkCommandBuffer commandBuffer)
 {
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+		kMesh._material->_pipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+		kMesh._material->_pipelineLayout, 0, 1, &kMesh._material->_uboSet, 0, nullptr);
+
 	vkCmdBindIndexBuffer(commandBuffer, kMesh._indicesBuffer, 0, VK_INDEX_TYPE_UINT32);
-	VkDeviceSize offset[] { 0 };
+	VkDeviceSize offset[]{ 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &kMesh._verticesBuffer, offset);
+
 	vkCmdDrawIndexed(commandBuffer, kMesh._indices.size(), 1, 0, 0, 0);
 }
 

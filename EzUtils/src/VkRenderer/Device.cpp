@@ -66,7 +66,8 @@ Device	CreateDevice(const Context& kContext)
 	vkGetPhysicalDeviceQueueFamilyProperties(newDevice._physicalDevice, &queueFamilyCount, nullptr);
 	//assert(queueFamilyCount > 0);
 	newDevice._queueFamilyProperties.resize(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(newDevice._physicalDevice, &queueFamilyCount, newDevice._queueFamilyProperties.data());
+	vkGetPhysicalDeviceQueueFamilyProperties(newDevice._physicalDevice, &queueFamilyCount,
+		newDevice._queueFamilyProperties.data());
 
 	// Get list of supported extensions
 	uint32_t extCount = 0;

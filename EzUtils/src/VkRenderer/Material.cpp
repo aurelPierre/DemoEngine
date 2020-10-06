@@ -174,10 +174,11 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 	pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	pipelineDepthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
 	pipelineDepthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
-	pipelineDepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-	pipelineDepthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
-
-
+	pipelineDepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+	pipelineDepthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
+	pipelineDepthStencilStateCreateInfo.minDepthBounds = 0.0f; // Optional
+	pipelineDepthStencilStateCreateInfo.maxDepthBounds = 1.0f; // Optional
+	pipelineDepthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
 
 	VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo{};
 	pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

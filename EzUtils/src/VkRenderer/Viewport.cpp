@@ -15,24 +15,40 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 
 	viewport._size = kExtent;
 
-	VkAttachmentDescription attachment = {};
-	attachment.format = kFormat;
-	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	VkAttachmentDescription colorAttachment = {};
+	colorAttachment.format = kFormat;
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	VkAttachmentReference final_attachment = {};
-	final_attachment.attachment = 0;
-	final_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkAttachmentReference attachmentRef[2] {};
+	attachmentRef[0].attachment = 0;
+	attachmentRef[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkFormat depthFormat = findDepthFormat(kDevice._physicalDevice);
+
+	VkAttachmentDescription depthAttachment{};
+	depthAttachment.format = depthFormat;
+	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	attachmentRef[1].attachment = 1;
+	attachmentRef[1].layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 
 	VkSubpassDescription subpass = {};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &final_attachment;
+	subpass.pColorAttachments = &attachmentRef[0];
+	subpass.pDepthStencilAttachment = &attachmentRef[1];
 
 	// Use subpass dependencies for layout transitions
 	std::array<VkSubpassDependency, 2> dependencies;
@@ -53,10 +69,12 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 	dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
+	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+
 	VkRenderPassCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	info.attachmentCount = 1;
-	info.pAttachments = &attachment;
+	info.attachmentCount = attachments.size();
+	info.pAttachments = attachments.data();
 	info.subpassCount = 1;
 	info.pSubpasses = &subpass;
 	info.dependencyCount = dependencies.size();
@@ -65,8 +83,64 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 	VkResult err = vkCreateRenderPass(kLogicalDevice._device, &info, kContext._allocator, &viewport._renderPass);
 	check_vk_result(err);
 
+	// Depth attachment
 	{
-		// Color attachment
+		VkImageCreateInfo image{};
+		image.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		image.imageType = VK_IMAGE_TYPE_2D;
+		image.format = depthFormat;
+		image.extent.width = viewport._size.width;
+		image.extent.height = viewport._size.height;
+		image.extent.depth = 1;
+		image.mipLevels = 1;
+		image.arrayLayers = 1;
+		image.samples = VK_SAMPLE_COUNT_1_BIT;
+		image.tiling = VK_IMAGE_TILING_OPTIMAL;
+		// We will sample directly from the color attachment
+		image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+		check_vk_result(vkCreateImage(kLogicalDevice._device, &image, kContext._allocator, &viewport._depthImage));
+
+		VkMemoryAllocateInfo memAlloc{};
+		VkMemoryRequirements memReqs;
+		vkGetImageMemoryRequirements(kLogicalDevice._device, viewport._depthImage, &memReqs);
+
+		memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		memAlloc.allocationSize = memReqs.size;
+
+		memAlloc.memoryTypeIndex = findMemoryType(kDevice._memoryProperties, memReqs.memoryTypeBits, 
+													VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+		check_vk_result(vkAllocateMemory(kLogicalDevice._device, &memAlloc, kContext._allocator, &viewport._depthImageMemory));
+		check_vk_result(vkBindImageMemory(kLogicalDevice._device, viewport._depthImage, viewport._depthImageMemory, 0));
+
+		/*** Texture handling ***/
+		VkImageViewCreateInfo colorAttachmentView = {};
+		colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		colorAttachmentView.pNext = NULL;
+		colorAttachmentView.format = depthFormat;
+		colorAttachmentView.components = {
+			VK_COMPONENT_SWIZZLE_R,
+			VK_COMPONENT_SWIZZLE_G,
+			VK_COMPONENT_SWIZZLE_B,
+			VK_COMPONENT_SWIZZLE_A
+		};
+		colorAttachmentView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		colorAttachmentView.subresourceRange.baseMipLevel = 0;
+		colorAttachmentView.subresourceRange.levelCount = 1;
+		colorAttachmentView.subresourceRange.baseArrayLayer = 0;
+		colorAttachmentView.subresourceRange.layerCount = 1;
+		colorAttachmentView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		colorAttachmentView.flags = 0;
+		colorAttachmentView.image = viewport._depthImage;
+
+		err = vkCreateImageView(kLogicalDevice._device, &colorAttachmentView, kContext._allocator,
+			&viewport._depthImageView);
+		check_vk_result(err);
+	}
+
+	// Color attachment
+	{
 		VkImageCreateInfo image{};
 		image.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		image.imageType = VK_IMAGE_TYPE_2D;
@@ -81,28 +155,20 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 		// We will sample directly from the color attachment
 		image.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
-		check_vk_result(vkCreateImage(kLogicalDevice._device, &image, nullptr, &viewport._image));
+		check_vk_result(vkCreateImage(kLogicalDevice._device, &image, kContext._allocator, &viewport._colorImage));
 
 		VkMemoryAllocateInfo memAlloc{};
 		VkMemoryRequirements memReqs;
-		vkGetImageMemoryRequirements(kLogicalDevice._device, viewport._image, &memReqs);
+		vkGetImageMemoryRequirements(kLogicalDevice._device, viewport._colorImage, &memReqs);
 
 		memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memAlloc.allocationSize = memReqs.size;
 
-		uint32_t type = UINT32_MAX;
-		for (uint32_t i = 0; i < kDevice._memoryProperties.memoryTypeCount; i++) {
-			if ((memReqs.memoryTypeBits & (1 << i)) && (kDevice._memoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) == (VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)) {
-				type = i;
-			}
-		}
-		if (type == UINT32_MAX)
-			throw;
+		memAlloc.memoryTypeIndex = findMemoryType(kDevice._memoryProperties, memReqs.memoryTypeBits,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		memAlloc.memoryTypeIndex = type;
-
-		check_vk_result(vkAllocateMemory(kLogicalDevice._device, &memAlloc, kContext._allocator, &viewport._imageMemory));
-		check_vk_result(vkBindImageMemory(kLogicalDevice._device, viewport._image, viewport._imageMemory, 0));
+		check_vk_result(vkAllocateMemory(kLogicalDevice._device, &memAlloc, kContext._allocator, &viewport._colorImageMemory));
+		check_vk_result(vkBindImageMemory(kLogicalDevice._device, viewport._colorImage, viewport._colorImageMemory, 0));
 
 		/*** Texture handling ***/
 		VkImageViewCreateInfo colorAttachmentView = {};
@@ -122,10 +188,10 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 		colorAttachmentView.subresourceRange.layerCount = 1;
 		colorAttachmentView.viewType = VK_IMAGE_VIEW_TYPE_2D;
 		colorAttachmentView.flags = 0;
-		colorAttachmentView.image = viewport._image;
+		colorAttachmentView.image = viewport._colorImage;
 
 		err = vkCreateImageView(kLogicalDevice._device, &colorAttachmentView, kContext._allocator,
-			&viewport._imageView);
+			&viewport._colorImageView);
 		check_vk_result(err);
 
 		VkSamplerCreateInfo samplerInfo{};
@@ -143,13 +209,14 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 		samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 		check_vk_result(vkCreateSampler(kLogicalDevice._device, &samplerInfo, kContext._allocator, &viewport._sampler));
 
-		VkImageView attachment[1];
-		attachment[0] = viewport._imageView;
+		VkImageView attachment[2];
+		attachment[0] = viewport._colorImageView;
+		attachment[1] = viewport._depthImageView;
 
 		VkFramebufferCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		info.renderPass = viewport._renderPass;
-		info.attachmentCount = 1;
+		info.attachmentCount = 2;
 		info.pAttachments = attachment;
 		info.width = viewport._size.width;
 		info.height = viewport._size.height;
@@ -171,7 +238,7 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 		}
 	}
 
-	viewport._set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(viewport._sampler, viewport._imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	viewport._set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(viewport._sampler, viewport._colorImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	{
 		VkFenceCreateInfo info = {};
@@ -310,8 +377,14 @@ void	DestroyViewport(const Context& kContext, const LogicalDevice& kLogicalDevic
 
 	vkDestroySampler(kLogicalDevice._device, kViewport._sampler, kContext._allocator);
 	vkDestroyFramebuffer(kLogicalDevice._device, kViewport._framebuffer, kContext._allocator);
-	vkDestroyImageView(kLogicalDevice._device, kViewport._imageView, kContext._allocator);
-	vkDestroyImage(kLogicalDevice._device, kViewport._image, kContext._allocator);
-	vkFreeMemory(kLogicalDevice._device, kViewport._imageMemory, kContext._allocator);
+
+	vkDestroyImageView(kLogicalDevice._device, kViewport._depthImageView, kContext._allocator);
+	vkDestroyImage(kLogicalDevice._device, kViewport._depthImage, kContext._allocator);
+	vkFreeMemory(kLogicalDevice._device, kViewport._depthImageMemory, kContext._allocator);
+
+	vkDestroyImageView(kLogicalDevice._device, kViewport._colorImageView, kContext._allocator);
+	vkDestroyImage(kLogicalDevice._device, kViewport._colorImage, kContext._allocator);
+	vkFreeMemory(kLogicalDevice._device, kViewport._colorImageMemory, kContext._allocator);
+
 	vkDestroyRenderPass(kLogicalDevice._device, kViewport._renderPass, kContext._allocator);
 }

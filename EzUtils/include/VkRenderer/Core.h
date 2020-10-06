@@ -32,3 +32,7 @@ void transitionImageLayout(VkDevice device, VkQueue queue, VkCommandPool command
 				VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 void copyBufferToImage(VkDevice device, VkQueue queue, VkCommandPool commandPool, 
 				VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+
+VkFormat findDepthFormat(const VkPhysicalDevice& kPhysicalDevice);
+VkFormat findSupportedFormat(const VkPhysicalDevice& kPhysicalDevice, const std::vector<VkFormat>& candidates,
+							VkImageTiling tiling, VkFormatFeatureFlags features);

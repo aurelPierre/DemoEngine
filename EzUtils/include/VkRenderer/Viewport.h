@@ -17,18 +17,24 @@ struct UniformBufferObject {
 
 struct Viewport
 {
-	VkFence					_fence			= VK_NULL_HANDLE;
+	VkFence					_fence				= VK_NULL_HANDLE;
 
-	VkCommandBuffer			_commandBuffer	= VK_NULL_HANDLE;
-	VkDeviceMemory			_imageMemory	= VK_NULL_HANDLE;
-	VkImage					_image			= VK_NULL_HANDLE;
-	VkImageView				_imageView		= VK_NULL_HANDLE;
-	VkFramebuffer			_framebuffer	= VK_NULL_HANDLE;
-	VkSampler				_sampler		= VK_NULL_HANDLE;
-	VkDescriptorSet			_set			= VK_NULL_HANDLE;
+	VkCommandBuffer			_commandBuffer		= VK_NULL_HANDLE;
+
+	VkDeviceMemory			_colorImageMemory	= VK_NULL_HANDLE;
+	VkImage					_colorImage			= VK_NULL_HANDLE;
+	VkImageView				_colorImageView		= VK_NULL_HANDLE;
+
+	VkDeviceMemory			_depthImageMemory	= VK_NULL_HANDLE;
+	VkImage					_depthImage			= VK_NULL_HANDLE;
+	VkImageView				_depthImageView		= VK_NULL_HANDLE;
+
+	VkFramebuffer			_framebuffer		= VK_NULL_HANDLE;
+	VkSampler				_sampler			= VK_NULL_HANDLE;
+	VkDescriptorSet			_set				= VK_NULL_HANDLE;
 
 	VkExtent2D				_size;
-	VkRenderPass			_renderPass		= VK_NULL_HANDLE;
+	VkRenderPass			_renderPass			= VK_NULL_HANDLE;
 };
 
 Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDevice,
