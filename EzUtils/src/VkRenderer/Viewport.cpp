@@ -39,7 +39,7 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	attachmentRef[1].attachment = 1;
 	attachmentRef[1].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -97,7 +97,7 @@ Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDe
 		image.samples = VK_SAMPLE_COUNT_1_BIT;
 		image.tiling = VK_IMAGE_TILING_OPTIMAL;
 		// We will sample directly from the color attachment
-		image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
 		check_vk_result(vkCreateImage(kLogicalDevice._device, &image, kContext._allocator, &viewport._depthImage));
 
@@ -325,7 +325,7 @@ void	StartDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport)
 	vkCmdSetScissor(viewport._commandBuffer, 0, 1, &scissor);
 
 	VkClearValue clearValues[2];
-	clearValues[0].color = { 0.0f, 0.0f, 0.2f, 1.0f };;
+	clearValues[0].color = { 0.05f, 0.05f, 0.1f, 1.0f };;
 	clearValues[1].depthStencil = { 1.0f, 0 };
 	
 	VkRenderPassBeginInfo renderPassBeginInfo = {};

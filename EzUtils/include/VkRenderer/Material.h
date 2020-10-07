@@ -19,7 +19,8 @@ struct Vertex
 {
 	glm::vec3 pos;
 	glm::vec2 uv;
-	glm::vec3 color;
+	glm::vec3 normal;
+	glm::vec3 tangent;
 
 	static VkVertexInputBindingDescription& getBindingDescription() {
 		static VkVertexInputBindingDescription bindingDescription{};
@@ -31,8 +32,8 @@ struct Vertex
 		return bindingDescription;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 3>& getAttributeDescriptions() {
-		static std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
+	static std::array<VkVertexInputAttributeDescription, 4>& getAttributeDescriptions() {
+		static std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
 
 		attributeDescriptions[0].binding = 0;
 		attributeDescriptions[0].location = 0;
@@ -47,13 +48,18 @@ struct Vertex
 		attributeDescriptions[2].binding = 0;
 		attributeDescriptions[2].location = 2;
 		attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[2].offset = offsetof(Vertex, color);
+		attributeDescriptions[2].offset = offsetof(Vertex, normal);
+
+		attributeDescriptions[3].binding = 0;
+		attributeDescriptions[3].location = 3;
+		attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[3].offset = offsetof(Vertex, tangent);
 
 		return attributeDescriptions;
 	}
 
 	bool operator==(const Vertex& other) const {
-		return pos == other.pos && color == other.color/* && texCoord == other.texCoord*/;
+		return pos == other.pos && normal == other.normal && uv == other.uv;
 	}
 };
 
@@ -61,7 +67,7 @@ namespace std {
 	template<> struct hash<Vertex> {
 		size_t operator()(Vertex const& vertex) const {
 			return ((hash<glm::vec3>()(vertex.pos) ^
-				(hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+				(hash<glm::vec3>()(vertex.normal) << 1)) >> 1) ^
 				(hash<glm::vec2>()(vertex.uv) << 1);
 		}
 	};
@@ -84,6 +90,6 @@ VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShad
 
 Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice,
 						const Viewport& kViewport, const std::string kVertextShaderPath,
-						const std::string kFragmentShaderPath, const Texture& kTexture);
+						const std::string kFragmentShaderPath, const std::vector<Texture*>& kTextures);
 
 void	DestroyMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice, const Material& kMaterial);

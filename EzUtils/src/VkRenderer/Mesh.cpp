@@ -1,5 +1,7 @@
 #include "Mesh.h"
 
+#include "LogSystem.h"
+
 #include <unordered_map>
 
 Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice,
@@ -17,29 +19,93 @@ Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, co
 	}
 
 	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-	for (const auto& shape : shapes) {
-		for (const auto& index : shape.mesh.indices) {
-			Vertex vertex{};
+	for (const auto& shape : shapes) 
+	{
+		size_t indexOffset = 0;
+		for (size_t i = 0; i < shape.mesh.num_face_vertices.size(); ++i)
+		{
+			int fv = shape.mesh.num_face_vertices[i];
+			if(fv > 3)
+				LOG(ez::WARNING, "Mesh " + kPath + "have a face with more than 3 vertices, tangent might be wrong")
 
-			vertex.pos = {
-				attrib.vertices[3 * index.vertex_index + 0],
-				attrib.vertices[3 * index.vertex_index + 1],
-				attrib.vertices[3 * index.vertex_index + 2]
-			};
+			for (size_t j = 0; j < fv; ++j)
+			{
+				Vertex vertex{};
+				tinyobj::index_t idx = shape.mesh.indices[indexOffset + j];
 
-			vertex.uv = {
-				attrib.texcoords[2 * index.texcoord_index + 0],
-				1.f - attrib.texcoords[2 * index.texcoord_index + 1]
-			};
+				vertex.pos = {
+					attrib.vertices[3 * idx.vertex_index + 0],
+					attrib.vertices[3 * idx.vertex_index + 1],
+					attrib.vertices[3 * idx.vertex_index + 2]
+				};
 
-			vertex.color = { 1.0f, 1.0f, 1.0f };
+				vertex.uv = {
+					attrib.texcoords[2 * idx.texcoord_index + 0],
+					1.f - attrib.texcoords[2 * idx.texcoord_index + 1]
+				};
 
-			if (uniqueVertices.count(vertex) == 0) {
-				uniqueVertices[vertex] = static_cast<uint32_t>(mesh._vertices.size());
-				mesh._vertices.push_back(vertex);
+				vertex.normal = {
+					attrib.normals[3 * idx.normal_index + 0],
+					attrib.normals[3 * idx.normal_index + 1],
+					attrib.normals[3 * idx.normal_index + 2]
+				};
+
+				// Shortcuts for vertices
+				glm::vec3 v0 = {
+					attrib.vertices[3 * shape.mesh.indices[indexOffset + 0].vertex_index + 0],
+					attrib.vertices[3 * shape.mesh.indices[indexOffset + 0].vertex_index + 1],
+					attrib.vertices[3 * shape.mesh.indices[indexOffset + 0].vertex_index + 2]
+				};
+				glm::vec3 v1 = {
+					attrib.vertices[3 * shape.mesh.indices[indexOffset + 1].vertex_index + 0],
+					attrib.vertices[3 * shape.mesh.indices[indexOffset + 1].vertex_index + 1],
+					attrib.vertices[3 * shape.mesh.indices[indexOffset + 1].vertex_index + 2]
+				};
+				glm::vec3 v2 = {
+					attrib.vertices[3 * shape.mesh.indices[indexOffset + 2].vertex_index + 0],
+					attrib.vertices[3 * shape.mesh.indices[indexOffset + 2].vertex_index + 1],
+					attrib.vertices[3 * shape.mesh.indices[indexOffset + 2].vertex_index + 2]
+				};
+
+				// Shortcuts for UVs
+				glm::vec2 uv0 = {
+					attrib.texcoords[2 * shape.mesh.indices[indexOffset + 0].texcoord_index + 0],
+					1.f - attrib.texcoords[2 * shape.mesh.indices[indexOffset + 0].texcoord_index + 1]
+				};
+				glm::vec2 uv1 = {
+					attrib.texcoords[2 * shape.mesh.indices[indexOffset + 1].texcoord_index + 0],
+					1.f - attrib.texcoords[2 * shape.mesh.indices[indexOffset + 1].texcoord_index + 1]
+				};
+				glm::vec2 uv2 = {
+					attrib.texcoords[2 * shape.mesh.indices[indexOffset + 2].texcoord_index + 0],
+					1.f - attrib.texcoords[2 * shape.mesh.indices[indexOffset + 2].texcoord_index + 1]
+				};
+
+				// Edges of the triangle : position delta
+				glm::vec3 deltaPos1 = v1 - v0;
+				glm::vec3 deltaPos2 = v2 - v0;
+
+				// UV delta
+				glm::vec2 deltaUV1 = uv1 - uv0;
+				glm::vec2 deltaUV2 = uv2 - uv0;
+
+				float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+				//glm::vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x)*r;
+
+				vertex.tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y)*r;
+				
+				if (uniqueVertices.count(vertex) == 0) {
+					uniqueVertices[vertex] = static_cast<uint32_t>(mesh._vertices.size());
+					mesh._vertices.push_back(vertex);
+				}
+				else
+				{
+					mesh._vertices[uniqueVertices[vertex]].tangent += vertex.tangent;
+				}
+
+				mesh._indices.push_back(uniqueVertices[vertex]);
 			}
-
-			mesh._indices.push_back(uniqueVertices[vertex]);
+			indexOffset += fv;
 		}
 	}
 

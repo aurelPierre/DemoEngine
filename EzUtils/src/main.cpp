@@ -24,15 +24,23 @@ int main(int, char**)
 
 	Viewport viewport = CreateViewport(context, logicalDevice, device, surface._colorFormat, { 512, 512 });
 
-	Texture text = CreateTexture(context, logicalDevice, device,
-		"D:/Personal project/DemoEngine/Resources/Textures/vikingRoom.png");
-	
+	Texture mugColor = CreateTexture(context, logicalDevice, device,
+		"D:/Personal project/DemoEngine/Resources/Textures/HylianShield_BaseColor.png");
+	Texture mugMetal = CreateTexture(context, logicalDevice, device,
+		"D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Metallic.png");
+	Texture mugNormal = CreateTexture(context, logicalDevice, device,
+		"D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Normal.png");
+	Texture mugRough = CreateTexture(context, logicalDevice, device,
+		"D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Roughness.png");
+	Texture mugAO = CreateTexture(context, logicalDevice, device,
+		"D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Default_AmbientOcclusion.png");
+
 	Material mat = CreateMaterial(context, logicalDevice, device, viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/shader.frag.spv",
-		text);
+		{ &mugColor, &mugMetal, &mugNormal, &mugRough, &mugAO });
 
-	Mesh mesh = CreateMesh(context, logicalDevice, device, "D:/Personal project/DemoEngine/Resources/Mesh/vikingRoom.obj");
+	Mesh mesh = CreateMesh(context, logicalDevice, device, "D:/Personal project/DemoEngine/Resources/Mesh/HylianShield.obj");
 	mesh._material = &mat;
 
 
@@ -42,6 +50,8 @@ int main(int, char**)
 
 	while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
 	{
+		TRACE("main::loop")
+
 		// Clear
 		imGui.StartFrame();
 
@@ -90,7 +100,12 @@ int main(int, char**)
 
 	imGui.Clear();
 
-	DestroyTexture(context, logicalDevice, text);
+	DestroyTexture(context, logicalDevice, mugColor);
+	DestroyTexture(context, logicalDevice, mugMetal);
+	DestroyTexture(context, logicalDevice, mugNormal);
+	DestroyTexture(context, logicalDevice, mugRough);
+	DestroyTexture(context, logicalDevice, mugAO);
+
 	DestroyMesh(context, logicalDevice, mesh);
 	DestroyMaterial(context, logicalDevice, mat);
 

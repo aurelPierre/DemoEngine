@@ -33,7 +33,7 @@ VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShad
 
 Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice,
 						const Viewport& kViewport, const std::string kVertextShaderPath,
-						const std::string kFragmentShaderPath, const Texture& kTexture)
+						const std::string kFragmentShaderPath, const std::vector<Texture*>& kTextures)
 {
 	Material material{};
 	
@@ -65,21 +65,25 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 
 	// ubo set
 	{
-		VkDescriptorSetLayoutBinding layoutBinding[2]{};
+		std::vector<VkDescriptorSetLayoutBinding> layoutBinding{ 1 + kTextures.size() };
 		layoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		layoutBinding[0].binding = 0;
 		layoutBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		layoutBinding[0].descriptorCount = 1;
 
-		layoutBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		layoutBinding[1].binding = 1;
-		layoutBinding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		layoutBinding[1].descriptorCount = 1;
+		for (int i = 0; i < kTextures.size(); ++i)
+		{
+			layoutBinding[i + 1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			layoutBinding[i + 1].binding = i + 1;
+			layoutBinding[i + 1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+			layoutBinding[i + 1].descriptorCount = 1;
+		}
+
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = 2;
-		layoutInfo.pBindings = layoutBinding;
+		layoutInfo.bindingCount = layoutBinding.size();
+		layoutInfo.pBindings = layoutBinding.data();
 
 		VkResult err = vkCreateDescriptorSetLayout(kLogicalDevice._device, &layoutInfo,
 													kContext._allocator, &material._uboLayout);
@@ -98,27 +102,30 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = kTexture._imageView;
-		imageInfo.sampler = kTexture._sampler;
+		std::vector<VkWriteDescriptorSet> descriptorWrites{ 1 + kTextures.size() };
+		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[0].dstSet = material._uboSet;
+		descriptorWrites[0].dstBinding = 0;
+		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrites[0].descriptorCount = 1;
+		descriptorWrites[0].pBufferInfo = &bufferInfo;
+		
+		std::vector<VkDescriptorImageInfo> imagesInfo{ kTextures.size() };
+		for (int i = 0; i < kTextures.size(); ++i)
+		{
+			imagesInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imagesInfo[i].imageView = kTextures[i]->_imageView;
+			imagesInfo[i].sampler = kTextures[i]->_sampler;
 
-		VkWriteDescriptorSet descriptorWrite[2]{};
-		descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite[0].dstSet = material._uboSet;
-		descriptorWrite[0].dstBinding = 0;
-		descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite[0].descriptorCount = 1;
-		descriptorWrite[0].pBufferInfo = &bufferInfo;
+			descriptorWrites[i + 1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[i + 1].dstSet = material._uboSet;
+			descriptorWrites[i + 1].dstBinding = i + 1;
+			descriptorWrites[i + 1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrites[i + 1].descriptorCount = 1;
+			descriptorWrites[i + 1].pImageInfo = &imagesInfo[i];
+		}
 		
-		descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite[1].dstSet = material._uboSet;
-		descriptorWrite[1].dstBinding = 1;
-		descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrite[1].descriptorCount = 1;
-		descriptorWrite[1].pImageInfo = &imageInfo;
-		
-		vkUpdateDescriptorSets(kLogicalDevice._device, 2, descriptorWrite, 0, nullptr);
+		vkUpdateDescriptorSets(kLogicalDevice._device, descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 	}
 
 	/******************************************************************************************************/
@@ -235,7 +242,7 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 	pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
 	pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = &Vertex::getBindingDescription();
-	pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = 3;
+	pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = Vertex::getAttributeDescriptions().size();
 	pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = Vertex::getAttributeDescriptions().data();
 
 	pipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
