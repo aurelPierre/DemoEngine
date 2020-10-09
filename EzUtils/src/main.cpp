@@ -47,6 +47,18 @@ int main(int, char**)
 	Scene scene{};
 	scene._viewports.emplace_back(&viewport);
 	scene._mesh.emplace_back(&mesh);
+	
+	imGui._globalFunctions.emplace_back([device]() {
+		DrawWindow("Device data", device);
+	});
+
+	imGui._globalFunctions.emplace_back([logicalDevice]() {
+		DrawWindow("LogicalDevice data", logicalDevice);
+	});
+
+	imGui._globalFunctions.emplace_back([viewport]() {
+		DrawWindow("viewport DEMO", viewport);
+	});
 
 	while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
 	{

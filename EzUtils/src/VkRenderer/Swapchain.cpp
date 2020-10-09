@@ -47,7 +47,7 @@ Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogical
 
 	// The VK_PRESENT_MODE_FIFO_KHR mode must always be present as per spec
 	// This mode waits for the vertical blank ("v-sync")
-	VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+	VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
 
 	// Determine the number of images
 	uint32_t desiredNumberOfSwapchainImages = surfCaps.minImageCount + 1;

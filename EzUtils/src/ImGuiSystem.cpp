@@ -171,6 +171,12 @@ void ImGuiSystem::StartFrame()
 		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 	}
 
+	for (size_t i = 0; i < _globalFunctions.size(); ++i)
+	{
+		_globalFunctions[i]();
+		_globalFunctions[i].reset();
+	}
+
 	ImGui::End();
 }
 

@@ -5,6 +5,10 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 
+#include <string>
+#include <future>
+#include <vector>
+
 struct GLFWWindowData;
 
 struct Context;
@@ -12,14 +16,12 @@ struct Device;
 struct LogicalDevice;
 struct Swapchain;
 
-struct ImGuiData
-{
-
-};
-
 class ImGuiSystem
 {
 public:
+	std::vector<std::packaged_task<void()>> _menuFunctions;
+
+	std::vector<std::packaged_task<void()>> _globalFunctions;
 
 	void Init(const GLFWWindowData const *, const Context&, const Device&,
 			const LogicalDevice&, const Swapchain&);
@@ -29,3 +31,4 @@ public:
 	void EndFrame();
 	void Clear();
 };
+
