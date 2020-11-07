@@ -4,9 +4,9 @@
 
 #include <vector>
 
-#include "Context.h"
 #include "Device.h"
 #include "Surface.h"
+#include "Context.h"
 
 struct GLFWWindowData;
 

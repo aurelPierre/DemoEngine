@@ -1,5 +1,7 @@
 #include "Surface.h"
 
+#include "Context.h"
+
 #include "Core.h"
 #include "GLFWWindowSystem.h"
 

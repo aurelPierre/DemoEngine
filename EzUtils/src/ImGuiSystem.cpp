@@ -3,6 +3,7 @@
 #include "GLFWWindowSystem.h"
 #include "Swapchain.h"
 #include "Core.h"
+#include "Context.h"
 
 void ImGuiSystem::Init(const GLFWWindowData* windowData, const Context& kContext, const Device& kDevice,
 						const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain)

@@ -10,10 +10,10 @@
 
 #include <array>
 
-#include "Context.h"
 #include "Device.h"
 #include "Viewport.h"
 #include "Texture.h"
+#include "Buffer.h"
 
 struct Vertex
 {
@@ -81,8 +81,7 @@ public:
 
 	// CAMERA
 	VkDescriptorSetLayout			_uboLayout			= VK_NULL_HANDLE;
-	VkBuffer						_ubo				= VK_NULL_HANDLE;
-	VkDeviceMemory					_uboMemory			= VK_NULL_HANDLE;
+	Buffer							_ubo;
 	VkDescriptorSet					_uboSet				= VK_NULL_HANDLE;
 
 public:

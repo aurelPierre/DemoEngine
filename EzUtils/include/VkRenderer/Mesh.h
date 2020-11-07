@@ -6,9 +6,10 @@
 
 #include "tiny_obj_loader.h"
 
-#include "Context.h"
 #include "Device.h"
 #include "Material.h"
+
+#include "Buffer.h"
 
 class Mesh
 {
@@ -18,11 +19,8 @@ public:
 
 	Material*				_material	= nullptr;
 
-	VkBuffer				_indicesBuffer		= VK_NULL_HANDLE;
-	VkDeviceMemory			_indicesMemory		= VK_NULL_HANDLE;
-
-	VkBuffer				_verticesBuffer		= VK_NULL_HANDLE;
-	VkDeviceMemory			_verticesMemory		= VK_NULL_HANDLE;
+	Buffer					_indicesBuffer;
+	Buffer					_verticesBuffer;
 
 public:
 	Mesh(const Device& kDevice, const std::string kPath);

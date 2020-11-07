@@ -1,5 +1,7 @@
 #include "Material.h"
 
+#include "Context.h"
+
 #include "Core.h"
 
 VkShaderModule loadShader(const VkDevice kDevice, std::string path)
@@ -34,33 +36,9 @@ VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShad
 Material::Material(const Device& kDevice, const Viewport& kViewport, const std::string kVertextShaderPath,
 						const std::string kFragmentShaderPath, const std::vector<Texture*>& kTextures)
 {
-	{
-		VkBufferCreateInfo bufferInfo{};
-		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = sizeof(UniformBufferObject);
-		bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		VkResult err = vkCreateBuffer(LogicalDevice::Instance()._device, &bufferInfo, Context::Instance()._allocator, &_ubo);
-		check_vk_result(err);
-
-		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(LogicalDevice::Instance()._device, _ubo, &memRequirements);
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = findMemoryType(kDevice._memoryProperties, memRequirements.memoryTypeBits, 
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-		err = vkAllocateMemory(LogicalDevice::Instance()._device, &allocInfo, Context::Instance()._allocator, &_uboMemory);
-		check_vk_result(err);
-
-		err = vkBindBufferMemory(LogicalDevice::Instance()._device, _ubo, _uboMemory, 0);
-		check_vk_result(err);
-	}
-
-	// ubo set
+	Buffer ubo(kDevice, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	_ubo = std::move(ubo);
+	
 	{
 		std::vector<VkDescriptorSetLayoutBinding> layoutBinding{ 1 + kTextures.size() };
 		layoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -95,7 +73,7 @@ Material::Material(const Device& kDevice, const Viewport& kViewport, const std::
 		check_vk_result(err);
 
 		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = _ubo;
+		bufferInfo.buffer = _ubo._buffer;
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 
@@ -261,9 +239,6 @@ Material::~Material()
 {
 	vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_uboSet);
 	vkDestroyDescriptorSetLayout(LogicalDevice::Instance()._device, _uboLayout, Context::Instance()._allocator);
-
-	vkDestroyBuffer(LogicalDevice::Instance()._device, _ubo, Context::Instance()._allocator);
-	vkFreeMemory(LogicalDevice::Instance()._device, _uboMemory, Context::Instance()._allocator);
 
 	vkDestroyPipeline(LogicalDevice::Instance()._device, _pipeline, Context::Instance()._allocator);
 	vkDestroyPipelineLayout(LogicalDevice::Instance()._device, _pipelineLayout, Context::Instance()._allocator);

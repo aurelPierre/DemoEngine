@@ -22,7 +22,7 @@ int main(int, char**)
 
 	imGui.Init(windowData, context, device, logicalDevice, swapchain);
 
-	Viewport viewport = CreateViewport(context, logicalDevice, device, surface._colorFormat, { 512, 512 });
+	Viewport viewport(device, surface._colorFormat, { 512, 512 });
 
 	Texture mugColor(device,
 		"D:/Personal project/DemoEngine/Resources/Textures/HylianShield_BaseColor.png");
@@ -74,8 +74,8 @@ int main(int, char**)
 			ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
 			for (int i = 0; i < scene._viewports.size(); ++i)
 			{
-				if (!UpdateViewportSize(*scene._viewports[i]))
-					ResizeViewport(context, logicalDevice, device, surface._colorFormat, *scene._viewports[i]);
+				if (!scene._viewports[i]->UpdateViewportSize())
+					scene._viewports[i]->Resize(device, surface._colorFormat);
 			}
 			windowData->_shouldUpdate = false;
 		}
@@ -98,10 +98,10 @@ int main(int, char**)
 
 		for (int i = 0; i < scene._viewports.size(); ++i)
 		{
-			if (!UpdateViewportSize(*scene._viewports[i]))
-				ResizeViewport(context, logicalDevice, device, surface._colorFormat, *scene._viewports[i]);
+			if (!scene._viewports[i]->UpdateViewportSize())
+				scene._viewports[i]->Resize(device, surface._colorFormat);
 			else
-				Render(logicalDevice, *scene._viewports[i]);
+				scene._viewports[i]->Render();
 		}
 		
 		swapchain.Draw();
@@ -113,8 +113,6 @@ int main(int, char**)
 	}
 
 	imGui.Clear();
-
-	DestroyViewport(context, logicalDevice, viewport);
 
 
 	glfwWindow.DeleteWindow();

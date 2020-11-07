@@ -43,7 +43,7 @@ void Draw(const LogicalDevice& kLogicalDevice, const Scene& scene)
 			0.1f, 512.0f);
 		ubo.proj[1][1] *= -1;
 
-		StartDraw(kLogicalDevice, *scene._viewports[i]);
+		scene._viewports[i]->StartDraw();
 
 		// foreach mesh draw
 		for (int j = 0; j < scene._mesh.size(); ++j)
@@ -55,16 +55,11 @@ void Draw(const LogicalDevice& kLogicalDevice, const Scene& scene)
 
 			ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(rUp[0], rUp[1], rUp[2]));
 
-			void* data;
-			vkMapMemory(kLogicalDevice._device, scene._mesh[j]->_material->_uboMemory, 0,
-				sizeof(UniformBufferObject), 0, &data);
-			memcpy(data, &ubo, sizeof(UniformBufferObject));
-			vkUnmapMemory(kLogicalDevice._device, scene._mesh[j]->_material->_uboMemory);
-
+			scene._mesh[j]->_material->_ubo.Map(&ubo, sizeof(UniformBufferObject));
 			scene._mesh[j]->Draw(scene._viewports[i]->_commandBuffer);
 		}
 
-		EndDraw(kLogicalDevice, *scene._viewports[i]);
+		scene._viewports[i]->EndDraw();
 	}
 
 	ImGui::End();

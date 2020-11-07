@@ -2,7 +2,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include "Context.h"
 #include "Editor.h"
 
 #include <vector>

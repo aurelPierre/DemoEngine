@@ -4,8 +4,8 @@
 
 #include <glm/glm.hpp>
 
-#include "Context.h"
 #include "Device.h"
+#include "Context.h"
 
 class Mesh;
 
@@ -42,6 +42,8 @@ public:
 	~Viewport();
 
 public:
+	void	Resize(const Device& kDevice, const VkFormat kFormat);
+
 	bool	UpdateViewportSize();
 
 	void	StartDraw();
@@ -49,6 +51,3 @@ public:
 
 	void	Render();
 };
-
-void	ResizeViewport(const Context& kContext, const LogicalDevice& kLogicalDevice,
-						const Device& kDevice, const VkFormat kFormat, Viewport& viewport);
