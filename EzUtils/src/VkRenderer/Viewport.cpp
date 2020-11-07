@@ -81,115 +81,14 @@ Viewport::Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent
 	VkResult err = vkCreateRenderPass(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_renderPass);
 	check_vk_result(err);
 
-	// Depth attachment
-	{
-		VkImageCreateInfo image{};
-		image.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		image.imageType = VK_IMAGE_TYPE_2D;
-		image.format = depthFormat;
-		image.extent.width = _size.width;
-		image.extent.height = _size.height;
-		image.extent.depth = 1;
-		image.mipLevels = 1;
-		image.arrayLayers = 1;
-		image.samples = VK_SAMPLE_COUNT_1_BIT;
-		image.tiling = VK_IMAGE_TILING_OPTIMAL;
-		// We will sample directly from the color attachment
-		image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	ImageBuffer depthImage(kDevice, depthFormat, _size, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	_depthImage = std::move(depthImage);
 
-		check_vk_result(vkCreateImage(LogicalDevice::Instance()._device, &image, Context::Instance()._allocator, &_depthImage));
-
-		VkMemoryAllocateInfo memAlloc{};
-		VkMemoryRequirements memReqs;
-		vkGetImageMemoryRequirements(LogicalDevice::Instance()._device, _depthImage, &memReqs);
-
-		memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		memAlloc.allocationSize = memReqs.size;
-
-		memAlloc.memoryTypeIndex = findMemoryType(kDevice._memoryProperties, memReqs.memoryTypeBits, 
-													VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		check_vk_result(vkAllocateMemory(LogicalDevice::Instance()._device, &memAlloc, Context::Instance()._allocator, &_depthImageMemory));
-		check_vk_result(vkBindImageMemory(LogicalDevice::Instance()._device, _depthImage, _depthImageMemory, 0));
-
-		/*** Texture handling ***/
-		VkImageViewCreateInfo colorAttachmentView = {};
-		colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		colorAttachmentView.pNext = NULL;
-		colorAttachmentView.format = depthFormat;
-		colorAttachmentView.components = {
-			VK_COMPONENT_SWIZZLE_R,
-			VK_COMPONENT_SWIZZLE_G,
-			VK_COMPONENT_SWIZZLE_B,
-			VK_COMPONENT_SWIZZLE_A
-		};
-		colorAttachmentView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		colorAttachmentView.subresourceRange.baseMipLevel = 0;
-		colorAttachmentView.subresourceRange.levelCount = 1;
-		colorAttachmentView.subresourceRange.baseArrayLayer = 0;
-		colorAttachmentView.subresourceRange.layerCount = 1;
-		colorAttachmentView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		colorAttachmentView.flags = 0;
-		colorAttachmentView.image = _depthImage;
-
-		err = vkCreateImageView(LogicalDevice::Instance()._device, &colorAttachmentView, Context::Instance()._allocator, &_depthImageView);
-		check_vk_result(err);
-	}
+	ImageBuffer colorImage(kDevice, kFormat, _size, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	_colorImage = std::move(colorImage);
 
 	// Color attachment
 	{
-		VkImageCreateInfo image{};
-		image.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		image.imageType = VK_IMAGE_TYPE_2D;
-		image.format = kFormat;
-		image.extent.width = _size.width;
-		image.extent.height = _size.height;
-		image.extent.depth = 1;
-		image.mipLevels = 1;
-		image.arrayLayers = 1;
-		image.samples = VK_SAMPLE_COUNT_1_BIT;
-		image.tiling = VK_IMAGE_TILING_OPTIMAL;
-		// We will sample directly from the color attachment
-		image.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-		check_vk_result(vkCreateImage(LogicalDevice::Instance()._device, &image, Context::Instance()._allocator, &_colorImage));
-
-		VkMemoryAllocateInfo memAlloc{};
-		VkMemoryRequirements memReqs;
-		vkGetImageMemoryRequirements(LogicalDevice::Instance()._device, _colorImage, &memReqs);
-
-		memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		memAlloc.allocationSize = memReqs.size;
-
-		memAlloc.memoryTypeIndex = findMemoryType(kDevice._memoryProperties, memReqs.memoryTypeBits,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		check_vk_result(vkAllocateMemory(LogicalDevice::Instance()._device, &memAlloc, Context::Instance()._allocator, &_colorImageMemory));
-		check_vk_result(vkBindImageMemory(LogicalDevice::Instance()._device, _colorImage, _colorImageMemory, 0));
-
-		/*** Texture handling ***/
-		VkImageViewCreateInfo colorAttachmentView = {};
-		colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		colorAttachmentView.pNext = NULL;
-		colorAttachmentView.format = kFormat;
-		colorAttachmentView.components = {
-			VK_COMPONENT_SWIZZLE_R,
-			VK_COMPONENT_SWIZZLE_G,
-			VK_COMPONENT_SWIZZLE_B,
-			VK_COMPONENT_SWIZZLE_A
-		};
-		colorAttachmentView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		colorAttachmentView.subresourceRange.baseMipLevel = 0;
-		colorAttachmentView.subresourceRange.levelCount = 1;
-		colorAttachmentView.subresourceRange.baseArrayLayer = 0;
-		colorAttachmentView.subresourceRange.layerCount = 1;
-		colorAttachmentView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		colorAttachmentView.flags = 0;
-		colorAttachmentView.image = _colorImage;
-
-		err = vkCreateImageView(LogicalDevice::Instance()._device, &colorAttachmentView, Context::Instance()._allocator, &_colorImageView);
-		check_vk_result(err);
-
 		VkSamplerCreateInfo samplerInfo{};
 		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		samplerInfo.magFilter = VK_FILTER_LINEAR;
@@ -206,8 +105,8 @@ Viewport::Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent
 		check_vk_result(vkCreateSampler(LogicalDevice::Instance()._device, &samplerInfo, Context::Instance()._allocator, &_sampler));
 
 		VkImageView attachment[2];
-		attachment[0] = _colorImageView;
-		attachment[1] = _depthImageView;
+		attachment[0] = _colorImage._view;
+		attachment[1] = _depthImage._view;
 
 		VkFramebufferCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -234,7 +133,7 @@ Viewport::Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent
 		}
 	}
 
-	_set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(_sampler, _colorImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	_set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(_sampler, _colorImage._view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	{
 		VkFenceCreateInfo info = {};
@@ -256,14 +155,6 @@ Viewport::~Viewport()
 
 	vkDestroySampler(LogicalDevice::Instance()._device, _sampler, Context::Instance()._allocator);
 	vkDestroyFramebuffer(LogicalDevice::Instance()._device, _framebuffer, Context::Instance()._allocator);
-
-	vkDestroyImageView(LogicalDevice::Instance()._device, _depthImageView, Context::Instance()._allocator);
-	vkDestroyImage(LogicalDevice::Instance()._device, _depthImage, Context::Instance()._allocator);
-	vkFreeMemory(LogicalDevice::Instance()._device, _depthImageMemory, Context::Instance()._allocator);
-
-	vkDestroyImageView(LogicalDevice::Instance()._device, _colorImageView, Context::Instance()._allocator);
-	vkDestroyImage(LogicalDevice::Instance()._device, _colorImage, Context::Instance()._allocator);
-	vkFreeMemory(LogicalDevice::Instance()._device, _colorImageMemory, Context::Instance()._allocator);
 
 	vkDestroyRenderPass(LogicalDevice::Instance()._device, _renderPass, Context::Instance()._allocator);
 }
@@ -288,14 +179,6 @@ void Viewport::Resize(const Device& kDevice, const VkFormat kFormat)
 
 		vkDestroySampler(LogicalDevice::Instance()._device, _sampler, Context::Instance()._allocator);
 		vkDestroyFramebuffer(LogicalDevice::Instance()._device, _framebuffer, Context::Instance()._allocator);
-
-		vkDestroyImageView(LogicalDevice::Instance()._device, _depthImageView, Context::Instance()._allocator);
-		vkDestroyImage(LogicalDevice::Instance()._device, _depthImage, Context::Instance()._allocator);
-		vkFreeMemory(LogicalDevice::Instance()._device, _depthImageMemory, Context::Instance()._allocator);
-
-		vkDestroyImageView(LogicalDevice::Instance()._device, _colorImageView, Context::Instance()._allocator);
-		vkDestroyImage(LogicalDevice::Instance()._device, _colorImage, Context::Instance()._allocator);
-		vkFreeMemory(LogicalDevice::Instance()._device, _colorImageMemory, Context::Instance()._allocator);
 
 		vkDestroyRenderPass(LogicalDevice::Instance()._device, _renderPass, Context::Instance()._allocator);
 	}
@@ -371,115 +254,14 @@ void Viewport::Resize(const Device& kDevice, const VkFormat kFormat)
 		VkResult err = vkCreateRenderPass(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_renderPass);
 		check_vk_result(err);
 
-		// Depth attachment
-		{
-			VkImageCreateInfo image{};
-			image.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-			image.imageType = VK_IMAGE_TYPE_2D;
-			image.format = depthFormat;
-			image.extent.width = _size.width;
-			image.extent.height = _size.height;
-			image.extent.depth = 1;
-			image.mipLevels = 1;
-			image.arrayLayers = 1;
-			image.samples = VK_SAMPLE_COUNT_1_BIT;
-			image.tiling = VK_IMAGE_TILING_OPTIMAL;
-			// We will sample directly from the color attachment
-			image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		ImageBuffer depthImage(kDevice, depthFormat, _size, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		_depthImage = std::move(depthImage);
 
-			check_vk_result(vkCreateImage(LogicalDevice::Instance()._device, &image, Context::Instance()._allocator, &_depthImage));
-
-			VkMemoryAllocateInfo memAlloc{};
-			VkMemoryRequirements memReqs;
-			vkGetImageMemoryRequirements(LogicalDevice::Instance()._device, _depthImage, &memReqs);
-
-			memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			memAlloc.allocationSize = memReqs.size;
-
-			memAlloc.memoryTypeIndex = findMemoryType(kDevice._memoryProperties, memReqs.memoryTypeBits,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-			check_vk_result(vkAllocateMemory(LogicalDevice::Instance()._device, &memAlloc, Context::Instance()._allocator, &_depthImageMemory));
-			check_vk_result(vkBindImageMemory(LogicalDevice::Instance()._device, _depthImage, _depthImageMemory, 0));
-
-			/*** Texture handling ***/
-			VkImageViewCreateInfo colorAttachmentView = {};
-			colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			colorAttachmentView.pNext = NULL;
-			colorAttachmentView.format = depthFormat;
-			colorAttachmentView.components = {
-				VK_COMPONENT_SWIZZLE_R,
-				VK_COMPONENT_SWIZZLE_G,
-				VK_COMPONENT_SWIZZLE_B,
-				VK_COMPONENT_SWIZZLE_A
-			};
-			colorAttachmentView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-			colorAttachmentView.subresourceRange.baseMipLevel = 0;
-			colorAttachmentView.subresourceRange.levelCount = 1;
-			colorAttachmentView.subresourceRange.baseArrayLayer = 0;
-			colorAttachmentView.subresourceRange.layerCount = 1;
-			colorAttachmentView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			colorAttachmentView.flags = 0;
-			colorAttachmentView.image = _depthImage;
-
-			err = vkCreateImageView(LogicalDevice::Instance()._device, &colorAttachmentView, Context::Instance()._allocator, &_depthImageView);
-			check_vk_result(err);
-		}
+		ImageBuffer colorImage(kDevice, kFormat, _size, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		_colorImage = std::move(colorImage);
 
 		// Color attachment
 		{
-			VkImageCreateInfo image{};
-			image.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-			image.imageType = VK_IMAGE_TYPE_2D;
-			image.format = kFormat;
-			image.extent.width = _size.width;
-			image.extent.height = _size.height;
-			image.extent.depth = 1;
-			image.mipLevels = 1;
-			image.arrayLayers = 1;
-			image.samples = VK_SAMPLE_COUNT_1_BIT;
-			image.tiling = VK_IMAGE_TILING_OPTIMAL;
-			// We will sample directly from the color attachment
-			image.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-			check_vk_result(vkCreateImage(LogicalDevice::Instance()._device, &image, Context::Instance()._allocator, &_colorImage));
-
-			VkMemoryAllocateInfo memAlloc{};
-			VkMemoryRequirements memReqs;
-			vkGetImageMemoryRequirements(LogicalDevice::Instance()._device, _colorImage, &memReqs);
-
-			memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			memAlloc.allocationSize = memReqs.size;
-
-			memAlloc.memoryTypeIndex = findMemoryType(kDevice._memoryProperties, memReqs.memoryTypeBits,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-			check_vk_result(vkAllocateMemory(LogicalDevice::Instance()._device, &memAlloc, Context::Instance()._allocator, &_colorImageMemory));
-			check_vk_result(vkBindImageMemory(LogicalDevice::Instance()._device, _colorImage, _colorImageMemory, 0));
-
-			/*** Texture handling ***/
-			VkImageViewCreateInfo colorAttachmentView = {};
-			colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			colorAttachmentView.pNext = NULL;
-			colorAttachmentView.format = kFormat;
-			colorAttachmentView.components = {
-				VK_COMPONENT_SWIZZLE_R,
-				VK_COMPONENT_SWIZZLE_G,
-				VK_COMPONENT_SWIZZLE_B,
-				VK_COMPONENT_SWIZZLE_A
-			};
-			colorAttachmentView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			colorAttachmentView.subresourceRange.baseMipLevel = 0;
-			colorAttachmentView.subresourceRange.levelCount = 1;
-			colorAttachmentView.subresourceRange.baseArrayLayer = 0;
-			colorAttachmentView.subresourceRange.layerCount = 1;
-			colorAttachmentView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			colorAttachmentView.flags = 0;
-			colorAttachmentView.image = _colorImage;
-
-			err = vkCreateImageView(LogicalDevice::Instance()._device, &colorAttachmentView, Context::Instance()._allocator, &_colorImageView);
-			check_vk_result(err);
-
 			VkSamplerCreateInfo samplerInfo{};
 			samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 			samplerInfo.magFilter = VK_FILTER_LINEAR;
@@ -496,8 +278,8 @@ void Viewport::Resize(const Device& kDevice, const VkFormat kFormat)
 			check_vk_result(vkCreateSampler(LogicalDevice::Instance()._device, &samplerInfo, Context::Instance()._allocator, &_sampler));
 
 			VkImageView attachment[2];
-			attachment[0] = _colorImageView;
-			attachment[1] = _depthImageView;
+			attachment[0] = _colorImage._view;
+			attachment[1] = _depthImage._view;
 
 			VkFramebufferCreateInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -513,7 +295,7 @@ void Viewport::Resize(const Device& kDevice, const VkFormat kFormat)
 				check_vk_result(err);
 			}
 
-			_set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(_sampler, _colorImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			_set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(_sampler, _colorImage._view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
 	}
 

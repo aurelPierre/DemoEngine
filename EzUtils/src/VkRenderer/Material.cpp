@@ -89,7 +89,7 @@ Material::Material(const Device& kDevice, const Viewport& kViewport, const std::
 		for (int i = 0; i < kTextures.size(); ++i)
 		{
 			imagesInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imagesInfo[i].imageView = kTextures[i]->_imageView;
+			imagesInfo[i].imageView = kTextures[i]->_image._view;
 			imagesInfo[i].sampler = kTextures[i]->_sampler;
 
 			descriptorWrites[i + 1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

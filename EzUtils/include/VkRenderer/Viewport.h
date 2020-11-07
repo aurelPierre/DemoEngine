@@ -6,6 +6,7 @@
 
 #include "Device.h"
 #include "Context.h"
+#include "ImageBuffer.h"
 
 class Mesh;
 
@@ -22,13 +23,8 @@ public:
 
 	VkCommandBuffer			_commandBuffer		= VK_NULL_HANDLE;
 
-	VkDeviceMemory			_colorImageMemory	= VK_NULL_HANDLE;
-	VkImage					_colorImage			= VK_NULL_HANDLE;
-	VkImageView				_colorImageView		= VK_NULL_HANDLE;
-
-	VkDeviceMemory			_depthImageMemory	= VK_NULL_HANDLE;
-	VkImage					_depthImage			= VK_NULL_HANDLE;
-	VkImageView				_depthImageView		= VK_NULL_HANDLE;
+	ImageBuffer				_colorImage;
+	ImageBuffer				_depthImage;
 
 	VkFramebuffer			_framebuffer		= VK_NULL_HANDLE;
 	VkSampler				_sampler			= VK_NULL_HANDLE;

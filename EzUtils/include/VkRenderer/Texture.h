@@ -3,13 +3,12 @@
 #include <vulkan/vulkan.h>
 
 #include "Device.h"
+#include "ImageBuffer.h"
 
 class Texture
 {
 public:
-	VkDeviceMemory		_imageMemory	= VK_NULL_HANDLE;
-	VkImage				_image			= VK_NULL_HANDLE;
-	VkImageView			_imageView		= VK_NULL_HANDLE;
+	ImageBuffer			_image;
 	VkSampler			_sampler		= VK_NULL_HANDLE;
 
 public:
