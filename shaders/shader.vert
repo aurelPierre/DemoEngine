@@ -20,12 +20,12 @@ layout(location = 3) out vec3 fragTangent;
 void main() 
 {
 	vec4 modelPos = ubo.model * vec4(inPosition, 1.0);
-    gl_Position = ubo.proj * ubo.view * modelPos;
+	fragPos = modelPos.xyz / modelPos.w;
+	fragUV = inUV;
 
-	fragPos = vec3(modelPos);
+    gl_Position = ubo.proj * ubo.view * modelPos;
 
 	mat3 mNormal = transpose(inverse(mat3(ubo.model)));
 	fragNormal = mNormal * normalize(inNormal);
     fragTangent = mNormal * normalize(inTangent);
-	fragUV = inUV;
 }

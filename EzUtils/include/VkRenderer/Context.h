@@ -10,15 +10,22 @@
 
 // Might also want to move allocator out of thi structure
 // A structure with custom memory management could be usefull
-struct Context
+class Context
 {
+	static const Context* _sInstance;
+
+public:
 	VkInstance					_instance		= VK_NULL_HANDLE;
 	VkAllocationCallbacks*		_allocator		= nullptr;
-	VkDebugUtilsMessengerEXT	_debugMessenger = VK_NULL_HANDLE; 
-};
+	VkDebugUtilsMessengerEXT	_debugMessenger = VK_NULL_HANDLE;
 
-Context CreateContext();
-void	DestroyContext(const Context& kContext);
+public:
+	static const Context& Instance();
+
+public:
+	Context();
+	~Context();
+};
 
 template<>
 inline void DrawEditor<Context>(const Context& obj)

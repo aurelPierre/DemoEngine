@@ -47,15 +47,15 @@ void DrawMenu(std::string name, const T& obj)
 }
 
 template<typename T>
-void DrawWindow(std::string name, const T& obj, const bool canDock = false)
+void DrawWindow(std::string name, const T& obj, bool* out_open)
 {
-	ImGui::Begin(name.c_str(), nullptr, canDock ? 0 : ImGuiWindowFlags_NoDocking);
-	DrawEditor(obj);
+	if(ImGui::Begin(name.c_str(), out_open, ImGuiWindowFlags_NoDocking))
+		DrawEditor(obj);
 	ImGui::End();
 }
 
 template<typename T>
 inline void DrawEditor(const T& obj)
 {
-	ImGui::Text((std::string("DrawEditor for ") + typeid(T).name() + " is undefined.").c_str());
+	ImGui::TextColored({1.f, 1.f, 0.f, 1.f}, (std::string("DrawEditor for ") + typeid(T).name() + " is undefined.").c_str());
 }

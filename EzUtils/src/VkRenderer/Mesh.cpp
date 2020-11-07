@@ -4,11 +4,8 @@
 
 #include <unordered_map>
 
-Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice,
-					const std::string kPath)
+Mesh::Mesh(const Device& kDevice, const std::string kPath)
 {
-	Mesh mesh{};
-
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -95,15 +92,15 @@ Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, co
 				vertex.tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y)*r;
 				
 				if (uniqueVertices.count(vertex) == 0) {
-					uniqueVertices[vertex] = static_cast<uint32_t>(mesh._vertices.size());
-					mesh._vertices.push_back(vertex);
+					uniqueVertices[vertex] = static_cast<uint32_t>(_vertices.size());
+					_vertices.push_back(vertex);
 				}
 				else
 				{
-					mesh._vertices[uniqueVertices[vertex]].tangent += vertex.tangent;
+					_vertices[uniqueVertices[vertex]].tangent += vertex.tangent;
 				}
 
-				mesh._indices.push_back(uniqueVertices[vertex]);
+				_indices.push_back(uniqueVertices[vertex]);
 			}
 			indexOffset += fv;
 		}
@@ -112,16 +109,16 @@ Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, co
 	{
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = sizeof(mesh._indices[0]) * mesh._indices.size();
+		bufferInfo.size = sizeof(_indices[0]) * _indices.size();
 		bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		if (vkCreateBuffer(kLogicalDevice._device, &bufferInfo, kContext._allocator, &mesh._indicesBuffer) != VK_SUCCESS) {
+		if (vkCreateBuffer(LogicalDevice::Instance()._device, &bufferInfo, Context::Instance()._allocator, &_indicesBuffer) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create vertex buffer!");
 		}
 
 		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(kLogicalDevice._device, mesh._indicesBuffer, &memRequirements);
+		vkGetBufferMemoryRequirements(LogicalDevice::Instance()._device, _indicesBuffer, &memRequirements);
 
 		uint32_t type = UINT32_MAX;
 		for (uint32_t i = 0; i < kDevice._memoryProperties.memoryTypeCount; i++) {
@@ -137,32 +134,32 @@ Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, co
 		allocInfo.allocationSize = memRequirements.size;
 		allocInfo.memoryTypeIndex = type;
 
-		if (vkAllocateMemory(kLogicalDevice._device, &allocInfo, kContext._allocator, &mesh._indicesMemory) != VK_SUCCESS) {
+		if (vkAllocateMemory(LogicalDevice::Instance()._device, &allocInfo, Context::Instance()._allocator, &_indicesMemory) != VK_SUCCESS) {
 			throw std::runtime_error("failed to allocate vertex buffer memory!");
 		}
 
-		vkBindBufferMemory(kLogicalDevice._device, mesh._indicesBuffer, mesh._indicesMemory, 0);
+		vkBindBufferMemory(LogicalDevice::Instance()._device, _indicesBuffer, _indicesMemory, 0);
 
 		void* data;
-		vkMapMemory(kLogicalDevice._device, mesh._indicesMemory, 0,
-			sizeof(mesh._indices[0]) * mesh._indices.size(), 0, &data);
-		memcpy(data, mesh._indices.data(), (size_t)sizeof(mesh._indices[0]) * mesh._indices.size());
-		vkUnmapMemory(kLogicalDevice._device, mesh._indicesMemory);
+		vkMapMemory(LogicalDevice::Instance()._device, _indicesMemory, 0,
+			sizeof(_indices[0]) * _indices.size(), 0, &data);
+		memcpy(data, _indices.data(), (size_t)sizeof(_indices[0]) * _indices.size());
+		vkUnmapMemory(LogicalDevice::Instance()._device, _indicesMemory);
 	}
 
 	{
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = sizeof(mesh._vertices[0]) * mesh._vertices.size();
+		bufferInfo.size = sizeof(_vertices[0]) * _vertices.size();
 		bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		if (vkCreateBuffer(kLogicalDevice._device, &bufferInfo, kContext._allocator, &mesh._verticesBuffer) != VK_SUCCESS) {
+		if (vkCreateBuffer(LogicalDevice::Instance()._device, &bufferInfo, Context::Instance()._allocator, &_verticesBuffer) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create vertex buffer!");
 		}
 
 		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(kLogicalDevice._device, mesh._verticesBuffer, &memRequirements);
+		vkGetBufferMemoryRequirements(LogicalDevice::Instance()._device, _verticesBuffer, &memRequirements);
 
 		uint32_t type = UINT32_MAX;
 		for (uint32_t i = 0; i < kDevice._memoryProperties.memoryTypeCount; i++) {
@@ -178,41 +175,39 @@ Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, co
 		allocInfo.allocationSize = memRequirements.size;
 		allocInfo.memoryTypeIndex = type;
 
-		if (vkAllocateMemory(kLogicalDevice._device, &allocInfo, kContext._allocator, &mesh._verticesMemory) != VK_SUCCESS) {
+		if (vkAllocateMemory(LogicalDevice::Instance()._device, &allocInfo, Context::Instance()._allocator, &_verticesMemory) != VK_SUCCESS) {
 			throw std::runtime_error("failed to allocate vertex buffer memory!");
 		}
 
-		vkBindBufferMemory(kLogicalDevice._device, mesh._verticesBuffer, mesh._verticesMemory, 0);
+		vkBindBufferMemory(LogicalDevice::Instance()._device, _verticesBuffer, _verticesMemory, 0);
 
 		void* data;
-		vkMapMemory(kLogicalDevice._device, mesh._verticesMemory, 0,
-			sizeof(mesh._vertices[0]) * mesh._vertices.size(), 0, &data);
-		memcpy(data, mesh._vertices.data(), (size_t)sizeof(mesh._vertices[0]) * mesh._vertices.size());
-		vkUnmapMemory(kLogicalDevice._device, mesh._verticesMemory);
+		vkMapMemory(LogicalDevice::Instance()._device, _verticesMemory, 0,
+			sizeof(_vertices[0]) * _vertices.size(), 0, &data);
+		memcpy(data, _vertices.data(), (size_t)sizeof(_vertices[0]) * _vertices.size());
+		vkUnmapMemory(LogicalDevice::Instance()._device, _verticesMemory);
 	}
-
-	return mesh;
 }
 
-void	Draw(const LogicalDevice& kLogicalDevice, const Mesh& kMesh, VkCommandBuffer commandBuffer)
+Mesh::~Mesh()
+{
+	vkFreeMemory(LogicalDevice::Instance()._device, _indicesMemory, Context::Instance()._allocator);
+	vkDestroyBuffer(LogicalDevice::Instance()._device, _indicesBuffer, Context::Instance()._allocator);
+
+	vkFreeMemory(LogicalDevice::Instance()._device, _verticesMemory, Context::Instance()._allocator);
+	vkDestroyBuffer(LogicalDevice::Instance()._device, _verticesBuffer, Context::Instance()._allocator);
+}
+
+void Mesh::Draw(VkCommandBuffer commandBuffer)
 {
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-		kMesh._material->_pipeline);
+		_material->_pipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-		kMesh._material->_pipelineLayout, 0, 1, &kMesh._material->_uboSet, 0, nullptr);
+		_material->_pipelineLayout, 0, 1, &_material->_uboSet, 0, nullptr);
 
-	vkCmdBindIndexBuffer(commandBuffer, kMesh._indicesBuffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdBindIndexBuffer(commandBuffer, _indicesBuffer, 0, VK_INDEX_TYPE_UINT32);
 	VkDeviceSize offset[]{ 0 };
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &kMesh._verticesBuffer, offset);
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &_verticesBuffer, offset);
 
-	vkCmdDrawIndexed(commandBuffer, kMesh._indices.size(), 1, 0, 0, 0);
-}
-
-void	DestroyMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, const Mesh& kMesh)
-{
-	vkFreeMemory(kLogicalDevice._device, kMesh._indicesMemory, kContext._allocator);
-	vkDestroyBuffer(kLogicalDevice._device, kMesh._indicesBuffer, kContext._allocator);
-
-	vkFreeMemory(kLogicalDevice._device, kMesh._verticesMemory, kContext._allocator);
-	vkDestroyBuffer(kLogicalDevice._device, kMesh._verticesBuffer, kContext._allocator);
+	vkCmdDrawIndexed(commandBuffer, _indices.size(), 1, 0, 0, 0);
 }

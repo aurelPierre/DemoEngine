@@ -3,16 +3,13 @@
 #include "Core.h"
 #include "GLFWWindowSystem.h"
 
-Surface CreateSurface(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice,
-						const GLFWWindowData* windowData)
+Surface::Surface(const Device& kDevice, const GLFWWindowData* windowData)
 {
-	Surface surface{};
-
-	VkResult err = glfwCreateWindowSurface(kContext._instance, windowData->_window, kContext._allocator, &surface._surface);
+	VkResult err = glfwCreateWindowSurface(Context::Instance()._instance, windowData->_window, Context::Instance()._allocator, &_surface);
 	check_vk_result(err);
 
 	VkBool32 res;
-	err = vkGetPhysicalDeviceSurfaceSupportKHR(kDevice._physicalDevice, kLogicalDevice._graphicsQueue._indice, surface._surface, &res);
+	err = vkGetPhysicalDeviceSurfaceSupportKHR(kDevice._physicalDevice, LogicalDevice::Instance()._graphicsQueue._indice, _surface, &res);
 	check_vk_result(err);
 	if (res != VK_TRUE)
 	{
@@ -22,20 +19,20 @@ Surface CreateSurface(const Context& kContext, const LogicalDevice& kLogicalDevi
 
 	// Get list of supported surface formats
 	uint32_t formatCount;
-	err = vkGetPhysicalDeviceSurfaceFormatsKHR(kDevice._physicalDevice, surface._surface, &formatCount, NULL);
+	err = vkGetPhysicalDeviceSurfaceFormatsKHR(kDevice._physicalDevice, _surface, &formatCount, NULL);
 	check_vk_result(err);
 	assert(formatCount > 0);
 
 	std::vector<VkSurfaceFormatKHR> surfaceFormats(formatCount);
-	err = vkGetPhysicalDeviceSurfaceFormatsKHR(kDevice._physicalDevice, surface._surface, &formatCount, surfaceFormats.data());
+	err = vkGetPhysicalDeviceSurfaceFormatsKHR(kDevice._physicalDevice, _surface, &formatCount, surfaceFormats.data());
 	check_vk_result(err);
 
 	// If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,
 	// there is no preferered format, so we assume VK_FORMAT_B8G8R8A8_UNORM
 	if ((formatCount == 1) && (surfaceFormats[0].format == VK_FORMAT_UNDEFINED))
 	{
-		surface._colorFormat = VK_FORMAT_B8G8R8A8_UNORM;
-		surface._colorSpace = surfaceFormats[0].colorSpace;
+		_colorFormat = VK_FORMAT_B8G8R8A8_UNORM;
+		_colorSpace = surfaceFormats[0].colorSpace;
 	}
 	else
 	{
@@ -46,8 +43,8 @@ Surface CreateSurface(const Context& kContext, const LogicalDevice& kLogicalDevi
 		{
 			if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_UNORM)
 			{
-				surface._colorFormat = surfaceFormat.format;
-				surface._colorSpace = surfaceFormat.colorSpace;
+				_colorFormat = surfaceFormat.format;
+				_colorSpace = surfaceFormat.colorSpace;
 				found_B8G8R8A8_UNORM = true;
 				break;
 			}
@@ -57,15 +54,13 @@ Surface CreateSurface(const Context& kContext, const LogicalDevice& kLogicalDevi
 		// select the first available color format
 		if (!found_B8G8R8A8_UNORM)
 		{
-			surface._colorFormat = surfaceFormats[0].format;
-			surface._colorSpace = surfaceFormats[0].colorSpace;
+			_colorFormat = surfaceFormats[0].format;
+			_colorSpace = surfaceFormats[0].colorSpace;
 		}
 	}
-
-	return surface;
 }
 
-void DestroySurface(const Context& kContext, const Surface& kSurface)
+Surface::~Surface()
 {
-	vkDestroySurfaceKHR(kContext._instance, kSurface._surface, kContext._allocator);
+	vkDestroySurfaceKHR(Context::Instance()._instance, _surface, Context::Instance()._allocator);
 }

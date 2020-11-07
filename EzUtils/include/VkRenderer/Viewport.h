@@ -15,8 +15,9 @@ struct UniformBufferObject {
 	glm::mat4 proj;
 };
 
-struct Viewport
+class Viewport
 {
+public:
 	VkFence					_fence				= VK_NULL_HANDLE;
 
 	VkCommandBuffer			_commandBuffer		= VK_NULL_HANDLE;
@@ -35,19 +36,19 @@ struct Viewport
 
 	VkExtent2D				_size;
 	VkRenderPass			_renderPass			= VK_NULL_HANDLE;
-};
 
-Viewport	CreateViewport(const Context& kContext, const LogicalDevice& kLogicalDevice,
-							const Device& kDevice, const VkFormat kFormat, const VkExtent2D kExtent);
+public:
+	Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent2D kExtent);
+	~Viewport();
+
+public:
+	bool	UpdateViewportSize();
+
+	void	StartDraw();
+	void	EndDraw();
+
+	void	Render();
+};
 
 void	ResizeViewport(const Context& kContext, const LogicalDevice& kLogicalDevice,
 						const Device& kDevice, const VkFormat kFormat, Viewport& viewport);
-
-bool	UpdateViewportSize(Viewport& viewport);
-
-void	StartDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport);
-void	EndDraw(const LogicalDevice& kLogicalDevice, Viewport& viewport);
-
-void	Render(const LogicalDevice& kLogicalDevice, Viewport& viewport);
-
-void	DestroyViewport(const Context& kContext, const LogicalDevice& kLogicalDevice, const Viewport& kViewport);

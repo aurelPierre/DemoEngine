@@ -31,12 +31,9 @@ VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShad
 	return shaderStageInfo;
 }
 
-Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice,
-						const Viewport& kViewport, const std::string kVertextShaderPath,
+Material::Material(const Device& kDevice, const Viewport& kViewport, const std::string kVertextShaderPath,
 						const std::string kFragmentShaderPath, const std::vector<Texture*>& kTextures)
 {
-	Material material{};
-	
 	{
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -44,11 +41,11 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 		bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		VkResult err = vkCreateBuffer(kLogicalDevice._device, &bufferInfo, kContext._allocator, &material._ubo);
+		VkResult err = vkCreateBuffer(LogicalDevice::Instance()._device, &bufferInfo, Context::Instance()._allocator, &_ubo);
 		check_vk_result(err);
 
 		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(kLogicalDevice._device, material._ubo, &memRequirements);
+		vkGetBufferMemoryRequirements(LogicalDevice::Instance()._device, _ubo, &memRequirements);
 
 		VkMemoryAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -56,10 +53,10 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 		allocInfo.memoryTypeIndex = findMemoryType(kDevice._memoryProperties, memRequirements.memoryTypeBits, 
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-		err = vkAllocateMemory(kLogicalDevice._device, &allocInfo, kContext._allocator, &material._uboMemory);
+		err = vkAllocateMemory(LogicalDevice::Instance()._device, &allocInfo, Context::Instance()._allocator, &_uboMemory);
 		check_vk_result(err);
 
-		err = vkBindBufferMemory(kLogicalDevice._device, material._ubo, material._uboMemory, 0);
+		err = vkBindBufferMemory(LogicalDevice::Instance()._device, _ubo, _uboMemory, 0);
 		check_vk_result(err);
 	}
 
@@ -85,26 +82,26 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 		layoutInfo.bindingCount = layoutBinding.size();
 		layoutInfo.pBindings = layoutBinding.data();
 
-		VkResult err = vkCreateDescriptorSetLayout(kLogicalDevice._device, &layoutInfo,
-													kContext._allocator, &material._uboLayout);
+		VkResult err = vkCreateDescriptorSetLayout(LogicalDevice::Instance()._device, &layoutInfo,
+													Context::Instance()._allocator, &_uboLayout);
 		check_vk_result(err);
 
 		VkDescriptorSetAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = kLogicalDevice._descriptorPool;
+		allocInfo.descriptorPool = LogicalDevice::Instance()._descriptorPool;
 		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &material._uboLayout;
-		err = vkAllocateDescriptorSets(kLogicalDevice._device, &allocInfo, &material._uboSet);
+		allocInfo.pSetLayouts = &_uboLayout;
+		err = vkAllocateDescriptorSets(LogicalDevice::Instance()._device, &allocInfo, &_uboSet);
 		check_vk_result(err);
 
 		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = material._ubo;
+		bufferInfo.buffer = _ubo;
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 
 		std::vector<VkWriteDescriptorSet> descriptorWrites{ 1 + kTextures.size() };
 		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].dstSet = material._uboSet;
+		descriptorWrites[0].dstSet = _uboSet;
 		descriptorWrites[0].dstBinding = 0;
 		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptorWrites[0].descriptorCount = 1;
@@ -118,14 +115,14 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 			imagesInfo[i].sampler = kTextures[i]->_sampler;
 
 			descriptorWrites[i + 1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[i + 1].dstSet = material._uboSet;
+			descriptorWrites[i + 1].dstSet = _uboSet;
 			descriptorWrites[i + 1].dstBinding = i + 1;
 			descriptorWrites[i + 1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			descriptorWrites[i + 1].descriptorCount = 1;
 			descriptorWrites[i + 1].pImageInfo = &imagesInfo[i];
 		}
 		
-		vkUpdateDescriptorSets(kLogicalDevice._device, descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
+		vkUpdateDescriptorSets(LogicalDevice::Instance()._device, descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 	}
 
 	/******************************************************************************************************/
@@ -133,11 +130,11 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1; // Optional
-	pipelineLayoutInfo.pSetLayouts = &material._uboLayout; // Optional
+	pipelineLayoutInfo.pSetLayouts = &_uboLayout; // Optional
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-	VkResult err = vkCreatePipelineLayout(kLogicalDevice._device, &pipelineLayoutInfo, kContext._allocator, &material._pipelineLayout);
+	VkResult err = vkCreatePipelineLayout(LogicalDevice::Instance()._device, &pipelineLayoutInfo, Context::Instance()._allocator, &_pipelineLayout);
 	check_vk_result(err);
 
 	// Rendering
@@ -172,7 +169,7 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 	pipelineColorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY; // Optional
 	pipelineColorBlendStateCreateInfo.attachmentCount = 1;
 	pipelineColorBlendStateCreateInfo.pAttachments = &pipelineColorBlendAttachmentState;
-	pipelineColorBlendStateCreateInfo.blendConstants[0] = 0.0f; // Optional
+	pipelineColorBlendStateCreateInfo.blendConstants[0] = 1.0f; // Optional
 	pipelineColorBlendStateCreateInfo.blendConstants[1] = 0.0f; // Optional
 	pipelineColorBlendStateCreateInfo.blendConstants[2] = 0.0f; // Optional
 	pipelineColorBlendStateCreateInfo.blendConstants[3] = 0.0f; // Optional
@@ -214,7 +211,7 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineCreateInfo.layout = material._pipelineLayout;
+	pipelineCreateInfo.layout = _pipelineLayout;
 	pipelineCreateInfo.renderPass = kViewport._renderPass;
 	pipelineCreateInfo.flags = 0;
 	pipelineCreateInfo.basePipelineIndex = -1;
@@ -247,29 +244,27 @@ Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDe
 
 	pipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
 
-	VkShaderModule vertShaderModule = loadShader(kLogicalDevice._device, kVertextShaderPath);
-	VkShaderModule fragShaderModule = loadShader(kLogicalDevice._device, kFragmentShaderPath);
+	VkShaderModule vertShaderModule = loadShader(LogicalDevice::Instance()._device, kVertextShaderPath);
+	VkShaderModule fragShaderModule = loadShader(LogicalDevice::Instance()._device, kFragmentShaderPath);
 
 	shaderStages[0] = createShader(vertShaderModule, VK_SHADER_STAGE_VERTEX_BIT);
 	shaderStages[1] = createShader(fragShaderModule, VK_SHADER_STAGE_FRAGMENT_BIT);
-	err = vkCreateGraphicsPipelines(kLogicalDevice._device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, kContext._allocator, &material._pipeline);
+	err = vkCreateGraphicsPipelines(LogicalDevice::Instance()._device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, Context::Instance()._allocator, &_pipeline);
 	check_vk_result(err);
 
 
-	vkDestroyShaderModule(kLogicalDevice._device, vertShaderModule, kContext._allocator);
-	vkDestroyShaderModule(kLogicalDevice._device, fragShaderModule, kContext._allocator);
-
-	return material;
+	vkDestroyShaderModule(LogicalDevice::Instance()._device, vertShaderModule, Context::Instance()._allocator);
+	vkDestroyShaderModule(LogicalDevice::Instance()._device, fragShaderModule, Context::Instance()._allocator);
 }
 
-void	DestroyMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice,  const Material& kMaterial)
+Material::~Material()
 {
-	vkFreeDescriptorSets(kLogicalDevice._device, kLogicalDevice._descriptorPool, 1, &kMaterial._uboSet);
-	vkDestroyDescriptorSetLayout(kLogicalDevice._device, kMaterial._uboLayout, kContext._allocator);
+	vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_uboSet);
+	vkDestroyDescriptorSetLayout(LogicalDevice::Instance()._device, _uboLayout, Context::Instance()._allocator);
 
-	vkDestroyBuffer(kLogicalDevice._device, kMaterial._ubo, kContext._allocator);
-	vkFreeMemory(kLogicalDevice._device, kMaterial._uboMemory, kContext._allocator);
+	vkDestroyBuffer(LogicalDevice::Instance()._device, _ubo, Context::Instance()._allocator);
+	vkFreeMemory(LogicalDevice::Instance()._device, _uboMemory, Context::Instance()._allocator);
 
-	vkDestroyPipeline(kLogicalDevice._device, kMaterial._pipeline, kContext._allocator);
-	vkDestroyPipelineLayout(kLogicalDevice._device, kMaterial._pipelineLayout, kContext._allocator);
+	vkDestroyPipeline(LogicalDevice::Instance()._device, _pipeline, Context::Instance()._allocator);
+	vkDestroyPipelineLayout(LogicalDevice::Instance()._device, _pipelineLayout, Context::Instance()._allocator);
 }

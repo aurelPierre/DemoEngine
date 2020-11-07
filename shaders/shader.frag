@@ -17,8 +17,9 @@ layout(location = 0) out vec4 outColor;
 const float PI = 3.14159265359;
 
 vec3 lightColor = vec3(0.8, 1.0, 0.8);
-vec3 lightPos = vec3(0.0, 8.0, 10.0);
-vec3 viewPos = vec3(15.0, 6.0, 15.0);
+vec3 lightPos = vec3(0.0, 0.0, 3.0);
+float lightRang = 5.0;
+vec3 viewPos = vec3(0.0, 0.0, 20.0);
 
 vec3 getNormalFromNormalMapping()
 {
@@ -30,7 +31,7 @@ vec3 getNormalFromNormalMapping()
 	vec3 B = cross(N, T);
 
 	mat3 TBN = mat3(T, B, N);
-	return TBN * normalize((texture(normalMap, fragUV).rgb * 2.0) - vec3(1.0)); 
+	return normalize(TBN * (texture(normalMap, fragUV).rgb * 2.0 - 1.0)); 
 }
 
 vec3 phongShading()
@@ -53,44 +54,40 @@ vec3 phongShading()
 	return ambient + diffuse + specular;
 }
 
-vec3 fresnelSchlick(float cosTheta, vec3 F0)
+vec3 Fresnel(vec3 f0, float cosTheta, float roughness)
 {
-    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+	return f0 + (max(vec3(1.0 - roughness), f0) - f0) * pow(1.0 - cosTheta, 5.0);
 }  
 
-float DistributionGGX(vec3 N, vec3 H, float roughness)
+float DistributionGGX(float cosAlpha, float roughness)
 {
-    float a      = roughness*roughness;
-    float a2     = a*a;
-    float NdotH  = max(dot(N, H), 0.0);
-    float NdotH2 = NdotH*NdotH;
-	
-    float num   = a2;
-    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-    denom = PI * denom * denom;
-	
-    return num / denom;
+	float roughSqr = roughness * roughness;
+
+	float denom = cosAlpha * cosAlpha * (roughSqr - 1.0) + 1.0;
+
+    return roughSqr / (PI * denom * denom);
 }
 
-float GeometrySchlickGGX(float NdotV, float roughness)
+float GeometrySchlickGGX(float cosRho, float roughness)
 {
-    float r = (roughness + 1.0);
-    float k = (r*r) / 8.0;
+	float k = ((roughness + 1.0) * (roughness + 1.0)) / 8.0;
 
-    float num   = NdotV;
-    float denom = NdotV * (1.0 - k) + k;
-	
-    return num / denom;
+    return cosRho / (cosRho * (1.0 - k) + k);
 }
 
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+float GeometrySmith(float cosTheta, float cosRho, float roughness)
 {
-    float NdotV = max(dot(N, V), 0.0);
-    float NdotL = max(dot(N, L), 0.0);
-    float ggx2  = GeometrySchlickGGX(NdotV, roughness);
-    float ggx1  = GeometrySchlickGGX(NdotL, roughness);
+	float ggx1 = GeometrySchlickGGX(cosRho, roughness);
+    float ggx2 = GeometrySchlickGGX(cosTheta, roughness);
 	
     return ggx1 * ggx2;
+}
+
+float ComputeAttenuation(vec3 lightPosition, float lightRange)
+{
+	float distance = length(lightPosition - fragPos);
+
+	return max(1 - (distance / lightRange), 0.0);
 }
 
 vec3 pbrShading()
@@ -101,51 +98,47 @@ vec3 pbrShading()
     float roughness = texture(roughnessMap, fragUV).r;
     float ao        = texture(aoMap, fragUV).r;
 
-	vec3 N = normalize(normal); 
-    vec3 V = normalize(viewPos - fragPos);
+	vec3 lightV = lightPos - fragPos;
+	vec3 camV = viewPos - fragPos;
 
-	vec3 Lo = vec3(0.0);
+	vec3 f0 = mix(vec3(0.16 * 1.0 * 1.0), albedo, metallic);
 
-	vec3 L = normalize(lightPos - fragPos);
-    vec3 H = normalize(V + L);
-  
-    float distance    = length(lightPos - fragPos);
-    float attenuation = 1.0 / (distance * distance);
-    vec3 radiance     = lightColor * attenuation; 
+	// AMBIENT
+	vec3 ambient = lightColor * 1.0 * albedo;
 
-	vec3 F0 = vec3(0.04); 
-	F0      = mix(F0, albedo, metallic);
-	vec3 F  = fresnelSchlick(max(dot(H, V), 0.0), F0);
+	// BRDF
+	float cosTheta = dot(normal, lightV);
+	vec3 BRDF = vec3(0.0);
 
-	float NDF = DistributionGGX(N, H, roughness);       
-	float G   = GeometrySmith(N, V, L, roughness);       
+	if(cosTheta > 0.0)
+	{
+		vec3 halfV = normalize(lightV + camV);
+		vec3 F = Fresnel(f0, dot(camV, halfV), roughness);
 
-	vec3 numerator    = NDF * G * F;
-	float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-	vec3 specular     = numerator / max(denominator, 0.001);  
+		// DIFFUSE
+		vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);
+		vec3 diffuse = kD * lightColor * 1.0 * albedo / PI;
 
-	vec3 kS = F;
-	vec3 kD = vec3(1.0) - kS;
-  
-	kD *= 1.0 - metallic;	
-  
-    float NdotL = max(dot(N, L), 0.0);        
-    Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+		// SPECULAR
+		float cosAlpha = dot(normal, halfV);
+		float cosRho = dot(normal, camV);
 
-	vec3 ambient = vec3(0.03) * albedo * ao;
-	vec3 color   = ambient + Lo; 
+		vec3 specular = vec3(0);
+		if(cosAlpha > 0.0 && cosRho > 0.0)
+		{
+			float NDF = DistributionGGX(cosAlpha, roughness);
+			float G = GeometrySmith(cosTheta, cosRho, roughness);
+		
+			specular = lightColor * 1.0 * (NDF * G * F) / (4.0 * cosTheta * cosRho);
+		}
 
-	color = color / (color + vec3(1.0));
-    color = pow(color, vec3(1.0/2.2));  
+		BRDF = (diffuse + specular) * cosTheta;
+	}
 
-	return color * 10.0;
+	return (ambient + BRDF) * ComputeAttenuation(lightPos, lightRang);
 }
 
 void main() 
 {
-	vec3 phongColor = phongShading();
-	vec3 pbrColor = pbrShading();
-	
-    vec3 objColor = texture(albedoMap, fragUV).rgb;
-	outColor = vec4(pbrColor * objColor, 1.0);
+	outColor = vec4(pbrShading(), 1.0);
 }

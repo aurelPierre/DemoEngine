@@ -4,12 +4,8 @@
 #include "GLFWWindowSystem.h"
 #include "ImGuiSystem.h"
 
-Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice,
-							const Device& kDevice, const Surface& kSurface,
-							const GLFWWindowData* windowData)
+Swapchain::Swapchain(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData)
 {
-	Swapchain swapchain{};
-
 	VkSurfaceCapabilitiesKHR surfCaps;
 	VkResult err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(kDevice._physicalDevice, kSurface._surface, &surfCaps);
 	check_vk_result(err);
@@ -31,14 +27,14 @@ Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogical
 	{
 		// If the surface size is undefined, the size is set to
 		// the size of the images requested.
-		swapchain._size.width = w;
-		swapchain._size.height = h;
+		_size.width = w;
+		_size.height = h;
 	}
 	else
 	{
 		// TODO check wtf
 		// If the surface size is defined, the swap chain size must match
-		swapchain._size = surfCaps.currentExtent;
+		_size = surfCaps.currentExtent;
 		//*width = surfCaps.currentExtent.width;
 		//*height = surfCaps.currentExtent.height;
 	}
@@ -93,7 +89,7 @@ Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogical
 	swapchainCI.minImageCount = desiredNumberOfSwapchainImages;
 	swapchainCI.imageFormat = kSurface._colorFormat;
 	swapchainCI.imageColorSpace = kSurface._colorSpace;
-	swapchainCI.imageExtent = { swapchain._size.width, swapchain._size.height };
+	swapchainCI.imageExtent = { _size.width, _size.height };
 	swapchainCI.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	swapchainCI.preTransform = (VkSurfaceTransformFlagBitsKHR)preTransform;
 	swapchainCI.imageArrayLayers = 1;
@@ -116,18 +112,18 @@ Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogical
 		swapchainCI.imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}
 
-	err = vkCreateSwapchainKHR(kLogicalDevice._device, &swapchainCI, kContext._allocator, &swapchain._swapchain);
+	err = vkCreateSwapchainKHR(LogicalDevice::Instance()._device, &swapchainCI, Context::Instance()._allocator, &_swapchain);
 	check_vk_result(err);
 
 	// If an existing swap chain is re-created, destroy the old swap chain
 	// This also cleans up all the presentable images
 	if (oldSwapchain != VK_NULL_HANDLE)
 	{
-		for (uint32_t i = 0; i < swapchain._imageCount; i++)
+		for (uint32_t i = 0; i < _imageCount; i++)
 		{
-			vkDestroyImageView(kLogicalDevice._device, swapchain._frames[i]._imageView, nullptr);
+			vkDestroyImageView(LogicalDevice::Instance()._device, _frames[i]._imageView, nullptr);
 		}
-		vkDestroySwapchainKHR(kLogicalDevice._device, oldSwapchain, nullptr);
+		vkDestroySwapchainKHR(LogicalDevice::Instance()._device, oldSwapchain, nullptr);
 	}
 
 	VkAttachmentDescription attachment = {};
@@ -167,12 +163,19 @@ Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogical
 	info.dependencyCount = 1;
 	info.pDependencies = &dependency;
 
-	err = vkCreateRenderPass(kLogicalDevice._device, &info, kContext._allocator, &swapchain._renderPass);
+	err = vkCreateRenderPass(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_renderPass);
 	check_vk_result(err);
 
-	CreateFrames(kContext, kLogicalDevice, kSurface, swapchain);
+	CreateFrames(Context::Instance(), LogicalDevice::Instance(), kSurface, *this);
+}
 
-	return swapchain;
+Swapchain::~Swapchain()
+{
+	for (uint32_t i = 0; i < _frames.size(); ++i)
+		DestroyFrame(Context::Instance(), LogicalDevice::Instance(), _frames[i]);
+
+	vkDestroyRenderPass(LogicalDevice::Instance()._device, _renderPass, Context::Instance()._allocator);
+	vkDestroySwapchainKHR(LogicalDevice::Instance()._device, _swapchain, Context::Instance()._allocator);
 }
 
 void	CreateFrames(const Context& kContext, const LogicalDevice& kLogicalDevice,
@@ -266,17 +269,16 @@ void	ResizeSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevic
 {
 	vkDeviceWaitIdle(kLogicalDevice._device);
 
-	DestroySwapchain(kContext, kLogicalDevice, swapchain);
-	swapchain = CreateSwapchain(kContext, kLogicalDevice, kDevice, kSurface, windowData);
+	//DestroySwapchain(kContext, kLogicalDevice, swapchain);
+	//swapchain = CreateSwapchain(kContext, kLogicalDevice, kDevice, kSurface, windowData);
 }
 
-bool	AcquireNextImage(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
+bool Swapchain::AcquireNextImage()
 {
-	vkWaitForFences(kLogicalDevice._device, 1, &swapchain._frames[swapchain._currentFrame]._fence, VK_TRUE, UINT64_MAX);
+	vkWaitForFences(LogicalDevice::Instance()._device, 1, &_frames[_currentFrame]._fence, VK_TRUE, UINT64_MAX);
 
-	VkResult err = vkAcquireNextImageKHR(kLogicalDevice._device, swapchain._swapchain, UINT64_MAX,
-		swapchain._frames[swapchain._currentFrame]._presentComplete,
-		VK_NULL_HANDLE, &swapchain._currentFrame);
+	VkResult err = vkAcquireNextImageKHR(LogicalDevice::Instance()._device, _swapchain, UINT64_MAX,
+										_frames[_currentFrame]._presentComplete, VK_NULL_HANDLE, &_currentFrame);
 
 	if (err == VK_ERROR_OUT_OF_DATE_KHR)
 		return false;
@@ -285,29 +287,29 @@ bool	AcquireNextImage(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 	return true;
 }
 
-void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
+void Swapchain::Draw()
 {
 	VkCommandBufferBeginInfo commandBeginInfo = {};
 	commandBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	commandBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	VkResult err = vkBeginCommandBuffer(swapchain._frames[swapchain._currentFrame]._commandBuffer, &commandBeginInfo);
+	VkResult err = vkBeginCommandBuffer(_frames[_currentFrame]._commandBuffer, &commandBeginInfo);
 	check_vk_result(err);
 
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = swapchain._size.width;
-	viewport.height = swapchain._size.height;
+	viewport.width = _size.width;
+	viewport.height = _size.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor = {};
 	scissor.offset = { 0, 0 };
-	scissor.extent = { swapchain._size.width, swapchain._size.height };
+	scissor.extent = { _size.width, _size.height };
 
-	vkCmdSetViewport(swapchain._frames[swapchain._currentFrame]._commandBuffer, 0, 1, &viewport);
-	vkCmdSetScissor(swapchain._frames[swapchain._currentFrame]._commandBuffer, 0, 1, &scissor);
+	vkCmdSetViewport(_frames[_currentFrame]._commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(_frames[_currentFrame]._commandBuffer, 0, 1, &scissor);
 
 	VkClearValue clearValues[2];
 	clearValues[0].color = { 0.0f, 0.0f, 0.f, 0.0f };;
@@ -315,13 +317,13 @@ void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 
 	VkRenderPassBeginInfo renderPassBeginInfo = {};
 	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassBeginInfo.renderPass = swapchain._renderPass;
-	renderPassBeginInfo.framebuffer = swapchain._frames[swapchain._currentFrame]._framebuffer;
-	renderPassBeginInfo.renderArea.extent.width = swapchain._size.width;
-	renderPassBeginInfo.renderArea.extent.height = swapchain._size.height;
+	renderPassBeginInfo.renderPass = _renderPass;
+	renderPassBeginInfo.framebuffer = _frames[_currentFrame]._framebuffer;
+	renderPassBeginInfo.renderArea.extent.width = _size.width;
+	renderPassBeginInfo.renderArea.extent.height = _size.height;
 	renderPassBeginInfo.clearValueCount = 2;
 	renderPassBeginInfo.pClearValues = clearValues;
-	vkCmdBeginRenderPass(swapchain._frames[swapchain._currentFrame]._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(_frames[_currentFrame]._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	/**********************************************/
 	/* Foreach objects in this renderpass to draw */
@@ -332,60 +334,60 @@ void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
 	{
 		ImGui::Render();
 		ImDrawData* draw_data = ImGui::GetDrawData();
-		ImGui_ImplVulkan_RenderDrawData(draw_data, swapchain._frames[swapchain._currentFrame]._commandBuffer);
+		ImGui_ImplVulkan_RenderDrawData(draw_data, _frames[_currentFrame]._commandBuffer);
 	}
 
-	vkCmdEndRenderPass(swapchain._frames[swapchain._currentFrame]._commandBuffer);
+	vkCmdEndRenderPass(_frames[_currentFrame]._commandBuffer);
 
-	err = vkEndCommandBuffer(swapchain._frames[swapchain._currentFrame]._commandBuffer);
+	err = vkEndCommandBuffer(_frames[_currentFrame]._commandBuffer);
 	check_vk_result(err);
 }
 
-void	Render(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
+void Swapchain::Render()
 {
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore waitSemaphores[] = { swapchain._frames[swapchain._currentFrame]._presentComplete };
+	VkSemaphore waitSemaphores[] = { _frames[_currentFrame]._presentComplete };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 
 	std::vector<VkCommandBuffer> commands(1);
-	commands[0] = swapchain._frames[swapchain._currentFrame]._commandBuffer;
+	commands[0] = _frames[_currentFrame]._commandBuffer;
 
 	submitInfo.commandBufferCount = commands.size();
 	submitInfo.pCommandBuffers = commands.data();
 
-	VkSemaphore signalSemaphores[] = { swapchain._frames[swapchain._currentFrame]._renderComplete };
+	VkSemaphore signalSemaphores[] = { _frames[_currentFrame]._renderComplete };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	vkResetFences(kLogicalDevice._device, 1, &swapchain._frames[swapchain._currentFrame]._fence);
-	VkResult err = vkQueueSubmit(kLogicalDevice._graphicsQueue._queue, 1, &submitInfo,
-									swapchain._frames[swapchain._currentFrame]._fence);
+	vkResetFences(LogicalDevice::Instance()._device, 1, &_frames[_currentFrame]._fence);
+	VkResult err = vkQueueSubmit(LogicalDevice::Instance()._graphicsQueue._queue, 1, &submitInfo,
+									_frames[_currentFrame]._fence);
 	check_vk_result(err);
 }
 
-bool	Present(const LogicalDevice& kLogicalDevice, Swapchain& swapchain)
+bool Swapchain::Present()
 {
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
 	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &swapchain._frames[swapchain._currentFrame]._renderComplete;
+	presentInfo.pWaitSemaphores = &_frames[_currentFrame]._renderComplete;
 
-	VkSwapchainKHR swapChains[] = { swapchain._swapchain };
+	VkSwapchainKHR swapChains[] = { _swapchain };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
-	presentInfo.pImageIndices = &swapchain._currentFrame;
+	presentInfo.pImageIndices = &_currentFrame;
 
 	presentInfo.pResults = nullptr; // Optional
 
-	VkResult err = vkQueuePresentKHR(kLogicalDevice._graphicsQueue._queue, &presentInfo);
+	VkResult err = vkQueuePresentKHR(LogicalDevice::Instance()._graphicsQueue._queue, &presentInfo);
 
-	swapchain._currentFrame = (swapchain._currentFrame + 1) % swapchain._frames.size();
+	_currentFrame = (_currentFrame + 1) % _frames.size();
 	
 	if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR)
 		return false;
@@ -405,13 +407,4 @@ void	DestroyFrame(const Context& kContext, const LogicalDevice& kLogicalDevice, 
 	vkDestroyFence(kLogicalDevice._device, kFrame._fence, kContext._allocator);
 	vkDestroyFramebuffer(kLogicalDevice._device, kFrame._framebuffer, kContext._allocator);
 	vkDestroyImageView(kLogicalDevice._device, kFrame._imageView, kContext._allocator);
-}
-
-void	DestroySwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain)
-{
-	for (uint32_t i = 0; i < kSwapchain._frames.size(); ++i)
-		DestroyFrame(kContext, kLogicalDevice, kSwapchain._frames[i]);
-
-	vkDestroyRenderPass(kLogicalDevice._device, kSwapchain._renderPass, kContext._allocator);
-	vkDestroySwapchainKHR(kLogicalDevice._device, kSwapchain._swapchain, kContext._allocator);
 }

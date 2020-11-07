@@ -10,8 +10,9 @@
 #include "Device.h"
 #include "Material.h"
 
-struct Mesh
+class Mesh
 {
+public:
 	std::vector<Vertex>		_vertices;
 	std::vector<uint32_t>	_indices;
 
@@ -22,11 +23,12 @@ struct Mesh
 
 	VkBuffer				_verticesBuffer		= VK_NULL_HANDLE;
 	VkDeviceMemory			_verticesMemory		= VK_NULL_HANDLE;
+
+public:
+	Mesh(const Device& kDevice, const std::string kPath);
+	~Mesh();
+
+public:
+	void Draw(VkCommandBuffer commandBuffer);
+
 };
-
-Mesh	CreateMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice,
-					const std::string kPath);
-
-void	Draw(const LogicalDevice& kLogicalDevice, const Mesh& kMesh, VkCommandBuffer commandBuffer);
-
-void	DestroyMesh(const Context& kContext, const LogicalDevice& kLogicalDevice, const Mesh& kMesh);

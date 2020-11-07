@@ -14,50 +14,52 @@ int main(int, char**)
 	ImGuiSystem				imGui;
 	GLFWWindowData*			windowData	= glfwWindow.CreateWindow();
 
-	Context context = CreateContext();
-	Device device = CreateDevice(context);
-	LogicalDevice logicalDevice = CreateLogicalDevice(context, device);
-	Surface surface = CreateSurface(context, logicalDevice, device, windowData);
-	Swapchain swapchain = CreateSwapchain(context, logicalDevice, device, surface, windowData);
+	Context context;
+	Device device;
+	LogicalDevice logicalDevice(device);
+	Surface surface(device, windowData);
+	Swapchain swapchain(device, surface, windowData);
 
 	imGui.Init(windowData, context, device, logicalDevice, swapchain);
 
 	Viewport viewport = CreateViewport(context, logicalDevice, device, surface._colorFormat, { 512, 512 });
 
-	Texture mugColor = CreateTexture(context, logicalDevice, device,
+	Texture mugColor(device,
 		"D:/Personal project/DemoEngine/Resources/Textures/HylianShield_BaseColor.png");
-	Texture mugMetal = CreateTexture(context, logicalDevice, device,
+	Texture mugMetal(device,
 		"D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Metallic.png");
-	Texture mugNormal = CreateTexture(context, logicalDevice, device,
+	Texture mugNormal(device,
 		"D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Normal.png");
-	Texture mugRough = CreateTexture(context, logicalDevice, device,
+	Texture mugRough(device,
 		"D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Roughness.png");
-	Texture mugAO = CreateTexture(context, logicalDevice, device,
+	Texture mugAO(device,
 		"D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Default_AmbientOcclusion.png");
 
-	Material mat = CreateMaterial(context, logicalDevice, device, viewport,
+	Material mat(device, viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/shader.frag.spv",
 		{ &mugColor, &mugMetal, &mugNormal, &mugRough, &mugAO });
 
-	Mesh mesh = CreateMesh(context, logicalDevice, device, "D:/Personal project/DemoEngine/Resources/Mesh/HylianShield.obj");
+	Mesh mesh(device, "D:/Personal project/DemoEngine/Resources/Mesh/HylianShield.obj");
 	mesh._material = &mat;
-
 
 	Scene scene{};
 	scene._viewports.emplace_back(&viewport);
 	scene._mesh.emplace_back(&mesh);
 	
-	imGui._globalFunctions.emplace_back([device]() {
-		DrawWindow("Device data", device);
+	static bool deviceWindow = true;
+	imGui._globalFunctions.emplace_back([&device]() {
+		DrawWindow("Device data", device, &deviceWindow);
 	});
 
-	imGui._globalFunctions.emplace_back([logicalDevice]() {
-		DrawWindow("LogicalDevice data", logicalDevice);
+	bool lDeviceWindow = true;
+	imGui._globalFunctions.emplace_back([&logicalDevice, &lDeviceWindow]() {
+		DrawWindow("LogicalDevice data", logicalDevice, &lDeviceWindow);
 	});
 
-	imGui._globalFunctions.emplace_back([viewport]() {
-		DrawWindow("viewport DEMO", viewport);
+	bool viewportWindow = true;
+	imGui._globalFunctions.emplace_back([&viewport, &viewportWindow]() {
+		DrawWindow("viewport DEMO", viewport, &viewportWindow);
 	});
 
 	while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
@@ -87,7 +89,7 @@ int main(int, char**)
 		ez::LogSystem::Draw();
 		ez::ProfileSystem::Draw();
 
-		if(!AcquireNextImage(logicalDevice, swapchain))
+		if(!swapchain.AcquireNextImage())
 		{
 			windowData->_shouldUpdate = true;
 			imGui.EndFrame();
@@ -102,9 +104,9 @@ int main(int, char**)
 				Render(logicalDevice, *scene._viewports[i]);
 		}
 		
-		Draw(logicalDevice, swapchain);
-		Render(logicalDevice, swapchain);
-		if(!Present(logicalDevice, swapchain))
+		swapchain.Draw();
+		swapchain.Render();
+		if(!swapchain.Present())
 			windowData->_shouldUpdate = true;
 
 		imGui.EndFrame();
@@ -112,21 +114,8 @@ int main(int, char**)
 
 	imGui.Clear();
 
-	DestroyTexture(context, logicalDevice, mugColor);
-	DestroyTexture(context, logicalDevice, mugMetal);
-	DestroyTexture(context, logicalDevice, mugNormal);
-	DestroyTexture(context, logicalDevice, mugRough);
-	DestroyTexture(context, logicalDevice, mugAO);
-
-	DestroyMesh(context, logicalDevice, mesh);
-	DestroyMaterial(context, logicalDevice, mat);
-
 	DestroyViewport(context, logicalDevice, viewport);
 
-	DestroySwapchain(context, logicalDevice, swapchain);
-	DestroySurface(context, surface);
-	DestroyLogicalDevice(context, logicalDevice);
-	DestroyContext(context);
 
 	glfwWindow.DeleteWindow();
 

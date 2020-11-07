@@ -4,7 +4,7 @@
 #include "Swapchain.h"
 #include "Core.h"
 
-void ImGuiSystem::Init(const GLFWWindowData const * windowData, const Context& kContext, const Device& kDevice,
+void ImGuiSystem::Init(const GLFWWindowData* windowData, const Context& kContext, const Device& kDevice,
 						const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain)
 {
 	// Setup Dear ImGui context

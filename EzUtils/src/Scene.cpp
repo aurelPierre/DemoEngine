@@ -61,7 +61,7 @@ void Draw(const LogicalDevice& kLogicalDevice, const Scene& scene)
 			memcpy(data, &ubo, sizeof(UniformBufferObject));
 			vkUnmapMemory(kLogicalDevice._device, scene._mesh[j]->_material->_uboMemory);
 
-			Draw(kLogicalDevice, *scene._mesh[j], scene._viewports[i]->_commandBuffer);
+			scene._mesh[j]->Draw(scene._viewports[i]->_commandBuffer);
 		}
 
 		EndDraw(kLogicalDevice, *scene._viewports[i]);

@@ -73,8 +73,9 @@ namespace std {
 	};
 }
 
-struct Material
+class Material
 {
+public:
 	VkPipelineLayout				_pipelineLayout		= VK_NULL_HANDLE;
 	VkPipeline						_pipeline			= VK_NULL_HANDLE;
 
@@ -83,13 +84,12 @@ struct Material
 	VkBuffer						_ubo				= VK_NULL_HANDLE;
 	VkDeviceMemory					_uboMemory			= VK_NULL_HANDLE;
 	VkDescriptorSet					_uboSet				= VK_NULL_HANDLE;
+
+public:
+	Material(const Device& kDevice, const Viewport& kViewport, const std::string kVertextShaderPath,
+		const std::string kFragmentShaderPath, const std::vector<Texture*>& kTextures);
+	~Material();
 };
 
 VkShaderModule loadShader(const VkDevice kDevice, std::string path);
 VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShaderStageFlagBits flags);
-
-Material CreateMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice, const Device& kDevice,
-						const Viewport& kViewport, const std::string kVertextShaderPath,
-						const std::string kFragmentShaderPath, const std::vector<Texture*>& kTextures);
-
-void	DestroyMaterial(const Context& kContext, const LogicalDevice& kLogicalDevice, const Material& kMaterial);

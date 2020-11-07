@@ -4,15 +4,22 @@
 
 #include "GLFWWindowSystem.h"
 
-Context CreateContext()
+const Context* Context::_sInstance = nullptr;
+
+const Context& Context::Instance()
 {
-	Context context{};
+	return *_sInstance;
+}
+
+Context::Context()
+{
+	_sInstance = this;
 
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = "EzEditor";
+	appInfo.pApplicationName = "Demo";
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.pEngineName = "EzEngine";
+	appInfo.pEngineName = "DemoEngine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_0;
 
@@ -57,7 +64,7 @@ Context CreateContext()
 	createInfo.enabledExtensionCount = extensions.size();
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
-	err = vkCreateInstance(&createInfo, context._allocator, &context._instance);
+	err = vkCreateInstance(&createInfo, _allocator, &_instance);
 	check_vk_result(err);
 
 	/************ Debug ************/
@@ -69,25 +76,23 @@ Context CreateContext()
 		createInfo.pfnUserCallback = debugCallback;
 		createInfo.pUserData = nullptr; // Optional
 
-		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context._instance, "vkCreateDebugUtilsMessengerEXT");
+		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance, "vkCreateDebugUtilsMessengerEXT");
 		if (func != nullptr) {
-			VkResult err = func(context._instance, &createInfo, context._allocator, &context._debugMessenger);
+			VkResult err = func(_instance, &createInfo, _allocator, &_debugMessenger);
 			check_vk_result(err);
 		}
 		else {
 			throw std::runtime_error("validation layers requested, but not available!");
 		}
 	}
-
-	return context;
 }
 
-void DestroyContext(const Context& kContext)
+Context::~Context()
 {
-	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(kContext._instance, "vkDestroyDebugUtilsMessengerEXT");
+	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance, "vkDestroyDebugUtilsMessengerEXT");
 	if (func != nullptr) {
-		func(kContext._instance, kContext._debugMessenger, kContext._allocator);
+		func(_instance, _debugMessenger, _allocator);
 	}
 
-	vkDestroyInstance(kContext._instance, kContext._allocator);
+	vkDestroyInstance(_instance, _allocator);
 }

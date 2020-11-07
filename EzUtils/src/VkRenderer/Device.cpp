@@ -4,7 +4,7 @@
 
 #include <map>
 
-uint32_t	RateDeviceSuitability(const VkPhysicalDevice& kDevice)
+uint32_t Device::RateDeviceSuitability(const VkPhysicalDevice& kDevice)
 {
 	VkPhysicalDeviceProperties deviceProperties;
 	VkPhysicalDeviceFeatures deviceFeatures;
@@ -29,17 +29,15 @@ uint32_t	RateDeviceSuitability(const VkPhysicalDevice& kDevice)
 	return score;
 }
 
-Device	CreateDevice(const Context& kContext)
+Device::Device()
 {
-	Device newDevice{};
-
 	uint32_t gpu_count;
-	VkResult err = vkEnumeratePhysicalDevices(kContext._instance, &gpu_count, NULL);
+	VkResult err = vkEnumeratePhysicalDevices(Context::Instance()._instance, &gpu_count, NULL);
 	check_vk_result(err);
 	//IM_ASSERT(gpu_count > 0);
 
 	std::vector<VkPhysicalDevice> physicalDevices(gpu_count);
-	err = vkEnumeratePhysicalDevices(kContext._instance, &gpu_count, physicalDevices.data());
+	err = vkEnumeratePhysicalDevices(Context::Instance()._instance, &gpu_count, physicalDevices.data());
 	check_vk_result(err);
 
 	// Use an ordered map to automatically sort candidates by increasing score
@@ -52,44 +50,48 @@ Device	CreateDevice(const Context& kContext)
 
 	// Check if the best candidate is suitable at all
 	if (candidates.rbegin()->first > 0) {
-		newDevice._physicalDevice = candidates.rbegin()->second;
+		_physicalDevice = candidates.rbegin()->second;
 	}
 	else {
 		throw std::runtime_error("failed to find a suitable GPU!");
 	}
 
-	vkGetPhysicalDeviceProperties(newDevice._physicalDevice, &newDevice._properties);
-	vkGetPhysicalDeviceFeatures(newDevice._physicalDevice, &newDevice._features);
-	vkGetPhysicalDeviceMemoryProperties(newDevice._physicalDevice, &newDevice._memoryProperties);
+	vkGetPhysicalDeviceProperties(_physicalDevice, &_properties);
+	vkGetPhysicalDeviceFeatures(_physicalDevice, &_features);
+	vkGetPhysicalDeviceMemoryProperties(_physicalDevice, &_memoryProperties);
 
 	uint32_t queueFamilyCount;
-	vkGetPhysicalDeviceQueueFamilyProperties(newDevice._physicalDevice, &queueFamilyCount, nullptr);
+	vkGetPhysicalDeviceQueueFamilyProperties(_physicalDevice, &queueFamilyCount, nullptr);
 	//assert(queueFamilyCount > 0);
-	newDevice._queueFamilyProperties.resize(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(newDevice._physicalDevice, &queueFamilyCount,
-		newDevice._queueFamilyProperties.data());
+	_queueFamilyProperties.resize(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(_physicalDevice, &queueFamilyCount, _queueFamilyProperties.data());
 
 	// Get list of supported extensions
 	uint32_t extCount = 0;
-	err = vkEnumerateDeviceExtensionProperties(newDevice._physicalDevice, nullptr, &extCount, nullptr);
+	err = vkEnumerateDeviceExtensionProperties(_physicalDevice, nullptr, &extCount, nullptr);
 	check_vk_result(err);
 	if (extCount > 0)
 	{
 		std::vector<VkExtensionProperties> extensions(extCount);
 
-		err = vkEnumerateDeviceExtensionProperties(newDevice._physicalDevice, nullptr, &extCount, &extensions.front());
+		err = vkEnumerateDeviceExtensionProperties(_physicalDevice, nullptr, &extCount, &extensions.front());
 		check_vk_result(err);
 
 		for (VkExtensionProperties& ext : extensions)
-			newDevice._supportedExtensions.push_back(ext.extensionName);
+			_supportedExtensions.push_back(ext.extensionName);
 	}
-
-	return newDevice;
 }
 
-LogicalDevice	CreateLogicalDevice(const Context& kContext, const Device& kDevice)
+const LogicalDevice* LogicalDevice::_sInstance = nullptr;
+
+const LogicalDevice& LogicalDevice::Instance()
 {
-	LogicalDevice newLogicalDevice{};
+	return *_sInstance;
+}
+
+LogicalDevice::LogicalDevice(const Device& kDevice)
+{
+	_sInstance = this;
 
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
 
@@ -101,18 +103,18 @@ LogicalDevice	CreateLogicalDevice(const Context& kContext, const Device& kDevice
 	for (uint32_t i = 0; i < static_cast<uint32_t>(kDevice._queueFamilyProperties.size()); i++)
 	{
 		if (kDevice._queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-			newLogicalDevice._graphicsQueue._indice = i;
+			_graphicsQueue._indice = i;
 		else if (kDevice._queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
-			newLogicalDevice._computeQueue._indice= i;
+			_computeQueue._indice= i;
 		else if (kDevice._queueFamilyProperties[i].queueFlags & VK_QUEUE_TRANSFER_BIT)
-			newLogicalDevice._transferQueue._indice = i;
+			_transferQueue._indice = i;
 	}
 
 	// Graphics queue
 	{
 		VkDeviceQueueCreateInfo queueInfo{};
 		queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queueInfo.queueFamilyIndex = newLogicalDevice._graphicsQueue._indice;
+		queueInfo.queueFamilyIndex = _graphicsQueue._indice;
 		queueInfo.queueCount = 1;
 		queueInfo.pQueuePriorities = &defaultQueuePriority;
 		queueCreateInfos.push_back(queueInfo);
@@ -120,12 +122,12 @@ LogicalDevice	CreateLogicalDevice(const Context& kContext, const Device& kDevice
 
 	// Dedicated compute queue
 	{
-		if (newLogicalDevice._graphicsQueue._indice != newLogicalDevice._computeQueue._indice)
+		if (_graphicsQueue._indice != _computeQueue._indice)
 		{
 			// If compute family index differs, we need an additional queue create info for the compute queue
 			VkDeviceQueueCreateInfo queueInfo{};
 			queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			queueInfo.queueFamilyIndex = newLogicalDevice._computeQueue._indice;
+			queueInfo.queueFamilyIndex = _computeQueue._indice;
 			queueInfo.queueCount = 1;
 			queueInfo.pQueuePriorities = &defaultQueuePriority;
 			queueCreateInfos.push_back(queueInfo);
@@ -134,13 +136,13 @@ LogicalDevice	CreateLogicalDevice(const Context& kContext, const Device& kDevice
 
 	// Dedicated transfer queue
 	{
-		if ((newLogicalDevice._transferQueue._indice != newLogicalDevice._graphicsQueue._indice)
-			&& (newLogicalDevice._transferQueue._indice != newLogicalDevice._computeQueue._indice))
+		if ((_transferQueue._indice != _graphicsQueue._indice)
+			&& (_transferQueue._indice != _computeQueue._indice))
 		{
 			// If compute family index differs, we need an additional queue create info for the compute queue
 			VkDeviceQueueCreateInfo queueInfo{};
 			queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			queueInfo.queueFamilyIndex = newLogicalDevice._transferQueue._indice;
+			queueInfo.queueFamilyIndex = _transferQueue._indice;
 			queueInfo.queueCount = 1;
 			queueInfo.pQueuePriorities = &defaultQueuePriority;
 			queueCreateInfos.push_back(queueInfo);
@@ -171,48 +173,48 @@ LogicalDevice	CreateLogicalDevice(const Context& kContext, const Device& kDevice
 	deviceCreateInfo.enabledLayerCount = (uint32_t)validationLayers.size();
 	deviceCreateInfo.ppEnabledLayerNames = validationLayers.data();
 
-	VkResult err = vkCreateDevice(kDevice._physicalDevice, &deviceCreateInfo, kContext._allocator, &newLogicalDevice._device);
+	VkResult err = vkCreateDevice(kDevice._physicalDevice, &deviceCreateInfo, Context::Instance()._allocator, &_device);
 	check_vk_result(err);
 
-	vkGetDeviceQueue(newLogicalDevice._device, newLogicalDevice._graphicsQueue._indice, 0, &newLogicalDevice._graphicsQueue._queue);
-	vkGetDeviceQueue(newLogicalDevice._device, newLogicalDevice._computeQueue._indice, 0, &newLogicalDevice._computeQueue._queue);
-	vkGetDeviceQueue(newLogicalDevice._device, newLogicalDevice._transferQueue._indice, 0, &newLogicalDevice._transferQueue._queue);
+	vkGetDeviceQueue(_device, _graphicsQueue._indice, 0, &_graphicsQueue._queue);
+	vkGetDeviceQueue(_device, _computeQueue._indice, 0, &_computeQueue._queue);
+	vkGetDeviceQueue(_device, _transferQueue._indice, 0, &_transferQueue._queue);
 
 	VkCommandPoolCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	info.queueFamilyIndex = newLogicalDevice._graphicsQueue._indice;
-	err = vkCreateCommandPool(newLogicalDevice._device, &info, kContext._allocator, 
-								&newLogicalDevice._graphicsQueue._commandPool);
+	info.queueFamilyIndex = _graphicsQueue._indice;
+	err = vkCreateCommandPool(_device, &info, Context::Instance()._allocator,
+								&_graphicsQueue._commandPool);
 	check_vk_result(err);
 
-	if (newLogicalDevice._computeQueue._indice != newLogicalDevice._graphicsQueue._indice)
+	if (_computeQueue._indice != _graphicsQueue._indice)
 	{
 		VkCommandPoolCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		info.queueFamilyIndex = newLogicalDevice._computeQueue._indice;
-		err = vkCreateCommandPool(newLogicalDevice._device, &info, kContext._allocator, &newLogicalDevice._computeQueue._commandPool);
+		info.queueFamilyIndex = _computeQueue._indice;
+		err = vkCreateCommandPool(_device, &info, Context::Instance()._allocator, &_computeQueue._commandPool);
 		check_vk_result(err);
 	}
 	else
-		newLogicalDevice._computeQueue._commandPool = newLogicalDevice._graphicsQueue._commandPool;
+		_computeQueue._commandPool = _graphicsQueue._commandPool;
 	
-	if (newLogicalDevice._transferQueue._indice == newLogicalDevice._graphicsQueue._indice)
+	if (_transferQueue._indice == _graphicsQueue._indice)
 	{
-		newLogicalDevice._transferQueue._commandPool = newLogicalDevice._graphicsQueue._commandPool;
+		_transferQueue._commandPool = _graphicsQueue._commandPool;
 	}
-	else if (newLogicalDevice._transferQueue._indice == newLogicalDevice._computeQueue._indice)
+	else if (_transferQueue._indice == _computeQueue._indice)
 	{
-		newLogicalDevice._transferQueue._commandPool = newLogicalDevice._computeQueue._commandPool;
+		_transferQueue._commandPool = _computeQueue._commandPool;
 	}
 	else
 	{
 		VkCommandPoolCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		info.queueFamilyIndex = newLogicalDevice._transferQueue._indice;
-		err = vkCreateCommandPool(newLogicalDevice._device, &info, kContext._allocator, &newLogicalDevice._transferQueue._commandPool);
+		info.queueFamilyIndex = _transferQueue._indice;
+		err = vkCreateCommandPool(_device, &info, Context::Instance()._allocator, &_transferQueue._commandPool);
 		check_vk_result(err);
 	}
 
@@ -237,23 +239,21 @@ LogicalDevice	CreateLogicalDevice(const Context& kContext, const Device& kDevice
 		pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
 		pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
 		pool_info.pPoolSizes = pool_sizes;
-		err = vkCreateDescriptorPool(newLogicalDevice._device, &pool_info, kContext._allocator, &newLogicalDevice._descriptorPool);
+		err = vkCreateDescriptorPool(_device, &pool_info, Context::Instance()._allocator, &_descriptorPool);
 		check_vk_result(err);
 	}
-
-	return newLogicalDevice;
 }
 
-void DestroyLogicalDevice(const Context& kContext, const LogicalDevice& kLogicalDevice)
+LogicalDevice::~LogicalDevice()
 {
-	vkDestroyDescriptorPool(kLogicalDevice._device, kLogicalDevice._descriptorPool, kContext._allocator);
-	vkDestroyCommandPool(kLogicalDevice._device, kLogicalDevice._graphicsQueue._commandPool, kContext._allocator);
+	vkDestroyDescriptorPool(_device, _descriptorPool, Context::Instance()._allocator);
+	vkDestroyCommandPool(_device, _graphicsQueue._commandPool, Context::Instance()._allocator);
 
-	if (kLogicalDevice._computeQueue._indice != kLogicalDevice._graphicsQueue._indice)
-		vkDestroyCommandPool(kLogicalDevice._device, kLogicalDevice._computeQueue._commandPool, kContext._allocator);
+	if (_computeQueue._indice != _graphicsQueue._indice)
+		vkDestroyCommandPool(_device, _computeQueue._commandPool, Context::Instance()._allocator);
 
-	if (kLogicalDevice._transferQueue._indice != kLogicalDevice._graphicsQueue._indice && kLogicalDevice._transferQueue._indice != kLogicalDevice._computeQueue._indice)
-		vkDestroyCommandPool(kLogicalDevice._device, kLogicalDevice._transferQueue._commandPool, kContext._allocator);
+	if (_transferQueue._indice != _graphicsQueue._indice && _transferQueue._indice != _computeQueue._indice)
+		vkDestroyCommandPool(_device, _transferQueue._commandPool, Context::Instance()._allocator);
 
-	vkDestroyDevice(kLogicalDevice._device, kContext._allocator);
+	vkDestroyDevice(_device, Context::Instance()._allocator);
 }

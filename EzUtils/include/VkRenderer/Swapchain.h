@@ -22,8 +22,9 @@ struct Frame
 	VkSemaphore				_renderComplete		= VK_NULL_HANDLE;
 };
 
-struct Swapchain
+class Swapchain
 {
+public:
 	VkSwapchainKHR			_swapchain			= VK_NULL_HANDLE;
 	VkPresentModeKHR		_presentMode		= VK_PRESENT_MODE_MAX_ENUM_KHR;
 	uint32_t				_imageCount			= 0; // ie. _frames.size() ???
@@ -33,11 +34,18 @@ struct Swapchain
 	VkRenderPass			_renderPass			= VK_NULL_HANDLE;
 
 	std::vector<Frame>		_frames;
+
+public:
+	Swapchain(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData);
+	~Swapchain();
+
+public:
+	bool	AcquireNextImage();
+	void	Draw();
+	void	Render();
+	bool	Present();
 };
 
-Swapchain	CreateSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice,
-							const Device& kDevice, const Surface& kSurface,
-							const GLFWWindowData* windowData);
 void		CreateFrames(const Context& kContext, const LogicalDevice& kLogicalDevice,
 						const Surface& kSurface, Swapchain& swapchain);
 
@@ -45,10 +53,4 @@ void	ResizeSwapchain(const Context& kContext, const LogicalDevice& kLogicalDevic
 						const Device& kDevice, const Surface& kSurface,
 						const GLFWWindowData* windowData, Swapchain& swapchain);
 
-bool	AcquireNextImage(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
-void	Draw(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
-void	Render(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
-bool	Present(const LogicalDevice& kLogicalDevice, Swapchain& swapchain);
-
 void	DestroyFrame(const Context& kContext, const LogicalDevice& kLogicalDevice, const Frame& kFrame);
-void	DestroySwapchain(const Context& kContext, const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain);

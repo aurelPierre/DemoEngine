@@ -14,32 +14,43 @@ struct Queue
 	VkCommandPool	_commandPool	= VK_NULL_HANDLE;
 };
 
-struct Device
+class Device
 {
+public:
 	VkPhysicalDevice						_physicalDevice			= VK_NULL_HANDLE;
 	VkPhysicalDeviceProperties				_properties;
 	VkPhysicalDeviceFeatures				_features;
 	VkPhysicalDeviceMemoryProperties		_memoryProperties;
 	std::vector<VkQueueFamilyProperties>	_queueFamilyProperties;
 	std::vector<std::string>				_supportedExtensions;
+
+private:
+	static uint32_t RateDeviceSuitability(const VkPhysicalDevice& kDevice);
+
+public:
+	Device();
+	~Device() = default;
 };
 
-struct LogicalDevice
+class LogicalDevice
 {
+	static const LogicalDevice* _sInstance;
+
+public:
 	VkDevice			_device				= VK_NULL_HANDLE;
 	Queue				_graphicsQueue;
 	Queue				_computeQueue;
 	Queue				_transferQueue;
 
 	VkDescriptorPool	_descriptorPool		= VK_NULL_HANDLE;
+
+public:
+	static const LogicalDevice& Instance();
+
+public:
+	LogicalDevice(const Device& kDevice);
+	~LogicalDevice();
 };
-
-uint32_t	RateDeviceSuitability(const VkPhysicalDevice& kDevice);
-
-Device				CreateDevice(const Context& kContext);
-LogicalDevice		CreateLogicalDevice(const Context& kContext, const Device& kDevice);
-
-void DestroyLogicalDevice(const Context& kContext, const LogicalDevice& kLogicalDevice);
 
 template<>
 inline void DrawEditor<VkPhysicalDeviceProperties>(const VkPhysicalDeviceProperties& obj)
