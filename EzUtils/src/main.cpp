@@ -71,7 +71,7 @@ int main(int, char**)
 
 		if (windowData->_shouldUpdate)
 		{
-			ResizeSwapchain(context, logicalDevice, device, surface, windowData, swapchain);
+			swapchain.Resize(device, surface, windowData);
 			for (int i = 0; i < scene._viewports.size(); ++i)
 			{
 				if (!scene._viewports[i]->UpdateViewportSize())
