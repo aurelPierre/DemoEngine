@@ -56,7 +56,6 @@ std::vector<char> readFile(const std::string& filename)
 
 uint32_t findMemoryType(VkPhysicalDeviceMemoryProperties memProperties, uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
-	uint32_t type = UINT32_MAX;
 	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
 		if ((typeFilter & (1 << i))
 			&& (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {

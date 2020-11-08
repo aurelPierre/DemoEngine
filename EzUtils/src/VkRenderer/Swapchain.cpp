@@ -125,6 +125,8 @@ Frame& Frame::operator=(Frame&& frame)
 	frame._fence			= VK_NULL_HANDLE;
 	frame._presentComplete	= VK_NULL_HANDLE;
 	frame._renderComplete	= VK_NULL_HANDLE;
+
+	return *this;
 }
 
 Swapchain::Swapchain(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData)
