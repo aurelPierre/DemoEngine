@@ -72,3 +72,17 @@ void Buffer::Map(void* data, size_t size)
 	memcpy(memoryPtr, data, size);
 	vkUnmapMemory(LogicalDevice::Instance()._device, _memory);
 }
+
+void Buffer::CopyBuffer(const Queue& kQueue, const Buffer& kSrcBuffer)
+{
+	if(kSrcBuffer._size != _size)
+		LOG(ez::WARNING, std::string("Buffer::CopyBuffer with different size src: ") + std::to_string(kSrcBuffer._size) + ", dst: " + std::to_string(_size))
+
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands(LogicalDevice::Instance()._device, kQueue._commandPool);
+
+	VkBufferCopy copyRegion{};
+	copyRegion.size = _size;
+	vkCmdCopyBuffer(commandBuffer, kSrcBuffer._buffer, _buffer, 1, &copyRegion);
+
+	endSingleTimeCommands(LogicalDevice::Instance()._device, kQueue._queue, kQueue._commandPool, commandBuffer);
+}

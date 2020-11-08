@@ -27,15 +27,9 @@ Texture::Texture(const Device& kDevice, const std::string kTexturePath)
 						VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	_image = std::move(image);
 
-	transitionImageLayout(LogicalDevice::Instance()._device, LogicalDevice::Instance()._graphicsQueue._queue,
-		LogicalDevice::Instance()._graphicsQueue._commandPool, _image._image,
-		VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	copyBufferToImage(LogicalDevice::Instance()._device, LogicalDevice::Instance()._graphicsQueue._queue,
-		LogicalDevice::Instance()._graphicsQueue._commandPool, stagingBuffer._buffer, 
-		_image._image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-	transitionImageLayout(LogicalDevice::Instance()._device, LogicalDevice::Instance()._graphicsQueue._queue,
-			LogicalDevice::Instance()._graphicsQueue._commandPool, _image._image, VK_FORMAT_R8G8B8A8_SRGB,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	_image.TransitionLayout(LogicalDevice::Instance()._transferQueue, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	_image.CopyBuffer(LogicalDevice::Instance()._transferQueue, stagingBuffer);
+	_image.TransitionLayout(LogicalDevice::Instance()._graphicsQueue, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;

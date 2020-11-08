@@ -25,4 +25,6 @@ public:
 
 public:
 	void Map(void* data, size_t size);
+
+	void CopyBuffer(const Queue& kQueue, const Buffer& kSrcBuffer);
 };

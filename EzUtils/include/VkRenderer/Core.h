@@ -26,13 +26,6 @@ uint32_t findMemoryType(VkPhysicalDeviceMemoryProperties memProperties, uint32_t
 VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool);
 void endSingleTimeCommands(VkDevice device, VkQueue queue, VkCommandPool commandPool, VkCommandBuffer commandBuffer);
 
-void copyBuffer(VkDevice device, VkQueue queue, VkCommandPool commandPool, 
-				VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-void transitionImageLayout(VkDevice device, VkQueue queue, VkCommandPool commandPool, 
-				VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-void copyBufferToImage(VkDevice device, VkQueue queue, VkCommandPool commandPool, 
-				VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-
 VkFormat findDepthFormat(const VkPhysicalDevice& kPhysicalDevice);
 VkFormat findSupportedFormat(const VkPhysicalDevice& kPhysicalDevice, const std::vector<VkFormat>& candidates,
 							VkImageTiling tiling, VkFormatFeatureFlags features);
