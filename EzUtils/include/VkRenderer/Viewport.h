@@ -7,6 +7,7 @@
 #include "Device.h"
 #include "Context.h"
 #include "ImageBuffer.h"
+#include "CommandBuffer.h"
 
 class Mesh;
 
@@ -21,7 +22,7 @@ class Viewport
 public:
 	VkFence					_fence				= VK_NULL_HANDLE;
 
-	VkCommandBuffer			_commandBuffer		= VK_NULL_HANDLE;
+	CommandBuffer			_commandBuffer;
 
 	ImageBuffer				_colorImage;
 	ImageBuffer				_depthImage;

@@ -56,7 +56,7 @@ void Draw(const LogicalDevice& kLogicalDevice, const Scene& scene)
 			ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(rUp[0], rUp[1], rUp[2]));
 
 			scene._mesh[j]->_material->_ubo.Map(&ubo, sizeof(UniformBufferObject));
-			scene._mesh[j]->Draw(scene._viewports[i]->_commandBuffer);
+			scene._mesh[j]->Draw(scene._viewports[i]->_commandBuffer._commandBuffer);
 		}
 
 		scene._viewports[i]->EndDraw();

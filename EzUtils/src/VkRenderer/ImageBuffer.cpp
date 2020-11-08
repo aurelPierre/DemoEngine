@@ -2,6 +2,7 @@
 
 #include "Context.h"
 #include "Core.h"
+#include "CommandBuffer.h"
 
 ImageBuffer::ImageBuffer(const Device& kDevice, const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage)
 	: _size{ kExtent }
@@ -108,7 +109,7 @@ ImageBuffer& ImageBuffer::operator=(ImageBuffer&& imageBuffer)
 
 void ImageBuffer::TransitionLayout(const Queue& kQueue, const VkImageLayout kOldLayout, const VkImageLayout kNewLayout)
 {
-	VkCommandBuffer commandBuffer = beginSingleTimeCommands(LogicalDevice::Instance()._device, kQueue._commandPool);
+	CommandBuffer commandBuffer = CommandBuffer::BeginSingleTimeCommands(kQueue);
 
 	VkImageMemoryBarrier barrier{};
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -147,7 +148,7 @@ void ImageBuffer::TransitionLayout(const Queue& kQueue, const VkImageLayout kOld
 	}
 
 	vkCmdPipelineBarrier(
-		commandBuffer,
+		commandBuffer._commandBuffer,
 		sourceStage, destinationStage,
 		0,
 		0, nullptr,
@@ -155,12 +156,12 @@ void ImageBuffer::TransitionLayout(const Queue& kQueue, const VkImageLayout kOld
 		1, &barrier
 	);
 
-	endSingleTimeCommands(LogicalDevice::Instance()._device, kQueue._queue, kQueue._commandPool, commandBuffer);
+	CommandBuffer::EndSingleTimeCommands(kQueue, commandBuffer);
 }
 
 void ImageBuffer::CopyBuffer(const Queue& kQueue, const Buffer& kBuffer)
 {
-	VkCommandBuffer commandBuffer = beginSingleTimeCommands(LogicalDevice::Instance()._device, kQueue._commandPool);
+	CommandBuffer commandBuffer = CommandBuffer::BeginSingleTimeCommands(kQueue);
 
 	VkBufferImageCopy region{};
 	region.bufferOffset = 0;
@@ -180,7 +181,7 @@ void ImageBuffer::CopyBuffer(const Queue& kQueue, const Buffer& kBuffer)
 	};
 
 	vkCmdCopyBufferToImage(
-		commandBuffer,
+		commandBuffer._commandBuffer,
 		kBuffer._buffer,
 		_image,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -188,5 +189,5 @@ void ImageBuffer::CopyBuffer(const Queue& kQueue, const Buffer& kBuffer)
 		&region
 	);
 
-	endSingleTimeCommands(LogicalDevice::Instance()._device, kQueue._queue, kQueue._commandPool, commandBuffer);
+	CommandBuffer::EndSingleTimeCommands(kQueue, commandBuffer);
 }

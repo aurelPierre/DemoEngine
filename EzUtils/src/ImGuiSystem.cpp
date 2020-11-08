@@ -4,6 +4,7 @@
 #include "Swapchain.h"
 #include "Core.h"
 #include "Context.h"
+#include "CommandBuffer.h"
 
 void ImGuiSystem::Init(const GLFWWindowData* windowData, const Context& kContext, const Device& kDevice,
 						const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain)
@@ -65,38 +66,9 @@ void ImGuiSystem::Init(const GLFWWindowData* windowData, const Context& kContext
 	// Upload Fonts
 	{
 		// Use any command queue
-		VkCommandBuffer command_buffer;
-
-		VkCommandBufferAllocateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		info.commandPool = kLogicalDevice._graphicsQueue._commandPool;
-		info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		info.commandBufferCount = 1;
-		VkResult err = vkAllocateCommandBuffers(kLogicalDevice._device, &info, &command_buffer);
-		check_vk_result(err);
-
-		VkCommandBufferBeginInfo begin_info = {};
-		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-		err = vkBeginCommandBuffer(command_buffer, &begin_info);
-		check_vk_result(err);
-
-		ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-
-		VkSubmitInfo end_info = {};
-		end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		end_info.commandBufferCount = 1;
-		end_info.pCommandBuffers = &command_buffer;
-		err = vkEndCommandBuffer(command_buffer);
-		check_vk_result(err);
-		err = vkQueueSubmit(kLogicalDevice._graphicsQueue._queue, 1, &end_info, VK_NULL_HANDLE);
-		check_vk_result(err);
-
-		err = vkDeviceWaitIdle(kLogicalDevice._device);
-		check_vk_result(err);
-		ImGui_ImplVulkan_DestroyFontUploadObjects();
-		vkFreeCommandBuffers(kLogicalDevice._device, kLogicalDevice._graphicsQueue._commandPool, 1, &command_buffer);
-		check_vk_result(err);
+		CommandBuffer commandBuffer = CommandBuffer::BeginSingleTimeCommands(kLogicalDevice._graphicsQueue);
+		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer._commandBuffer);
+		CommandBuffer::EndSingleTimeCommands(kLogicalDevice._graphicsQueue, commandBuffer);
 	}
 }
 

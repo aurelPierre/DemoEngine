@@ -6,14 +6,14 @@
 
 #include "Device.h"
 #include "Surface.h"
-#include "Context.h"
+#include "CommandBuffer.h"
 
 struct GLFWWindowData;
 
 class Frame
 {
 public:
-	VkCommandBuffer		_commandBuffer		= VK_NULL_HANDLE;
+	CommandBuffer		_commandBuffer;
 	VkImage				_image				= VK_NULL_HANDLE;
 	VkImageView			_imageView			= VK_NULL_HANDLE;
 	VkFramebuffer		_framebuffer		= VK_NULL_HANDLE;

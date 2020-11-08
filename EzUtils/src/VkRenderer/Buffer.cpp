@@ -2,6 +2,7 @@
 
 #include "Context.h"
 #include "Core.h"
+#include "CommandBuffer.h"
 
 Buffer::Buffer(const Device& kDevice, const VkDeviceSize kSize, const VkBufferUsageFlags kUsage)
 	: _size{ kSize }
@@ -78,11 +79,11 @@ void Buffer::CopyBuffer(const Queue& kQueue, const Buffer& kSrcBuffer)
 	if(kSrcBuffer._size != _size)
 		LOG(ez::WARNING, std::string("Buffer::CopyBuffer with different size src: ") + std::to_string(kSrcBuffer._size) + ", dst: " + std::to_string(_size))
 
-	VkCommandBuffer commandBuffer = beginSingleTimeCommands(LogicalDevice::Instance()._device, kQueue._commandPool);
+	CommandBuffer commandBuffer = CommandBuffer::BeginSingleTimeCommands(kQueue);
 
 	VkBufferCopy copyRegion{};
 	copyRegion.size = _size;
-	vkCmdCopyBuffer(commandBuffer, kSrcBuffer._buffer, _buffer, 1, &copyRegion);
+	vkCmdCopyBuffer(commandBuffer._commandBuffer, kSrcBuffer._buffer, _buffer, 1, &copyRegion);
 
-	endSingleTimeCommands(LogicalDevice::Instance()._device, kQueue._queue, kQueue._commandPool, commandBuffer);
+	CommandBuffer::EndSingleTimeCommands(kQueue, commandBuffer);
 }

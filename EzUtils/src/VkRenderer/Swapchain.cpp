@@ -6,7 +6,7 @@
 #include "ImGuiSystem.h"
 
 Frame::Frame(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkRenderPass kRenderPass)
-	: _image { kImage }
+	: _commandBuffer{ LogicalDevice::Instance()._graphicsQueue }, _image { kImage }
 {
 	VkImageViewCreateInfo colorAttachmentView = {};
 	colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -48,15 +48,6 @@ Frame::Frame(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kEx
 	}
 
 	{
-		VkCommandBufferAllocateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		info.commandPool = LogicalDevice::Instance()._graphicsQueue._commandPool;
-		info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		info.commandBufferCount = 1;
-		err = vkAllocateCommandBuffers(LogicalDevice::Instance()._device, &info, &_commandBuffer);
-		check_vk_result(err);
-	}
-	{
 		VkFenceCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
@@ -75,9 +66,6 @@ Frame::Frame(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kEx
 
 Frame::~Frame()
 {
-	if(_commandBuffer != VK_NULL_HANDLE)
-		vkFreeCommandBuffers(LogicalDevice::Instance()._device, LogicalDevice::Instance()._graphicsQueue._commandPool, 1, &_commandBuffer);
-
 	if(_presentComplete != VK_NULL_HANDLE)
 		vkDestroySemaphore(LogicalDevice::Instance()._device, _presentComplete, Context::Instance()._allocator);
 	if(_renderComplete != VK_NULL_HANDLE)
@@ -92,10 +80,9 @@ Frame::~Frame()
 }
 
 Frame::Frame(Frame&& frame)
-	: _commandBuffer{ frame._commandBuffer }, _image{ frame._image }, _imageView { frame._imageView }, _framebuffer { frame._framebuffer },
+	: _commandBuffer{ std::move(frame._commandBuffer) }, _image{ frame._image }, _imageView { frame._imageView }, _framebuffer { frame._framebuffer },
 	_fence{ frame._fence }, _presentComplete { frame._presentComplete }, _renderComplete{ frame._renderComplete }
 {
-	frame._commandBuffer	= VK_NULL_HANDLE;
 	frame._image			= VK_NULL_HANDLE;
 	frame._imageView		= VK_NULL_HANDLE;
 	frame._framebuffer		= VK_NULL_HANDLE;
@@ -107,7 +94,7 @@ Frame::Frame(Frame&& frame)
 
 Frame& Frame::operator=(Frame&& frame)
 {
-	_commandBuffer		= frame._commandBuffer;
+	_commandBuffer		= std::move(frame._commandBuffer);
 	_image				= frame._image;
 	_imageView			= frame._imageView;
 	_framebuffer		= frame._framebuffer;
@@ -116,8 +103,6 @@ Frame& Frame::operator=(Frame&& frame)
 	_presentComplete	= frame._presentComplete;
 	_renderComplete		= frame._renderComplete;
 
-
-	frame._commandBuffer	= VK_NULL_HANDLE;
 	frame._image			= VK_NULL_HANDLE;
 	frame._imageView		= VK_NULL_HANDLE;
 	frame._framebuffer		= VK_NULL_HANDLE;
@@ -516,12 +501,7 @@ bool Swapchain::AcquireNextImage()
 
 void Swapchain::Draw()
 {
-	VkCommandBufferBeginInfo commandBeginInfo = {};
-	commandBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	commandBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	VkResult err = vkBeginCommandBuffer(_frames[_currentFrame]._commandBuffer, &commandBeginInfo);
-	check_vk_result(err);
+	_frames[_currentFrame]._commandBuffer.Begin();
 
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
@@ -535,8 +515,8 @@ void Swapchain::Draw()
 	scissor.offset = { 0, 0 };
 	scissor.extent = { _size.width, _size.height };
 
-	vkCmdSetViewport(_frames[_currentFrame]._commandBuffer, 0, 1, &viewport);
-	vkCmdSetScissor(_frames[_currentFrame]._commandBuffer, 0, 1, &scissor);
+	vkCmdSetViewport(_frames[_currentFrame]._commandBuffer._commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(_frames[_currentFrame]._commandBuffer._commandBuffer, 0, 1, &scissor);
 
 	VkClearValue clearValues[2];
 	clearValues[0].color = { 0.0f, 0.0f, 0.f, 0.0f };;
@@ -550,7 +530,7 @@ void Swapchain::Draw()
 	renderPassBeginInfo.renderArea.extent.height = _size.height;
 	renderPassBeginInfo.clearValueCount = 2;
 	renderPassBeginInfo.pClearValues = clearValues;
-	vkCmdBeginRenderPass(_frames[_currentFrame]._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(_frames[_currentFrame]._commandBuffer._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	/**********************************************/
 	/* Foreach objects in this renderpass to draw */
@@ -561,13 +541,12 @@ void Swapchain::Draw()
 	{
 		ImGui::Render();
 		ImDrawData* draw_data = ImGui::GetDrawData();
-		ImGui_ImplVulkan_RenderDrawData(draw_data, _frames[_currentFrame]._commandBuffer);
+		ImGui_ImplVulkan_RenderDrawData(draw_data, _frames[_currentFrame]._commandBuffer._commandBuffer);
 	}
 
-	vkCmdEndRenderPass(_frames[_currentFrame]._commandBuffer);
+	vkCmdEndRenderPass(_frames[_currentFrame]._commandBuffer._commandBuffer);
 
-	err = vkEndCommandBuffer(_frames[_currentFrame]._commandBuffer);
-	check_vk_result(err);
+	_frames[_currentFrame]._commandBuffer.End();
 }
 
 void Swapchain::Render()
@@ -582,7 +561,7 @@ void Swapchain::Render()
 	submitInfo.pWaitDstStageMask = waitStages;
 
 	std::vector<VkCommandBuffer> commands(1);
-	commands[0] = _frames[_currentFrame]._commandBuffer;
+	commands[0] = _frames[_currentFrame]._commandBuffer._commandBuffer;
 
 	submitInfo.commandBufferCount = commands.size();
 	submitInfo.pCommandBuffers = commands.data();

@@ -11,7 +11,7 @@
 
 
 Viewport::Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent2D kExtent)
-	: _size{ kExtent }
+	: _commandBuffer{ LogicalDevice::Instance()._graphicsQueue }, _size { kExtent }
 {
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = kFormat;
@@ -121,16 +121,6 @@ Viewport::Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent
 			err = vkCreateFramebuffer(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_framebuffer);
 			check_vk_result(err);
 		}
-
-		{
-			VkCommandBufferAllocateInfo info = {};
-			info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			info.commandPool = LogicalDevice::Instance()._graphicsQueue._commandPool;
-			info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			info.commandBufferCount = 1;
-			err = vkAllocateCommandBuffers(LogicalDevice::Instance()._device, &info, &_commandBuffer);
-			check_vk_result(err);
-		}
 	}
 
 	_set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(_sampler, _colorImage._view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -147,8 +137,6 @@ Viewport::Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent
 Viewport::~Viewport()
 {
 	vkDestroyFence(LogicalDevice::Instance()._device, _fence, Context::Instance()._allocator);
-
-	vkFreeCommandBuffers(LogicalDevice::Instance()._device, LogicalDevice::Instance()._graphicsQueue._commandPool, 1, &_commandBuffer);
 
 	VkResult err = vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_set);
 	check_vk_result(err);
@@ -331,12 +319,7 @@ void Viewport::StartDraw()
 
 	/**********************************************************************************************/
 
-	VkCommandBufferBeginInfo commandBeginInfo = {};
-	commandBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	commandBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	err = vkBeginCommandBuffer(_commandBuffer, &commandBeginInfo);
-	check_vk_result(err);
+	_commandBuffer.Begin();
 
 	VkViewport vkViewport = {};
 	vkViewport.x = 0.0f;
@@ -350,8 +333,8 @@ void Viewport::StartDraw()
 	scissor.offset = { 0, 0 };
 	scissor.extent = { _size.width, _size.height };
 
-	vkCmdSetViewport(_commandBuffer, 0, 1, &vkViewport);
-	vkCmdSetScissor(_commandBuffer, 0, 1, &scissor);
+	vkCmdSetViewport(_commandBuffer._commandBuffer, 0, 1, &vkViewport);
+	vkCmdSetScissor(_commandBuffer._commandBuffer, 0, 1, &scissor);
 
 	VkClearValue clearValues[2];
 	clearValues[0].color = { 0.05f, 0.05f, 0.1f, 1.0f };;
@@ -365,15 +348,14 @@ void Viewport::StartDraw()
 	renderPassBeginInfo.renderArea.extent.height = _size.height;
 	renderPassBeginInfo.clearValueCount = 2;
 	renderPassBeginInfo.pClearValues = clearValues;
-	vkCmdBeginRenderPass(_commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(_commandBuffer._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void Viewport::EndDraw()
 {
-	vkCmdEndRenderPass(_commandBuffer);
+	vkCmdEndRenderPass(_commandBuffer._commandBuffer);
 
-	VkResult err = vkEndCommandBuffer(_commandBuffer);
-	check_vk_result(err);
+	_commandBuffer.End();
 }
 
 void Viewport::Render()
@@ -386,7 +368,7 @@ void Viewport::Render()
 	submitInfo.pWaitDstStageMask = waitStages;
 
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &_commandBuffer;
+	submitInfo.pCommandBuffers = &_commandBuffer._commandBuffer;
 
 	submitInfo.signalSemaphoreCount = 0;
 

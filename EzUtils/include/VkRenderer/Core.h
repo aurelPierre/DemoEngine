@@ -23,9 +23,6 @@ std::vector<char> readFile(const std::string& filename);
 
 uint32_t findMemoryType(VkPhysicalDeviceMemoryProperties memProperties, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool);
-void endSingleTimeCommands(VkDevice device, VkQueue queue, VkCommandPool commandPool, VkCommandBuffer commandBuffer);
-
 VkFormat findDepthFormat(const VkPhysicalDevice& kPhysicalDevice);
 VkFormat findSupportedFormat(const VkPhysicalDevice& kPhysicalDevice, const std::vector<VkFormat>& candidates,
 							VkImageTiling tiling, VkFormatFeatureFlags features);
