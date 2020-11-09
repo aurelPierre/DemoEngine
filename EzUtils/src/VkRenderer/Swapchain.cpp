@@ -8,6 +8,10 @@
 Frame::Frame(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkRenderPass kRenderPass)
 	: _commandBuffer{ LogicalDevice::Instance()._graphicsQueue }, _image { kImage }
 {
+	ASSERT(kImage != nullptr, "kImage is nullptr")
+	ASSERT(kExtent.width != 0u || kExtent.height != 0, "kExtent.width is 0 or kExtent.height is 0")
+	ASSERT(kRenderPass != nullptr, "kRenderPass is nullptr")
+
 	VkImageViewCreateInfo colorAttachmentView = {};
 	colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	colorAttachmentView.pNext = NULL;
@@ -116,6 +120,8 @@ Frame& Frame::operator=(Frame&& frame)
 
 Swapchain::Swapchain(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData)
 {
+	ASSERT(windowData != nullptr, "windowData is nullptr")
+
 	VkSurfaceCapabilitiesKHR surfCaps;
 	VkResult err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(kDevice._physicalDevice, kSurface._surface, &surfCaps);
 	check_vk_result(err);
@@ -300,6 +306,8 @@ Swapchain::~Swapchain()
 
 void Swapchain::Resize(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData)
 {
+	ASSERT(windowData != nullptr, "windowData is nullptr")
+
 	vkDeviceWaitIdle(LogicalDevice::Instance()._device);
 
 	{
@@ -519,7 +527,7 @@ void Swapchain::Draw()
 	vkCmdSetScissor(_frames[_currentFrame]._commandBuffer._commandBuffer, 0, 1, &scissor);
 
 	VkClearValue clearValues[2];
-	clearValues[0].color = { 0.0f, 0.0f, 0.f, 0.0f };;
+	clearValues[0].color = { { 0.0f, 0.0f, 0.f, 0.0f } };
 	clearValues[1].depthStencil = { 1.0f, 0 };
 
 	VkRenderPassBeginInfo renderPassBeginInfo = {};

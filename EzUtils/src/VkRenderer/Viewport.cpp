@@ -13,6 +13,8 @@
 Viewport::Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent2D kExtent)
 	: _commandBuffer{ LogicalDevice::Instance()._graphicsQueue }, _size { kExtent }
 {
+	ASSERT(kExtent.width != 0 && kExtent.height != 0, "kExtent.width is 0 or kExtent.height is 0")
+
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = kFormat;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -337,7 +339,7 @@ void Viewport::StartDraw()
 	vkCmdSetScissor(_commandBuffer._commandBuffer, 0, 1, &scissor);
 
 	VkClearValue clearValues[2];
-	clearValues[0].color = { 0.05f, 0.05f, 0.1f, 1.0f };;
+	clearValues[0].color = { { 0.05f, 0.05f, 0.1f, 1.0f } };
 	clearValues[1].depthStencil = { 1.0f, 0 };
 	
 	VkRenderPassBeginInfo renderPassBeginInfo = {};

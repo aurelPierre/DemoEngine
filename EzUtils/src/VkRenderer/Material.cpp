@@ -6,6 +6,8 @@
 
 VkShaderModule loadShader(const VkDevice kDevice, std::string path)
 {
+	ASSERT(!path.empty(), "path is empty")
+
 	std::vector<char> code = readFile(path);
 
 	VkShaderModuleCreateInfo createInfo = {};
@@ -36,6 +38,9 @@ VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShad
 Material::Material(const Device& kDevice, const Viewport& kViewport, const std::string kVertextShaderPath,
 						const std::string kFragmentShaderPath, const std::vector<Texture*>& kTextures)
 {
+	ASSERT(!kVertextShaderPath.empty(), "kVertextShaderPath is empty")
+	ASSERT(!kFragmentShaderPath.empty(), "kFragmentShaderPath is empty")
+
 	Buffer ubo(kDevice, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 	_ubo = std::move(ubo);
 	

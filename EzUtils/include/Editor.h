@@ -57,5 +57,5 @@ void DrawWindow(std::string name, const T& obj, bool* out_open)
 template<typename T>
 inline void DrawEditor(const T& obj)
 {
-	ImGui::TextColored({1.f, 1.f, 0.f, 1.f}, (std::string("DrawEditor for ") + typeid(T).name() + " is undefined.").c_str());
+	ImGui::TextColored({1.f, 1.f, 0.f, 1.f}, "%s", (std::string("DrawEditor for ") + typeid(T).name() + " is undefined.").c_str());
 }

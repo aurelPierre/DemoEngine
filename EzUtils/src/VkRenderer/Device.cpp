@@ -87,6 +87,7 @@ const LogicalDevice* LogicalDevice::_sInstance = nullptr;
 
 const LogicalDevice& LogicalDevice::Instance()
 {
+	ASSERT(_sInstance != nullptr, "_sInstance is nullptr")
 	return *_sInstance;
 }
 

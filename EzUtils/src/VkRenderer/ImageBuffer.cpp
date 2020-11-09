@@ -7,6 +7,8 @@
 ImageBuffer::ImageBuffer(const Device& kDevice, const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage)
 	: _size{ kExtent }
 {
+	ASSERT(kExtent.width != 0u && kExtent.height != 0, "kExtent.width is 0 or kExtent.height is 0")
+
 	VkImageCreateInfo image{};
 	image.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	image.imageType = VK_IMAGE_TYPE_2D;
@@ -107,8 +109,10 @@ ImageBuffer& ImageBuffer::operator=(ImageBuffer&& imageBuffer)
 	return *this;
 }
 
-void ImageBuffer::TransitionLayout(const Queue& kQueue, const VkImageLayout kOldLayout, const VkImageLayout kNewLayout)
+void ImageBuffer::TransitionLayout(const Queue& kQueue, const VkImageLayout kOldLayout, const VkImageLayout kNewLayout) const
 {
+	ASSERT(kOldLayout != kNewLayout, "kOldLayout is equal to kNewLayout")
+
 	CommandBuffer commandBuffer = CommandBuffer::BeginSingleTimeCommands(kQueue);
 
 	VkImageMemoryBarrier barrier{};
@@ -159,7 +163,7 @@ void ImageBuffer::TransitionLayout(const Queue& kQueue, const VkImageLayout kOld
 	CommandBuffer::EndSingleTimeCommands(kQueue, commandBuffer);
 }
 
-void ImageBuffer::CopyBuffer(const Queue& kQueue, const Buffer& kBuffer)
+void ImageBuffer::CopyBuffer(const Queue& kQueue, const Buffer& kBuffer) const
 {
 	CommandBuffer commandBuffer = CommandBuffer::BeginSingleTimeCommands(kQueue);
 

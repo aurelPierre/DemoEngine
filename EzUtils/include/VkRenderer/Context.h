@@ -12,6 +12,7 @@
 // A structure with custom memory management could be usefull
 class Context
 {
+private:
 	static const Context* _sInstance;
 
 public:
@@ -20,11 +21,11 @@ public:
 	VkDebugUtilsMessengerEXT	_debugMessenger = VK_NULL_HANDLE;
 
 public:
-	static const Context& Instance();
-
-public:
 	Context();
 	~Context();
+
+public:
+	static const Context& Instance();
 };
 
 template<>

@@ -24,7 +24,7 @@ public:
 
 public:
 	Mesh(const Device& kDevice, const std::string kPath);
-	~Mesh();
+	~Mesh() = default;
 
 public:
 	void Draw(VkCommandBuffer commandBuffer);

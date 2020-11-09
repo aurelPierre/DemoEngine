@@ -7,6 +7,8 @@
 
 Surface::Surface(const Device& kDevice, const GLFWWindowData* windowData)
 {
+	ASSERT(windowData != nullptr, "windowData is nullptr")
+
 	VkResult err = glfwCreateWindowSurface(Context::Instance()._instance, windowData->_window, Context::Instance()._allocator, &_surface);
 	check_vk_result(err);
 

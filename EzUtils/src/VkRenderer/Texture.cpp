@@ -10,7 +10,9 @@
 
 Texture::Texture(const Device& kDevice, const std::string kTexturePath)
 {
-	int texWidth, texHeight, texChannels;
+	ASSERT(!kTexturePath.empty(), "kTexturePath is empty")
+
+	int texWidth = 0, texHeight = 0, texChannels = 0;
 	stbi_uc* pixels = stbi_load(kTexturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 

@@ -44,11 +44,11 @@ public:
 	VkDescriptorPool	_descriptorPool		= VK_NULL_HANDLE;
 
 public:
-	static const LogicalDevice& Instance();
-
-public:
 	LogicalDevice(const Device& kDevice);
 	~LogicalDevice();
+
+public:
+	static const LogicalDevice& Instance();
 };
 
 template<>

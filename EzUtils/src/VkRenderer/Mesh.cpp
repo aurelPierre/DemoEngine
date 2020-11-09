@@ -5,9 +5,13 @@
 #include "LogSystem.h"
 
 #include <unordered_map>
+#include <stdexcept>
+#include "Core.h"
 
 Mesh::Mesh(const Device& kDevice, const std::string kPath)
 {
+	ASSERT(!kPath.empty(), "kPath is empty")
+
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -119,10 +123,6 @@ Mesh::Mesh(const Device& kDevice, const std::string kPath)
 		_verticesBuffer = std::move(verticesBuffer);
 		_verticesBuffer.Map(_vertices.data(), sizeof(_vertices[0]) * _vertices.size());
 	}
-}
-
-Mesh::~Mesh()
-{
 }
 
 void Mesh::Draw(VkCommandBuffer commandBuffer)

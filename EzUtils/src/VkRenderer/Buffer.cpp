@@ -7,6 +7,8 @@
 Buffer::Buffer(const Device& kDevice, const VkDeviceSize kSize, const VkBufferUsageFlags kUsage)
 	: _size{ kSize }
 {
+	ASSERT(_size != 0u, "kSize is 0")
+
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = kSize;
@@ -66,18 +68,20 @@ Buffer& Buffer::operator=(Buffer&& buffer)
 	return *this;
 }
 
-void Buffer::Map(void* data, size_t size)
+void Buffer::Map(void* data, size_t size) const
 {
+	ASSERT(data != nullptr, "data is nullptr")
+	ASSERT(size != 0u, "size is 0")
+
 	void* memoryPtr = nullptr;
 	vkMapMemory(LogicalDevice::Instance()._device, _memory, 0, _size, 0, &memoryPtr);
 	memcpy(memoryPtr, data, size);
 	vkUnmapMemory(LogicalDevice::Instance()._device, _memory);
 }
 
-void Buffer::CopyBuffer(const Queue& kQueue, const Buffer& kSrcBuffer)
+void Buffer::CopyBuffer(const Queue& kQueue, const Buffer& kSrcBuffer) const
 {
-	if(kSrcBuffer._size != _size)
-		LOG(ez::WARNING, std::string("Buffer::CopyBuffer with different size src: ") + std::to_string(kSrcBuffer._size) + ", dst: " + std::to_string(_size))
+	ASSERT(kSrcBuffer._size == _size, "different size src : " + std::to_string(kSrcBuffer._size) + ", dst : " + std::to_string(_size))
 
 	CommandBuffer commandBuffer = CommandBuffer::BeginSingleTimeCommands(kQueue);
 

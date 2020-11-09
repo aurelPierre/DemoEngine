@@ -26,6 +26,6 @@ public:
 	ImageBuffer& operator=(ImageBuffer&& imageBuffer);
 
 public:
-	void TransitionLayout(const Queue& kQueue, const VkImageLayout kOldLayout, const VkImageLayout kNewLayout);
-	void CopyBuffer(const Queue& kQueue, const Buffer& kBuffer);
+	void TransitionLayout(const Queue& kQueue, const VkImageLayout kOldLayout, const VkImageLayout kNewLayout) const;
+	void CopyBuffer(const Queue& kQueue, const Buffer& kBuffer) const;
 };

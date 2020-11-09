@@ -1,5 +1,4 @@
-{
-    // See https://go.microsoft.com//fwlink//?linkid=834763 for more information about this file.
+﻿{
   "configurations": [
     {
       "name": "x64-Debug",
@@ -9,7 +8,8 @@
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v -j4",
-      "ctestCommandArgs": ""
+      "ctestCommandArgs": "",
+      "variables": []
     },
     {
       "name": "x64-Release",
@@ -19,13 +19,14 @@
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v -j4",
-      "ctestCommandArgs": ""
+      "ctestCommandArgs": "",
+      "variables": []
     },
     {
       "name": "x64-Debug-Clang",
       "generator": "Ninja",
       "configurationType": "Debug",
-      "inheritEnvironments": [ "msvc_x64" ],
+      "inheritEnvironments": [ "clang_cl_x64_x64" ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v -j4",
@@ -33,11 +34,13 @@
       "variables": [
         {
           "name": "CMAKE_C_COMPILER",
-          "value": "clang-cl"
+          "value": "clang-cl",
+          "type": "STRING"
         },
         {
           "name": "CMAKE_CXX_COMPILER",
-          "value": "clang-cl"
+          "value": "clang-cl",
+          "type": "STRING"
         }
       ]
     },
@@ -45,7 +48,7 @@
       "name": "x64-Release-Clang",
       "generator": "Ninja",
       "configurationType": "Release",
-      "inheritEnvironments": [ "msvc_x64" ],
+      "inheritEnvironments": [ "clang_cl_x64_x64" ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v -j4",
@@ -53,11 +56,13 @@
       "variables": [
         {
           "name": "CMAKE_C_COMPILER",
-          "value": "clang-cl"
+          "value": "clang-cl",
+          "type": "STRING"
         },
         {
           "name": "CMAKE_CXX_COMPILER",
-          "value": "clang-cl"
+          "value": "clang-cl",
+          "type": "STRING"
         }
       ]
     }

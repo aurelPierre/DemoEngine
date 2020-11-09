@@ -8,6 +8,7 @@ const Context* Context::_sInstance = nullptr;
 
 const Context& Context::Instance()
 {
+	ASSERT(_sInstance != nullptr, "_sInstance is nullptr")
 	return *_sInstance;
 }
 
