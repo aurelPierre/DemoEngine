@@ -46,15 +46,7 @@ Frame::Frame(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kEx
 
 Frame::~Frame()
 {
-	if(_presentComplete != VK_NULL_HANDLE)
-		vkDestroySemaphore(LogicalDevice::Instance()._device, _presentComplete, Context::Instance()._allocator);
-	if(_renderComplete != VK_NULL_HANDLE)
-		vkDestroySemaphore(LogicalDevice::Instance()._device, _renderComplete, Context::Instance()._allocator);
-	if(_fence != VK_NULL_HANDLE)
-		vkDestroyFence(LogicalDevice::Instance()._device, _fence, Context::Instance()._allocator);
-
-	if(_framebuffer != VK_NULL_HANDLE)
-		vkDestroyFramebuffer(LogicalDevice::Instance()._device, _framebuffer, Context::Instance()._allocator);
+	Clean();
 }
 
 Frame::Frame(Frame&& frame)
@@ -70,6 +62,8 @@ Frame::Frame(Frame&& frame)
 
 Frame& Frame::operator=(Frame&& frame)
 {
+	Clean();
+
 	_commandBuffer		= std::move(frame._commandBuffer);
 	_imageBuffer		= std::move(frame._imageBuffer);
 	_framebuffer		= frame._framebuffer;
@@ -85,6 +79,19 @@ Frame& Frame::operator=(Frame&& frame)
 	frame._renderComplete	= VK_NULL_HANDLE;
 
 	return *this;
+}
+
+void Frame::Clean()
+{
+	if (_presentComplete != VK_NULL_HANDLE)
+		vkDestroySemaphore(LogicalDevice::Instance()._device, _presentComplete, Context::Instance()._allocator);
+	if (_renderComplete != VK_NULL_HANDLE)
+		vkDestroySemaphore(LogicalDevice::Instance()._device, _renderComplete, Context::Instance()._allocator);
+	if (_fence != VK_NULL_HANDLE)
+		vkDestroyFence(LogicalDevice::Instance()._device, _fence, Context::Instance()._allocator);
+
+	if (_framebuffer != VK_NULL_HANDLE)
+		vkDestroyFramebuffer(LogicalDevice::Instance()._device, _framebuffer, Context::Instance()._allocator);
 }
 
 Swapchain::Swapchain(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData)

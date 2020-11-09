@@ -32,6 +32,9 @@ public:
 
 	Frame& operator=(const Frame& kFrame) = delete;
 	Frame& operator=(Frame&& frame);
+
+private:
+	void Clean();
 };
 
 class Swapchain
