@@ -144,6 +144,8 @@ void Viewport::Init(const Device& kDevice, const VkFormat kFormat)
 
 void Viewport::Clean()
 {
+	vkDeviceWaitIdle(LogicalDevice::Instance()._device);
+
 	VkResult err = vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_set);
 	check_vk_result(err);
 
@@ -155,8 +157,6 @@ void Viewport::Clean()
 
 void Viewport::Resize(const Device& kDevice, const VkFormat kFormat)
 {
-	vkDeviceWaitIdle(LogicalDevice::Instance()._device);
-	
 	ImVec2 vMin = ImGui::GetWindowContentRegionMin();
 	ImVec2 vMax = ImGui::GetWindowContentRegionMax();
 

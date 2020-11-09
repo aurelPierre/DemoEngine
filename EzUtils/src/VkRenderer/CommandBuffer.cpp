@@ -57,7 +57,7 @@ void CommandBuffer::EndSingleTimeCommands(const Queue& kQueue, const CommandBuff
 	VkResult err = vkQueueSubmit(kQueue._queue, 1, &submitInfo, VK_NULL_HANDLE);
 	check_vk_result(err);
 
-	err = vkQueueWaitIdle(kQueue._queue); // TODO: should remove this line ?
+	err = vkQueueWaitIdle(kQueue._queue);
 	check_vk_result(err);
 }
 

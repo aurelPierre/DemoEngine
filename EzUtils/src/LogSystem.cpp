@@ -206,9 +206,10 @@ namespace ez
 		if (file.is_open())
 		{
 			for (size_t i = 0; i < _buffer.size(); ++i)
-				file << _buffer[i].Text() << std::endl;
+				file << _buffer[i].Text() << '\n';
 
-			file.close();
+			file.flush();
 		}
+		file.close();
 	}
 }

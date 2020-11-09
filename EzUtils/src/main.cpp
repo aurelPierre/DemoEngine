@@ -112,8 +112,9 @@ int main(int, char**)
 		imGui.EndFrame();
 	}
 
-	imGui.Clear();
+	vkDeviceWaitIdle(logicalDevice._device);
 
+	imGui.Clear();
 
 	glfwWindow.DeleteWindow();
 

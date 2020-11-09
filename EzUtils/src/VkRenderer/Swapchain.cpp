@@ -271,6 +271,8 @@ void Swapchain::Init(const Device& kDevice, const Surface& kSurface, const GLFWW
 
 void Swapchain::Clean()
 {
+	vkDeviceWaitIdle(LogicalDevice::Instance()._device);
+
 	_frames.clear();
 
 	vkDestroyRenderPass(LogicalDevice::Instance()._device, _renderPass, Context::Instance()._allocator);
@@ -280,8 +282,6 @@ void Swapchain::Clean()
 void Swapchain::Resize(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData)
 {
 	ASSERT(windowData != nullptr, "windowData is nullptr")
-
-	vkDeviceWaitIdle(LogicalDevice::Instance()._device);
 
 	Clean();
 	Init(kDevice, kSurface, windowData);
