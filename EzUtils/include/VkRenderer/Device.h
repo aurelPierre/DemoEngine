@@ -29,6 +29,12 @@ private:
 public:
 	Device();
 	~Device() = default;
+
+public:
+	uint32_t FindMemoryType(const uint32_t typeFilter, const VkMemoryPropertyFlags properties) const;
+
+	VkFormat FindDepthFormat() const;
+	VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, const VkImageTiling tiling, const VkFormatFeatureFlags features) const;
 };
 
 class LogicalDevice

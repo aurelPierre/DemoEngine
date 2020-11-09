@@ -15,6 +15,7 @@ class Context;
 class Device;
 class LogicalDevice;
 class Swapchain;
+class CommandBuffer;
 
 template<typename T>
 struct WindowRef
@@ -34,7 +35,7 @@ public:
 			const LogicalDevice&, const Swapchain&);
 
 	void StartFrame();
-	void Draw(VkCommandBuffer command);
+	void Draw(const CommandBuffer& command);
 	void EndFrame();
 	void Clear();
 };

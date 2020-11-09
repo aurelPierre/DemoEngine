@@ -24,8 +24,7 @@ Buffer::Buffer(const Device& kDevice, const VkDeviceSize kSize, const VkBufferUs
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = findMemoryType(kDevice._memoryProperties, memRequirements.memoryTypeBits,
-												VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	allocInfo.memoryTypeIndex = kDevice.FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	result = vkAllocateMemory(LogicalDevice::Instance()._device, &allocInfo, nullptr, &_memory);
 	check_vk_result(result);

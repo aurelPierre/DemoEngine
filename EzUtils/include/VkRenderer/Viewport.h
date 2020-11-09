@@ -38,6 +38,10 @@ public:
 	Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent2D kExtent);
 	~Viewport();
 
+private:
+	void Init(const Device& kDevice, const VkFormat kFormat);
+	void Clean();
+
 public:
 	void	Resize(const Device& kDevice, const VkFormat kFormat);
 

@@ -15,6 +15,25 @@ Viewport::Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent
 {
 	ASSERT(kExtent.width != 0 && kExtent.height != 0, "kExtent.width is 0 or kExtent.height is 0")
 
+	Init(kDevice, kFormat);
+
+	VkFenceCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	VkResult err = vkCreateFence(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_fence);
+	check_vk_result(err);
+}
+
+Viewport::~Viewport()
+{
+	vkDestroyFence(LogicalDevice::Instance()._device, _fence, Context::Instance()._allocator);
+
+	Clean();
+}
+
+void Viewport::Init(const Device& kDevice, const VkFormat kFormat)
+{
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = kFormat;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -25,11 +44,11 @@ Viewport::Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	VkAttachmentReference attachmentRef[2] {};
+	VkAttachmentReference attachmentRef[2]{};
 	attachmentRef[0].attachment = 0;
 	attachmentRef[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-	VkFormat depthFormat = findDepthFormat(kDevice._physicalDevice);
+	VkFormat depthFormat = kDevice.FindDepthFormat();
 
 	VkAttachmentDescription depthAttachment{};
 	depthAttachment.format = depthFormat;
@@ -123,23 +142,13 @@ Viewport::Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent
 			err = vkCreateFramebuffer(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_framebuffer);
 			check_vk_result(err);
 		}
-	}
 
-	_set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(_sampler, _colorImage._view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-	{
-		VkFenceCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-		err = vkCreateFence(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_fence);
-		check_vk_result(err);
+		_set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(_sampler, _colorImage._view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 }
 
-Viewport::~Viewport()
+void Viewport::Clean()
 {
-	vkDestroyFence(LogicalDevice::Instance()._device, _fence, Context::Instance()._allocator);
-
 	VkResult err = vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_set);
 	check_vk_result(err);
 
@@ -160,136 +169,14 @@ void Viewport::Resize(const Device& kDevice, const VkFormat kFormat)
 	vMin.y += ImGui::GetWindowPos().y;
 	vMax.x += ImGui::GetWindowPos().x;
 	vMax.y += ImGui::GetWindowPos().y;
+	
+	ImGui::End();
 
 	VkExtent2D size = { (uint32_t)vMax.x - (uint32_t)vMin.x, (uint32_t)vMax.y - (uint32_t)vMin.y };
+	_size = size;
 
-	{
-		VkResult err = vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_set);
-		check_vk_result(err);
-
-		vkDestroySampler(LogicalDevice::Instance()._device, _sampler, Context::Instance()._allocator);
-		vkDestroyFramebuffer(LogicalDevice::Instance()._device, _framebuffer, Context::Instance()._allocator);
-
-		vkDestroyRenderPass(LogicalDevice::Instance()._device, _renderPass, Context::Instance()._allocator);
-	}
-
-	{
-		_size = size;
-
-		VkAttachmentDescription colorAttachment = {};
-		colorAttachment.format = kFormat;
-		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-		VkAttachmentReference attachmentRef[2]{};
-		attachmentRef[0].attachment = 0;
-		attachmentRef[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkFormat depthFormat = findDepthFormat(kDevice._physicalDevice);
-
-		VkAttachmentDescription depthAttachment{};
-		depthAttachment.format = depthFormat;
-		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-		attachmentRef[1].attachment = 1;
-		attachmentRef[1].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		VkSubpassDescription subpass = {};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &attachmentRef[0];
-		subpass.pDepthStencilAttachment = &attachmentRef[1];
-
-		// Use subpass dependencies for layout transitions
-		std::array<VkSubpassDependency, 2> dependencies;
-
-		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[0].dstSubpass = 0;
-		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		dependencies[1].srcSubpass = 0;
-		dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
-
-		VkRenderPassCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		info.attachmentCount = attachments.size();
-		info.pAttachments = attachments.data();
-		info.subpassCount = 1;
-		info.pSubpasses = &subpass;
-		info.dependencyCount = dependencies.size();
-		info.pDependencies = dependencies.data();
-
-		VkResult err = vkCreateRenderPass(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_renderPass);
-		check_vk_result(err);
-
-		ImageBuffer depthImage(kDevice, depthFormat, _size, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		_depthImage = std::move(depthImage);
-
-		ImageBuffer colorImage(kDevice, kFormat, _size, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		_colorImage = std::move(colorImage);
-
-		// Color attachment
-		{
-			VkSamplerCreateInfo samplerInfo{};
-			samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			samplerInfo.magFilter = VK_FILTER_LINEAR;
-			samplerInfo.minFilter = VK_FILTER_LINEAR;
-			samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-			samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-			samplerInfo.addressModeV = samplerInfo.addressModeU;
-			samplerInfo.addressModeW = samplerInfo.addressModeU;
-			samplerInfo.mipLodBias = 0.0f;
-			samplerInfo.maxAnisotropy = 1.0f;
-			samplerInfo.minLod = 0.0f;
-			samplerInfo.maxLod = 1.0f;
-			samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-			check_vk_result(vkCreateSampler(LogicalDevice::Instance()._device, &samplerInfo, Context::Instance()._allocator, &_sampler));
-
-			VkImageView attachment[2];
-			attachment[0] = _colorImage._view;
-			attachment[1] = _depthImage._view;
-
-			VkFramebufferCreateInfo info = {};
-			info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			info.renderPass = _renderPass;
-			info.attachmentCount = 2;
-			info.pAttachments = attachment;
-			info.width = _size.width;
-			info.height = _size.height;
-			info.layers = 1;
-
-			{
-				err = vkCreateFramebuffer(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_framebuffer);
-				check_vk_result(err);
-			}
-
-			_set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(_sampler, _colorImage._view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		}
-	}
-
-	ImGui::End();
+	Clean();
+	Init(kDevice, kFormat);
 }
 
 bool Viewport::UpdateViewportSize()

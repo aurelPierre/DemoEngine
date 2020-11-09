@@ -27,6 +27,6 @@ public:
 	~Mesh() = default;
 
 public:
-	void Draw(VkCommandBuffer commandBuffer);
+	void Draw(const CommandBuffer& commandBuffer);
 
 };

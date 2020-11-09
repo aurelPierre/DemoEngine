@@ -83,6 +83,44 @@ Device::Device()
 	}
 }
 
+uint32_t Device::FindMemoryType(const uint32_t typeFilter, const VkMemoryPropertyFlags properties) const
+{
+	for (uint32_t i = 0; i < _memoryProperties.memoryTypeCount; i++) {
+		if ((typeFilter & (1 << i))
+			&& (_memoryProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+			return i;
+		}
+	}
+
+	throw std::runtime_error("aucun type de memoire ne satisfait le buffer!");
+}
+
+VkFormat Device::FindDepthFormat() const
+{
+	return FindSupportedFormat(
+		{ VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT },
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+	);
+}
+
+VkFormat Device::FindSupportedFormat(const std::vector<VkFormat>& candidates, const VkImageTiling tiling, const VkFormatFeatureFlags features) const
+{
+	for (VkFormat format : candidates) {
+		VkFormatProperties props;
+		vkGetPhysicalDeviceFormatProperties(_physicalDevice, format, &props);
+
+		if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+			return format;
+		}
+		else if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+			 return format;
+		}
+	}
+
+	throw std::runtime_error("failed to find supported format!");
+}
+
 const LogicalDevice* LogicalDevice::_sInstance = nullptr;
 
 const LogicalDevice& LogicalDevice::Instance()

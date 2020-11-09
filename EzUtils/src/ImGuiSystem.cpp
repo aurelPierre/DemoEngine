@@ -153,15 +153,12 @@ void ImGuiSystem::StartFrame()
 	ImGui::End();
 }
 
-void ImGuiSystem::Draw(VkCommandBuffer command)
+void ImGuiSystem::Draw(const CommandBuffer& command)
 {
 	ImGui::Render();
 	
-	if (command != VK_NULL_HANDLE)
-	{
-		ImDrawData* draw_data = ImGui::GetDrawData();
-		ImGui_ImplVulkan_RenderDrawData(draw_data, command);
-	}
+	ImDrawData* draw_data = ImGui::GetDrawData();
+	ImGui_ImplVulkan_RenderDrawData(draw_data, command._commandBuffer);
 }
 
 void ImGuiSystem::EndFrame()

@@ -26,9 +26,3 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 void check_vk_result(const VkResult err);
 
 std::vector<char> readFile(const std::string& filename);
-
-uint32_t findMemoryType(VkPhysicalDeviceMemoryProperties memProperties, uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
-VkFormat findDepthFormat(const VkPhysicalDevice& kPhysicalDevice);
-VkFormat findSupportedFormat(const VkPhysicalDevice& kPhysicalDevice, const std::vector<VkFormat>& candidates,
-							VkImageTiling tiling, VkFormatFeatureFlags features);

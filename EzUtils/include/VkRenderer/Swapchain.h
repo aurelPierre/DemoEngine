@@ -55,6 +55,10 @@ public:
 	Swapchain(const Swapchain& kSwapchain) = delete;
 	Swapchain& operator=(const Swapchain& kSwapchain) = delete;
 
+private:
+	void Init(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData);
+	void Clean();
+
 public:
 	void	Resize(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData);
 	bool	AcquireNextImage();

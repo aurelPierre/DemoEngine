@@ -32,8 +32,7 @@ ImageBuffer::ImageBuffer(const Device& kDevice, const VkFormat kFormat, const Vk
 	memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memAlloc.allocationSize = memReqs.size;
 
-	memAlloc.memoryTypeIndex = findMemoryType(kDevice._memoryProperties, memReqs.memoryTypeBits,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memAlloc.memoryTypeIndex = kDevice.FindMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	err = vkAllocateMemory(LogicalDevice::Instance()._device, &memAlloc, Context::Instance()._allocator, &_memory);
 	check_vk_result(err);
