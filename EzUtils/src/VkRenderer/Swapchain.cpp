@@ -5,8 +5,69 @@
 #include "GLFWWindowSystem.h"
 #include "ImGuiSystem.h"
 
-Frame::Frame(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkRenderPass kRenderPass)
-	: _commandBuffer{ LogicalDevice::Instance()._graphicsQueue }, _imageBuffer { kImage, kFormat, kExtent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT }
+FrameData::FrameData()
+	: _commandBuffer{ LogicalDevice::Instance()._graphicsQueue }
+{
+	VkFenceCreateInfo fenceInfo = {};
+	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	VkResult err = vkCreateFence(LogicalDevice::Instance()._device, &fenceInfo, Context::Instance()._allocator, &_fence);
+	check_vk_result(err);
+
+	VkSemaphoreCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	err = vkCreateSemaphore(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_presentComplete);
+	check_vk_result(err);
+
+	err = vkCreateSemaphore(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_renderComplete);
+	check_vk_result(err);
+}
+
+FrameData::~FrameData()
+{
+	Clean();
+}
+
+FrameData::FrameData(FrameData&& frameImage)
+	: _commandBuffer{ std::move(frameImage._commandBuffer) }, _fence{ frameImage._fence },
+	_presentComplete{ frameImage._presentComplete }, _renderComplete{ frameImage._renderComplete }
+{
+	frameImage._fence = VK_NULL_HANDLE;
+	frameImage._presentComplete = VK_NULL_HANDLE;
+	frameImage._renderComplete = VK_NULL_HANDLE;
+}
+
+FrameData& FrameData::operator=(FrameData&& frameImage)
+{
+	Clean();
+
+	_commandBuffer = std::move(frameImage._commandBuffer);
+
+	_fence = frameImage._fence;
+	_presentComplete = frameImage._presentComplete;
+	_renderComplete = frameImage._renderComplete;
+
+	frameImage._fence = VK_NULL_HANDLE;
+	frameImage._presentComplete = VK_NULL_HANDLE;
+	frameImage._renderComplete = VK_NULL_HANDLE;
+
+	return *this;
+}
+
+void FrameData::Clean()
+{
+	if (_presentComplete != VK_NULL_HANDLE)
+		vkDestroySemaphore(LogicalDevice::Instance()._device, _presentComplete, Context::Instance()._allocator);
+	if (_renderComplete != VK_NULL_HANDLE)
+		vkDestroySemaphore(LogicalDevice::Instance()._device, _renderComplete, Context::Instance()._allocator);
+	if (_fence != VK_NULL_HANDLE)
+		vkDestroyFence(LogicalDevice::Instance()._device, _fence, Context::Instance()._allocator);
+}
+
+FrameImage::FrameImage(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkRenderPass kRenderPass)
+	: _imageBuffer { kImage, kFormat, kExtent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT }
 {
 	ASSERT(kImage != nullptr, "kImage is nullptr")
 	ASSERT(kExtent.width != 0u || kExtent.height != 0, "kExtent.width is 0 or kExtent.height is 0")
@@ -26,70 +87,33 @@ Frame::Frame(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kEx
 
 	VkResult err = vkCreateFramebuffer(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_framebuffer);
 	check_vk_result(err);
-
-	{
-		VkFenceCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-		err = vkCreateFence(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_fence);
-		check_vk_result(err);
-	}
-	{
-		VkSemaphoreCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		err = vkCreateSemaphore(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_presentComplete);
-		check_vk_result(err);
-		err = vkCreateSemaphore(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_renderComplete);
-		check_vk_result(err);
-	}
 }
 
-Frame::~Frame()
+FrameImage::~FrameImage()
 {
 	Clean();
 }
 
-Frame::Frame(Frame&& frame)
-	: _commandBuffer{ std::move(frame._commandBuffer) }, _imageBuffer{ std::move(frame._imageBuffer) }, _framebuffer { frame._framebuffer },
-	_fence{ frame._fence }, _presentComplete { frame._presentComplete }, _renderComplete{ frame._renderComplete }
+FrameImage::FrameImage(FrameImage&& frameImage)
+	: _imageBuffer{ std::move(frameImage._imageBuffer) }, _framebuffer { frameImage._framebuffer }
 {
-	frame._framebuffer		= VK_NULL_HANDLE;
-
-	frame._fence			= VK_NULL_HANDLE;
-	frame._presentComplete	= VK_NULL_HANDLE;
-	frame._renderComplete	= VK_NULL_HANDLE;
+	frameImage._framebuffer		= VK_NULL_HANDLE;
 }
 
-Frame& Frame::operator=(Frame&& frame)
+FrameImage& FrameImage::operator=(FrameImage&& frameImage)
 {
 	Clean();
 
-	_commandBuffer		= std::move(frame._commandBuffer);
-	_imageBuffer		= std::move(frame._imageBuffer);
-	_framebuffer		= frame._framebuffer;
+	_imageBuffer		= std::move(frameImage._imageBuffer);
+	_framebuffer		= frameImage._framebuffer;
 
-	_fence				= frame._fence;
-	_presentComplete	= frame._presentComplete;
-	_renderComplete		= frame._renderComplete;
-
-	frame._framebuffer		= VK_NULL_HANDLE;
-
-	frame._fence			= VK_NULL_HANDLE;
-	frame._presentComplete	= VK_NULL_HANDLE;
-	frame._renderComplete	= VK_NULL_HANDLE;
+	frameImage._framebuffer		= VK_NULL_HANDLE;
 
 	return *this;
 }
 
-void Frame::Clean()
+void FrameImage::Clean()
 {
-	if (_presentComplete != VK_NULL_HANDLE)
-		vkDestroySemaphore(LogicalDevice::Instance()._device, _presentComplete, Context::Instance()._allocator);
-	if (_renderComplete != VK_NULL_HANDLE)
-		vkDestroySemaphore(LogicalDevice::Instance()._device, _renderComplete, Context::Instance()._allocator);
-	if (_fence != VK_NULL_HANDLE)
-		vkDestroyFence(LogicalDevice::Instance()._device, _fence, Context::Instance()._allocator);
-
 	if (_framebuffer != VK_NULL_HANDLE)
 		vkDestroyFramebuffer(LogicalDevice::Instance()._device, _framebuffer, Context::Instance()._allocator);
 }
@@ -263,17 +287,21 @@ void Swapchain::Init(const Device& kDevice, const Surface& kSurface, const GLFWW
 	err = vkGetSwapchainImagesKHR(LogicalDevice::Instance()._device, _swapchain, &_imageCount, images.data());
 	check_vk_result(err);
 
-	_frames.reserve(_imageCount);
+	_framesData.reserve(_imageCount);
+	_framesImage.reserve(_imageCount);
 	// Get the swap chain buffers containing the image and imageview
 	for (uint32_t i = 0; i < _imageCount; i++)
-		_frames.emplace_back(images[i], kSurface._colorFormat, _size, _renderPass);
+	{
+		_framesData.emplace_back();
+		_framesImage.emplace_back(images[i], kSurface._colorFormat, _size, _renderPass);
+	}
 }
 
 void Swapchain::Clean()
 {
 	vkDeviceWaitIdle(LogicalDevice::Instance()._device);
 
-	_frames.clear();
+	_framesImage.clear();
 
 	vkDestroyRenderPass(LogicalDevice::Instance()._device, _renderPass, Context::Instance()._allocator);
 	vkDestroySwapchainKHR(LogicalDevice::Instance()._device, _swapchain, Context::Instance()._allocator);
@@ -289,10 +317,10 @@ void Swapchain::Resize(const Device& kDevice, const Surface& kSurface, const GLF
 
 bool Swapchain::AcquireNextImage()
 {
-	vkWaitForFences(LogicalDevice::Instance()._device, 1, &_frames[_currentFrame]._fence, VK_TRUE, UINT64_MAX);
+	vkWaitForFences(LogicalDevice::Instance()._device, 1, &_framesData[_currentFrame]._fence, VK_TRUE, UINT64_MAX);
 
 	VkResult err = vkAcquireNextImageKHR(LogicalDevice::Instance()._device, _swapchain, UINT64_MAX,
-										_frames[_currentFrame]._presentComplete, VK_NULL_HANDLE, &_currentFrame);
+											_framesData[_currentFrame]._presentComplete, VK_NULL_HANDLE, &_currentImage);
 
 	if (err == VK_ERROR_OUT_OF_DATE_KHR)
 		return false;
@@ -303,7 +331,7 @@ bool Swapchain::AcquireNextImage()
 
 void Swapchain::Draw()
 {
-	_frames[_currentFrame]._commandBuffer.Begin();
+	_framesData[_currentFrame]._commandBuffer.Begin();
 
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
@@ -317,8 +345,8 @@ void Swapchain::Draw()
 	scissor.offset = { 0, 0 };
 	scissor.extent = { _size.width, _size.height };
 
-	vkCmdSetViewport(_frames[_currentFrame]._commandBuffer._commandBuffer, 0, 1, &viewport);
-	vkCmdSetScissor(_frames[_currentFrame]._commandBuffer._commandBuffer, 0, 1, &scissor);
+	vkCmdSetViewport(_framesData[_currentFrame]._commandBuffer._commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(_framesData[_currentFrame]._commandBuffer._commandBuffer, 0, 1, &scissor);
 
 	VkClearValue clearValues[2];
 	clearValues[0].color = { { 0.0f, 0.0f, 0.f, 0.0f } };
@@ -327,12 +355,12 @@ void Swapchain::Draw()
 	VkRenderPassBeginInfo renderPassBeginInfo = {};
 	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassBeginInfo.renderPass = _renderPass;
-	renderPassBeginInfo.framebuffer = _frames[_currentFrame]._framebuffer;
+	renderPassBeginInfo.framebuffer = _framesImage[_currentImage]._framebuffer;
 	renderPassBeginInfo.renderArea.extent.width = _size.width;
 	renderPassBeginInfo.renderArea.extent.height = _size.height;
 	renderPassBeginInfo.clearValueCount = 2;
 	renderPassBeginInfo.pClearValues = clearValues;
-	vkCmdBeginRenderPass(_frames[_currentFrame]._commandBuffer._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(_framesData[_currentFrame]._commandBuffer._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	/**********************************************/
 	/* Foreach objects in this renderpass to draw */
@@ -343,12 +371,12 @@ void Swapchain::Draw()
 	{
 		ImGui::Render();
 		ImDrawData* draw_data = ImGui::GetDrawData();
-		ImGui_ImplVulkan_RenderDrawData(draw_data, _frames[_currentFrame]._commandBuffer._commandBuffer);
+		ImGui_ImplVulkan_RenderDrawData(draw_data, _framesData[_currentFrame]._commandBuffer._commandBuffer);
 	}
 
-	vkCmdEndRenderPass(_frames[_currentFrame]._commandBuffer._commandBuffer);
+	vkCmdEndRenderPass(_framesData[_currentFrame]._commandBuffer._commandBuffer);
 
-	_frames[_currentFrame]._commandBuffer.End();
+	_framesData[_currentFrame]._commandBuffer.End();
 }
 
 void Swapchain::Render()
@@ -356,25 +384,25 @@ void Swapchain::Render()
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore waitSemaphores[] = { _frames[_currentFrame]._presentComplete };
+	VkSemaphore waitSemaphores[] = { _framesData[_currentFrame]._presentComplete };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 
 	std::vector<VkCommandBuffer> commands(1);
-	commands[0] = _frames[_currentFrame]._commandBuffer._commandBuffer;
+	commands[0] = _framesData[_currentFrame]._commandBuffer._commandBuffer;
 
 	submitInfo.commandBufferCount = commands.size();
 	submitInfo.pCommandBuffers = commands.data();
 
-	VkSemaphore signalSemaphores[] = { _frames[_currentFrame]._renderComplete };
+	VkSemaphore signalSemaphores[] = { _framesData[_currentFrame]._renderComplete };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	vkResetFences(LogicalDevice::Instance()._device, 1, &_frames[_currentFrame]._fence);
+	vkResetFences(LogicalDevice::Instance()._device, 1, &_framesData[_currentFrame]._fence);
 	VkResult err = vkQueueSubmit(LogicalDevice::Instance()._graphicsQueue._queue, 1, &submitInfo,
-									_frames[_currentFrame]._fence);
+		_framesData[_currentFrame]._fence);
 	check_vk_result(err);
 }
 
@@ -384,7 +412,7 @@ bool Swapchain::Present()
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
 	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &_frames[_currentFrame]._renderComplete;
+	presentInfo.pWaitSemaphores = &_framesData[_currentFrame]._renderComplete;
 
 	VkSwapchainKHR swapChains[] = { _swapchain };
 	presentInfo.swapchainCount = 1;
@@ -395,7 +423,7 @@ bool Swapchain::Present()
 
 	VkResult err = vkQueuePresentKHR(LogicalDevice::Instance()._graphicsQueue._queue, &presentInfo);
 
-	_currentFrame = (_currentFrame + 1) % _frames.size();
+	_currentFrame = (_currentFrame + 1) % _framesData.size();
 	
 	if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR)
 		return false;

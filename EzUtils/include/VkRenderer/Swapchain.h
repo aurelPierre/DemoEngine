@@ -11,27 +11,45 @@
 
 struct GLFWWindowData;
 
-class Frame
+class FrameData
 {
 public:
 	CommandBuffer		_commandBuffer;
-	ImageBuffer			_imageBuffer;
-	VkFramebuffer		_framebuffer		= VK_NULL_HANDLE;
 
 	VkFence				_fence				= VK_NULL_HANDLE;
 	VkSemaphore			_presentComplete	= VK_NULL_HANDLE;
 	VkSemaphore			_renderComplete		= VK_NULL_HANDLE;
 
 public:
-	Frame(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkRenderPass kRenderPass);
+	FrameData();
+	~FrameData();
 
-	~Frame();
+	FrameData(const FrameData& kFrame) = delete;
+	FrameData(FrameData&& frame);
 
-	Frame(const Frame& kFrame) = delete;
-	Frame(Frame&& frame);
+	FrameData& operator=(const FrameData& kFrame) = delete;
+	FrameData& operator=(FrameData&& frame);
 
-	Frame& operator=(const Frame& kFrame) = delete;
-	Frame& operator=(Frame&& frame);
+private:
+	void Clean();
+};
+
+class FrameImage
+{
+public:
+	ImageBuffer			_imageBuffer;
+	VkFramebuffer		_framebuffer = VK_NULL_HANDLE;
+
+public:
+	FrameImage(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkRenderPass kRenderPass);
+
+	~FrameImage();
+
+	FrameImage(const FrameImage& kFrame) = delete;
+	FrameImage(FrameImage&& frame);
+
+	FrameImage& operator=(const FrameImage& kFrame) = delete;
+	FrameImage& operator=(FrameImage&& frame);
 
 private:
 	void Clean();
@@ -44,11 +62,13 @@ public:
 	VkPresentModeKHR	_presentMode		= VK_PRESENT_MODE_MAX_ENUM_KHR;
 	uint32_t			_imageCount			= 0; // ie. _frames.size() ???
 	uint32_t			_currentFrame		= 0;
+	uint32_t			_currentImage		= 0;
 
 	VkExtent2D			_size;
 	VkRenderPass		_renderPass			= VK_NULL_HANDLE;
 
-	std::vector<Frame>	_frames;
+	std::vector<FrameData>	_framesData;
+	std::vector<FrameImage> _framesImage;
 
 public:
 	Swapchain(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData);
