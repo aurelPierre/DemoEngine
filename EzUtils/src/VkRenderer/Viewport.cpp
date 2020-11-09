@@ -90,16 +90,16 @@ void Viewport::Init(const Device& kDevice, const VkFormat kFormat)
 
 	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
 
-	VkRenderPassCreateInfo info = {};
-	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	info.attachmentCount = attachments.size();
-	info.pAttachments = attachments.data();
-	info.subpassCount = 1;
-	info.pSubpasses = &subpass;
-	info.dependencyCount = dependencies.size();
-	info.pDependencies = dependencies.data();
+	VkRenderPassCreateInfo renderPassIinfo = {};
+	renderPassIinfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassIinfo.attachmentCount = attachments.size();
+	renderPassIinfo.pAttachments = attachments.data();
+	renderPassIinfo.subpassCount = 1;
+	renderPassIinfo.pSubpasses = &subpass;
+	renderPassIinfo.dependencyCount = dependencies.size();
+	renderPassIinfo.pDependencies = dependencies.data();
 
-	VkResult err = vkCreateRenderPass(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_renderPass);
+	VkResult err = vkCreateRenderPass(LogicalDevice::Instance()._device, &renderPassIinfo, Context::Instance()._allocator, &_renderPass);
 	check_vk_result(err);
 
 	ImageBuffer depthImage(kDevice, depthFormat, _size, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -108,43 +108,38 @@ void Viewport::Init(const Device& kDevice, const VkFormat kFormat)
 	ImageBuffer colorImage(kDevice, kFormat, _size, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	_colorImage = std::move(colorImage);
 
-	// Color attachment
-	{
-		VkSamplerCreateInfo samplerInfo{};
-		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerInfo.magFilter = VK_FILTER_LINEAR;
-		samplerInfo.minFilter = VK_FILTER_LINEAR;
-		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		samplerInfo.addressModeV = samplerInfo.addressModeU;
-		samplerInfo.addressModeW = samplerInfo.addressModeU;
-		samplerInfo.mipLodBias = 0.0f;
-		samplerInfo.maxAnisotropy = 1.0f;
-		samplerInfo.minLod = 0.0f;
-		samplerInfo.maxLod = 1.0f;
-		samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-		check_vk_result(vkCreateSampler(LogicalDevice::Instance()._device, &samplerInfo, Context::Instance()._allocator, &_sampler));
+	VkSamplerCreateInfo samplerInfo{};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.addressModeV = samplerInfo.addressModeU;
+	samplerInfo.addressModeW = samplerInfo.addressModeU;
+	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.maxAnisotropy = 1.0f;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = 1.0f;
+	samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	check_vk_result(vkCreateSampler(LogicalDevice::Instance()._device, &samplerInfo, Context::Instance()._allocator, &_sampler));
 
-		VkImageView attachment[2];
-		attachment[0] = _colorImage._view;
-		attachment[1] = _depthImage._view;
+	VkImageView attachment[2];
+	attachment[0] = _colorImage._view;
+	attachment[1] = _depthImage._view;
 
-		VkFramebufferCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		info.renderPass = _renderPass;
-		info.attachmentCount = 2;
-		info.pAttachments = attachment;
-		info.width = _size.width;
-		info.height = _size.height;
-		info.layers = 1;
+	VkFramebufferCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	info.renderPass = _renderPass;
+	info.attachmentCount = 2;
+	info.pAttachments = attachment;
+	info.width = _size.width;
+	info.height = _size.height;
+	info.layers = 1;
 
-		{
-			err = vkCreateFramebuffer(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_framebuffer);
-			check_vk_result(err);
-		}
+	err = vkCreateFramebuffer(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_framebuffer);
+	check_vk_result(err);
 
-		_set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(_sampler, _colorImage._view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	}
+	_set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(_sampler, _colorImage._view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void Viewport::Clean()

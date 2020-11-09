@@ -17,8 +17,7 @@ CommandBuffer::CommandBuffer(const Queue& kQueue, const VkCommandBufferLevel kLe
 
 CommandBuffer::~CommandBuffer()
 {
-	if (_commandBuffer != VK_NULL_HANDLE)
-		vkFreeCommandBuffers(LogicalDevice::Instance()._device, _commandPool, 1, &_commandBuffer);
+	Clean();
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer&& commandBuffer)
@@ -29,8 +28,7 @@ CommandBuffer::CommandBuffer(CommandBuffer&& commandBuffer)
 
 CommandBuffer& CommandBuffer::operator=(CommandBuffer&& commandBuffer)
 {
-	if (_commandBuffer != VK_NULL_HANDLE)
-		vkFreeCommandBuffers(LogicalDevice::Instance()._device, _commandPool, 1, &_commandBuffer);
+	Clean();
 
 	_commandBuffer = commandBuffer._commandBuffer;
 	commandBuffer._commandBuffer = VK_NULL_HANDLE;
@@ -61,6 +59,12 @@ void CommandBuffer::EndSingleTimeCommands(const Queue& kQueue, const CommandBuff
 
 	err = vkQueueWaitIdle(kQueue._queue); // TODO: should remove this line ?
 	check_vk_result(err);
+}
+
+void CommandBuffer::Clean()
+{
+	if (_commandBuffer != VK_NULL_HANDLE)
+		vkFreeCommandBuffers(LogicalDevice::Instance()._device, _commandPool, 1, &_commandBuffer);
 }
 
 void CommandBuffer::Begin(const VkCommandBufferUsageFlags kUsage) const

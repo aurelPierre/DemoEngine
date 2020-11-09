@@ -6,36 +6,14 @@
 #include "ImGuiSystem.h"
 
 Frame::Frame(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkRenderPass kRenderPass)
-	: _commandBuffer{ LogicalDevice::Instance()._graphicsQueue }, _image { kImage }
+	: _commandBuffer{ LogicalDevice::Instance()._graphicsQueue }, _imageBuffer { kImage, kFormat, kExtent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT }
 {
 	ASSERT(kImage != nullptr, "kImage is nullptr")
 	ASSERT(kExtent.width != 0u || kExtent.height != 0, "kExtent.width is 0 or kExtent.height is 0")
 	ASSERT(kRenderPass != nullptr, "kRenderPass is nullptr")
 
-	VkImageViewCreateInfo colorAttachmentView = {};
-	colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	colorAttachmentView.pNext = NULL;
-	colorAttachmentView.format = kFormat;
-	colorAttachmentView.components = {
-		VK_COMPONENT_SWIZZLE_R,
-		VK_COMPONENT_SWIZZLE_G,
-		VK_COMPONENT_SWIZZLE_B,
-		VK_COMPONENT_SWIZZLE_A
-	};
-	colorAttachmentView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	colorAttachmentView.subresourceRange.baseMipLevel = 0;
-	colorAttachmentView.subresourceRange.levelCount = 1;
-	colorAttachmentView.subresourceRange.baseArrayLayer = 0;
-	colorAttachmentView.subresourceRange.layerCount = 1;
-	colorAttachmentView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	colorAttachmentView.flags = 0;
-	colorAttachmentView.image = _image;
-
-	VkResult err = vkCreateImageView(LogicalDevice::Instance()._device, &colorAttachmentView, Context::Instance()._allocator, &_imageView);
-	check_vk_result(err);
-
 	VkImageView attachment[1];
-	attachment[0] = _imageView;
+	attachment[0] = _imageBuffer._view;
 
 	VkFramebufferCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -46,10 +24,8 @@ Frame::Frame(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kEx
 	info.height = kExtent.height;
 	info.layers = 1;
 
-	{
-		err = vkCreateFramebuffer(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_framebuffer);
-		check_vk_result(err);
-	}
+	VkResult err = vkCreateFramebuffer(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_framebuffer);
+	check_vk_result(err);
 
 	{
 		VkFenceCreateInfo info = {};
@@ -79,16 +55,12 @@ Frame::~Frame()
 
 	if(_framebuffer != VK_NULL_HANDLE)
 		vkDestroyFramebuffer(LogicalDevice::Instance()._device, _framebuffer, Context::Instance()._allocator);
-	if(_imageView != VK_NULL_HANDLE)
-		vkDestroyImageView(LogicalDevice::Instance()._device, _imageView, Context::Instance()._allocator);
 }
 
 Frame::Frame(Frame&& frame)
-	: _commandBuffer{ std::move(frame._commandBuffer) }, _image{ frame._image }, _imageView { frame._imageView }, _framebuffer { frame._framebuffer },
+	: _commandBuffer{ std::move(frame._commandBuffer) }, _imageBuffer{ std::move(frame._imageBuffer) }, _framebuffer { frame._framebuffer },
 	_fence{ frame._fence }, _presentComplete { frame._presentComplete }, _renderComplete{ frame._renderComplete }
 {
-	frame._image			= VK_NULL_HANDLE;
-	frame._imageView		= VK_NULL_HANDLE;
 	frame._framebuffer		= VK_NULL_HANDLE;
 
 	frame._fence			= VK_NULL_HANDLE;
@@ -99,16 +71,13 @@ Frame::Frame(Frame&& frame)
 Frame& Frame::operator=(Frame&& frame)
 {
 	_commandBuffer		= std::move(frame._commandBuffer);
-	_image				= frame._image;
-	_imageView			= frame._imageView;
+	_imageBuffer		= std::move(frame._imageBuffer);
 	_framebuffer		= frame._framebuffer;
 
 	_fence				= frame._fence;
 	_presentComplete	= frame._presentComplete;
 	_renderComplete		= frame._renderComplete;
 
-	frame._image			= VK_NULL_HANDLE;
-	frame._imageView		= VK_NULL_HANDLE;
 	frame._framebuffer		= VK_NULL_HANDLE;
 
 	frame._fence			= VK_NULL_HANDLE;
@@ -206,8 +175,6 @@ void Swapchain::Init(const Device& kDevice, const Surface& kSurface, const GLFWW
 		};
 	}
 
-	VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE;// kSurface._swapchain;
-
 	VkSwapchainCreateInfoKHR swapchainCI = {};
 	swapchainCI.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	swapchainCI.pNext = NULL;
@@ -240,17 +207,6 @@ void Swapchain::Init(const Device& kDevice, const Surface& kSurface, const GLFWW
 
 	err = vkCreateSwapchainKHR(LogicalDevice::Instance()._device, &swapchainCI, Context::Instance()._allocator, &_swapchain);
 	check_vk_result(err);
-
-	// If an existing swap chain is re-created, destroy the old swap chain
-	// This also cleans up all the presentable images
-	if (oldSwapchain != VK_NULL_HANDLE)
-	{
-		for (uint32_t i = 0; i < _imageCount; i++)
-		{
-			vkDestroyImageView(LogicalDevice::Instance()._device, _frames[i]._imageView, nullptr);
-		}
-		vkDestroySwapchainKHR(LogicalDevice::Instance()._device, oldSwapchain, nullptr);
-	}
 
 	VkAttachmentDescription attachment = {};
 	attachment.format = kSurface._colorFormat;

@@ -4,6 +4,15 @@
 #include "Core.h"
 #include "CommandBuffer.h"
 
+ImageBuffer::ImageBuffer(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage)
+	: _size{ kExtent }, _image{ kImage }
+{
+	ASSERT(kImage != nullptr, "kImage is nullptr")
+	ASSERT(kExtent.width != 0u && kExtent.height != 0, "kExtent.width is 0 or kExtent.height is 0")
+
+	CreateView(kFormat, kUsage);
+}
+
 ImageBuffer::ImageBuffer(const Device& kDevice, const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage)
 	: _size{ kExtent }
 {
@@ -40,7 +49,40 @@ ImageBuffer::ImageBuffer(const Device& kDevice, const VkFormat kFormat, const Vk
 	err = vkBindImageMemory(LogicalDevice::Instance()._device, _image, _memory, 0);
 	check_vk_result(err);
 
-	/*** Texture handling ***/
+	CreateView(kFormat, kUsage);
+}
+
+ImageBuffer::~ImageBuffer()
+{
+	Clean();
+}
+
+ImageBuffer::ImageBuffer(ImageBuffer&& imageBuffer)
+	: _size{ imageBuffer._size }, _memory { imageBuffer._memory }, _image{ imageBuffer._image }, _view{ imageBuffer._view }
+{
+	imageBuffer._memory = VK_NULL_HANDLE;
+	imageBuffer._image = VK_NULL_HANDLE;
+	imageBuffer._view = VK_NULL_HANDLE;
+}
+
+ImageBuffer& ImageBuffer::operator=(ImageBuffer&& imageBuffer)
+{
+	Clean();
+
+	_size = imageBuffer._size;
+	_memory = imageBuffer._memory;
+	_image = imageBuffer._image;
+	_view = imageBuffer._view;
+
+	imageBuffer._memory = VK_NULL_HANDLE;
+	imageBuffer._image = VK_NULL_HANDLE;
+	imageBuffer._view = VK_NULL_HANDLE;
+
+	return *this;
+}
+
+void ImageBuffer::CreateView(const VkFormat kFormat, const VkImageUsageFlags kUsage)
+{
 	VkImageViewCreateInfo colorAttachmentView = {};
 	colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	colorAttachmentView.pNext = NULL;
@@ -65,47 +107,21 @@ ImageBuffer::ImageBuffer(const Device& kDevice, const VkFormat kFormat, const Vk
 	colorAttachmentView.flags = 0;
 	colorAttachmentView.image = _image;
 
-	err = vkCreateImageView(LogicalDevice::Instance()._device, &colorAttachmentView, Context::Instance()._allocator, &_view);
+	VkResult err = vkCreateImageView(LogicalDevice::Instance()._device, &colorAttachmentView, Context::Instance()._allocator, &_view);
 	check_vk_result(err);
 }
 
-ImageBuffer::~ImageBuffer()
-{
-	if(_view != VK_NULL_HANDLE)
-		vkDestroyImageView(LogicalDevice::Instance()._device, _view, Context::Instance()._allocator);
-	if(_image != VK_NULL_HANDLE)
-		vkDestroyImage(LogicalDevice::Instance()._device, _image, Context::Instance()._allocator);
-	if(_memory != VK_NULL_HANDLE)
-		vkFreeMemory(LogicalDevice::Instance()._device, _memory, Context::Instance()._allocator);
-}
-
-ImageBuffer::ImageBuffer(ImageBuffer&& imageBuffer)
-	: _size{ imageBuffer._size }, _memory { imageBuffer._memory }, _image{ imageBuffer._image }, _view{ imageBuffer._view }
-{
-	imageBuffer._memory = VK_NULL_HANDLE;
-	imageBuffer._image = VK_NULL_HANDLE;
-	imageBuffer._view = VK_NULL_HANDLE;
-}
-
-ImageBuffer& ImageBuffer::operator=(ImageBuffer&& imageBuffer)
+void ImageBuffer::Clean()
 {
 	if (_view != VK_NULL_HANDLE)
 		vkDestroyImageView(LogicalDevice::Instance()._device, _view, Context::Instance()._allocator);
-	if (_image != VK_NULL_HANDLE)
-		vkDestroyImage(LogicalDevice::Instance()._device, _image, Context::Instance()._allocator);
+
 	if (_memory != VK_NULL_HANDLE)
+	{
 		vkFreeMemory(LogicalDevice::Instance()._device, _memory, Context::Instance()._allocator);
-
-	_size = imageBuffer._size;
-	_memory = imageBuffer._memory;
-	_image = imageBuffer._image;
-	_view = imageBuffer._view;
-
-	imageBuffer._memory = VK_NULL_HANDLE;
-	imageBuffer._image = VK_NULL_HANDLE;
-	imageBuffer._view = VK_NULL_HANDLE;
-
-	return *this;
+		if (_image != VK_NULL_HANDLE)
+			vkDestroyImage(LogicalDevice::Instance()._device, _image, Context::Instance()._allocator);
+	}
 }
 
 void ImageBuffer::TransitionLayout(const Queue& kQueue, const VkImageLayout kOldLayout, const VkImageLayout kNewLayout) const

@@ -15,6 +15,7 @@ public:
 
 public:
 	ImageBuffer() = default;
+	ImageBuffer(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage);
 	ImageBuffer(const Device& kDevice, const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage);
 
 	~ImageBuffer();
@@ -24,6 +25,10 @@ public:
 
 	ImageBuffer& operator=(const ImageBuffer& kImageBuffer) = delete;
 	ImageBuffer& operator=(ImageBuffer&& imageBuffer);
+
+private:
+	void CreateView(const VkFormat kFormat, const VkImageUsageFlags kUsage);
+	void Clean();
 
 public:
 	void TransitionLayout(const Queue& kQueue, const VkImageLayout kOldLayout, const VkImageLayout kNewLayout) const;

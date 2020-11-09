@@ -25,6 +25,9 @@ public:
 	static CommandBuffer BeginSingleTimeCommands(const Queue& kQueue);
 	static void EndSingleTimeCommands(const Queue& kQueue, const CommandBuffer& kCommandBuffer);
 
+private:
+	void Clean();
+
 public:
 	void Begin(const VkCommandBufferUsageFlags kUsage = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) const;
 	void End() const;

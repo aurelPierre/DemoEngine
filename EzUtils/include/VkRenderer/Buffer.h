@@ -23,6 +23,9 @@ public:
 	Buffer& operator=(const Buffer& kBuffer) = delete;
 	Buffer& operator=(Buffer&& buffer);
 
+private:
+	void Clean();
+
 public:
 	void Map(void* data, size_t size) const;
 

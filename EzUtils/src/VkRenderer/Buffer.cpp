@@ -35,10 +35,7 @@ Buffer::Buffer(const Device& kDevice, const VkDeviceSize kSize, const VkBufferUs
 
 Buffer::~Buffer()
 {
-	if(_memory != VK_NULL_HANDLE)
-		vkFreeMemory(LogicalDevice::Instance()._device, _memory, Context::Instance()._allocator);
-	if(_buffer != VK_NULL_HANDLE)
-		vkDestroyBuffer(LogicalDevice::Instance()._device, _buffer, Context::Instance()._allocator);
+	Clean();
 }
 
 Buffer::Buffer(Buffer&& buffer)
@@ -51,10 +48,7 @@ Buffer::Buffer(Buffer&& buffer)
 
 Buffer& Buffer::operator=(Buffer&& buffer)
 {
-	if (_memory != VK_NULL_HANDLE)
-		vkFreeMemory(LogicalDevice::Instance()._device, _memory, Context::Instance()._allocator);
-	if (_buffer != VK_NULL_HANDLE)
-		vkDestroyBuffer(LogicalDevice::Instance()._device, _buffer, Context::Instance()._allocator);
+	Clean();
 
 	_size = buffer._size;
 	_buffer = buffer._buffer;
@@ -65,6 +59,14 @@ Buffer& Buffer::operator=(Buffer&& buffer)
 	buffer._memory = VK_NULL_HANDLE;
 
 	return *this;
+}
+
+void Buffer::Clean()
+{
+	if (_memory != VK_NULL_HANDLE)
+		vkFreeMemory(LogicalDevice::Instance()._device, _memory, Context::Instance()._allocator);
+	if (_buffer != VK_NULL_HANDLE)
+		vkDestroyBuffer(LogicalDevice::Instance()._device, _buffer, Context::Instance()._allocator);
 }
 
 void Buffer::Map(void* data, size_t size) const
