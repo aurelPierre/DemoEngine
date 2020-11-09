@@ -8,7 +8,7 @@
 #include <fstream>
 
 #ifndef NDEBUG
-	#define ASSERT(predicate, msg) if(!(predicate)) LOG(ez::ASSERT, std::string(__FILE__) + std::to_string(__LINE__) + std::string(msg)) else abort;
+	#define ASSERT(predicate, msg) if(!(predicate)) LOG(ez::ASSERT, std::string(__FILE__) + std::to_string(__LINE__) + std::string(msg)) else ez::LogSystem::Save(); abort;
 #else
 	#define ASSERT(predicate, msg)	
 #endif

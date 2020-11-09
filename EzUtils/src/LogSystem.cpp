@@ -4,6 +4,10 @@
 #include <sstream>
 #include <chrono>
 
+#include <iostream>
+#include <fstream>
+#include <ctime>
+
 #include "Utils.h"
 
 namespace ez
@@ -186,5 +190,25 @@ namespace ez
 
 		ImGui::EndChild();
 		ImGui::End();
+	}
+
+	void	LogSystem::Save()
+	{
+		std::time_t otime = time(0);
+		struct tm newtime;
+		localtime_s(&newtime, &otime);
+		
+		std::stringstream ss;
+		ss << std::put_time(&newtime, "%Y_%m_%d_%H_%M_%S");
+
+		std::ofstream file;
+		file.open(ss.str() + ".log");
+		if (file.is_open())
+		{
+			for (size_t i = 0; i < _buffer.size(); ++i)
+				file << _buffer[i].Text() << std::endl;
+
+			file.close();
+		}
 	}
 }

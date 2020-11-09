@@ -117,5 +117,7 @@ int main(int, char**)
 
 	glfwWindow.DeleteWindow();
 
+	ez::LogSystem::Save();
+
 	return EXIT_SUCCESS;
 }
