@@ -11,7 +11,7 @@
 	#define ASSERT(predicate, msg) \
 		if(!(predicate)) \
 		{ \
-			LOG(ez::ASSERT, std::string(__FILE__) + std::to_string(__LINE__) + std::string(msg)) \
+			LOG(ez::ASSERT, std::string(__FILE__) + ':' + std::to_string(__LINE__) + "\n\t" + std::string(msg) + '\n') \
 			ez::LogSystem::Save(); \
 			std::abort(); \
 		}

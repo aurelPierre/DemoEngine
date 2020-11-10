@@ -8,11 +8,15 @@
 #include "Texture.h"
 #include "Scene.h"
 
+#include "Core.h"
+
 int main(int, char**)
 {
 	GLFWWindowSystem		glfwWindow;
 	ImGuiSystem				imGui;
 	GLFWWindowData*			windowData	= glfwWindow.CreateWindow();
+
+	ASSERT(false, "Oups")
 
 	Context context;
 	Device device;
