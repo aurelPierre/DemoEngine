@@ -6,65 +6,47 @@
       "configurationType": "Debug",
       "inheritEnvironments": [ "msvc_x64" ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
       "cmakeCommandArgs": "",
-      "buildCommandArgs": "-v -j4",
+      "buildCommandArgs": "-v -j${env.NUMBER_OF_PROCESSORS}",
       "ctestCommandArgs": "",
+      "variables": []
+    },
+    {
+      "name": "x64-Clang-Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v -j${env.NUMBER_OF_PROCESSORS}",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "clang_cl_x64" ],
+      "variables": []
+    },
+    {
+      "name": "x64-Clang-Release",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v -j${env.NUMBER_OF_PROCESSORS}",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "clang_cl_x64" ],
       "variables": []
     },
     {
       "name": "x64-Release",
       "generator": "Ninja",
       "configurationType": "Release",
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v -j${env.NUMBER_OF_PROCESSORS}",
+      "ctestCommandArgs": "",
       "inheritEnvironments": [ "msvc_x64" ],
-      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
-      "cmakeCommandArgs": "",
-      "buildCommandArgs": "-v -j4",
-      "ctestCommandArgs": "",
       "variables": []
-    },
-    {
-      "name": "x64-Debug-Clang",
-      "generator": "Ninja",
-      "configurationType": "Debug",
-      "inheritEnvironments": [ "clang_cl_x64_x64" ],
-      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
-      "cmakeCommandArgs": "",
-      "buildCommandArgs": "-v -j4",
-      "ctestCommandArgs": "",
-      "variables": [
-        {
-          "name": "CMAKE_C_COMPILER",
-          "value": "clang-cl",
-          "type": "STRING"
-        },
-        {
-          "name": "CMAKE_CXX_COMPILER",
-          "value": "clang-cl",
-          "type": "STRING"
-        }
-      ]
-    },
-    {
-      "name": "x64-Release-Clang",
-      "generator": "Ninja",
-      "configurationType": "Release",
-      "inheritEnvironments": [ "clang_cl_x64_x64" ],
-      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
-      "cmakeCommandArgs": "",
-      "buildCommandArgs": "-v -j4",
-      "ctestCommandArgs": "",
-      "variables": [
-        {
-          "name": "CMAKE_C_COMPILER",
-          "value": "clang-cl",
-          "type": "STRING"
-        },
-        {
-          "name": "CMAKE_CXX_COMPILER",
-          "value": "clang-cl",
-          "type": "STRING"
-        }
-      ]
     }
   ]
 }
