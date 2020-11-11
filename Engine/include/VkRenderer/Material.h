@@ -78,15 +78,27 @@ public:
 	VkPipelineLayout				_pipelineLayout		= VK_NULL_HANDLE;
 	VkPipeline						_pipeline			= VK_NULL_HANDLE;
 
-	// CAMERA
-	VkDescriptorSetLayout			_uboLayout			= VK_NULL_HANDLE;
-	Buffer							_ubo;
-	VkDescriptorSet					_uboSet				= VK_NULL_HANDLE;
+	VkDescriptorSetLayout			_globalLayout		= VK_NULL_HANDLE;
+	VkDescriptorSet					_globalSet			= VK_NULL_HANDLE;
+
+	VkDescriptorSetLayout			_materialLayout		= VK_NULL_HANDLE;
+	VkDescriptorSet					_materialSet		= VK_NULL_HANDLE;
+
+	VkDescriptorSetLayout			_objectsLayout		= VK_NULL_HANDLE;
+	VkDescriptorSet					_objectsSet			= VK_NULL_HANDLE;
 
 public:
 	Material(const Viewport& kViewport, const std::string kVertextShaderPath,
-		const std::string kFragmentShaderPath, const std::vector<Texture*>& kTextures);
+		const std::string kFragmentShaderPath, const size_t kTextureSize);
 	~Material();
+
+private:
+	void CreateDescriptors(const size_t kTextureSize);
+	void CreatePipeline(const Viewport& kViewport, const std::string kVertextShaderPath,
+							const std::string kFragmentShaderPath);
+
+public:
+	void UpdateDescriptors(const Buffer& kCamera, const Buffer& kLight, const std::vector<Texture*>& kTextures, const Buffer& kModel) const;
 };
 
 VkShaderModule loadShader(std::string path);

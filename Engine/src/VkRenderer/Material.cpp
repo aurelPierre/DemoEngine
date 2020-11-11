@@ -36,84 +36,127 @@ VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShad
 }
 
 Material::Material(const Viewport& kViewport, const std::string kVertextShaderPath,
-						const std::string kFragmentShaderPath, const std::vector<Texture*>& kTextures)
+						const std::string kFragmentShaderPath, const size_t kTextureSize)
 {
 	ASSERT(!kVertextShaderPath.empty(), "kVertextShaderPath is empty")
 	ASSERT(!kFragmentShaderPath.empty(), "kFragmentShaderPath is empty")
 
-	Buffer ubo(sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-	_ubo = std::move(ubo);
-	
+	CreateDescriptors(kTextureSize);
+	CreatePipeline(kViewport, kVertextShaderPath, kFragmentShaderPath);
+}
+
+Material::~Material()
+{
+	vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_globalSet);
+	vkDestroyDescriptorSetLayout(LogicalDevice::Instance()._device, _globalLayout, Context::Instance()._allocator);
+
+	vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_materialSet);
+	vkDestroyDescriptorSetLayout(LogicalDevice::Instance()._device, _materialLayout, Context::Instance()._allocator);
+
+	vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_objectsSet);
+	vkDestroyDescriptorSetLayout(LogicalDevice::Instance()._device, _objectsLayout, Context::Instance()._allocator);
+
+	vkDestroyPipeline(LogicalDevice::Instance()._device, _pipeline, Context::Instance()._allocator);
+	vkDestroyPipelineLayout(LogicalDevice::Instance()._device, _pipelineLayout, Context::Instance()._allocator);
+}
+
+void Material::CreateDescriptors(const size_t kTextureSize)
+{
+	// GLOBAL
 	{
-		std::vector<VkDescriptorSetLayoutBinding> layoutBinding{ 1 + kTextures.size() };
-		layoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		layoutBinding[0].binding = 0;
-		layoutBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		layoutBinding[0].descriptorCount = 1;
+		std::vector<VkDescriptorSetLayoutBinding> gloLayoutBinding{ 2 };
+		gloLayoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		gloLayoutBinding[0].binding = 0;
+		gloLayoutBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		gloLayoutBinding[0].descriptorCount = 1;
 
-		for (size_t i = 0; i < kTextures.size(); ++i)
-		{
-			layoutBinding[i + 1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			layoutBinding[i + 1].binding = i + 1;
-			layoutBinding[i + 1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-			layoutBinding[i + 1].descriptorCount = 1;
-		}
+		gloLayoutBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		gloLayoutBinding[1].binding = 1;
+		gloLayoutBinding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		gloLayoutBinding[1].descriptorCount = 1;
 
+		VkDescriptorSetLayoutCreateInfo gloLayoutInfo{};
+		gloLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		gloLayoutInfo.bindingCount = gloLayoutBinding.size();
+		gloLayoutInfo.pBindings = gloLayoutBinding.data();
 
-		VkDescriptorSetLayoutCreateInfo layoutInfo{};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = layoutBinding.size();
-		layoutInfo.pBindings = layoutBinding.data();
-
-		VkResult err = vkCreateDescriptorSetLayout(LogicalDevice::Instance()._device, &layoutInfo,
-													Context::Instance()._allocator, &_uboLayout);
+		VkResult err = vkCreateDescriptorSetLayout(LogicalDevice::Instance()._device, &gloLayoutInfo,
+			Context::Instance()._allocator, &_globalLayout);
 		check_vk_result(err);
 
-		VkDescriptorSetAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = LogicalDevice::Instance()._descriptorPool;
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &_uboLayout;
-		err = vkAllocateDescriptorSets(LogicalDevice::Instance()._device, &allocInfo, &_uboSet);
+		VkDescriptorSetAllocateInfo gloAllocInfo{};
+		gloAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		gloAllocInfo.descriptorPool = LogicalDevice::Instance()._descriptorPool;
+		gloAllocInfo.descriptorSetCount = 1;
+		gloAllocInfo.pSetLayouts = &_globalLayout;
+		err = vkAllocateDescriptorSets(LogicalDevice::Instance()._device, &gloAllocInfo, &_globalSet);
 		check_vk_result(err);
-
-		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = _ubo._buffer;
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
-
-		std::vector<VkWriteDescriptorSet> descriptorWrites{ 1 + kTextures.size() };
-		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].dstSet = _uboSet;
-		descriptorWrites[0].dstBinding = 0;
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].pBufferInfo = &bufferInfo;
-		
-		std::vector<VkDescriptorImageInfo> imagesInfo{ kTextures.size() };
-		for (size_t i = 0; i < kTextures.size(); ++i)
-		{
-			imagesInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imagesInfo[i].imageView = kTextures[i]->_image._view;
-			imagesInfo[i].sampler = kTextures[i]->_sampler;
-
-			descriptorWrites[i + 1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[i + 1].dstSet = _uboSet;
-			descriptorWrites[i + 1].dstBinding = i + 1;
-			descriptorWrites[i + 1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			descriptorWrites[i + 1].descriptorCount = 1;
-			descriptorWrites[i + 1].pImageInfo = &imagesInfo[i];
-		}
-		
-		vkUpdateDescriptorSets(LogicalDevice::Instance()._device, descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 	}
+	
+	// MATERIAL
+	{
+		std::vector<VkDescriptorSetLayoutBinding> matlayoutBinding{ kTextureSize };
+		for (size_t i = 0; i < kTextureSize; ++i)
+		{
+			matlayoutBinding[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			matlayoutBinding[i].binding = i;
+			matlayoutBinding[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+			matlayoutBinding[i].descriptorCount = 1;
+		}
 
-	/******************************************************************************************************/
+		VkDescriptorSetLayoutCreateInfo matLayoutInfo{};
+		matLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		matLayoutInfo.bindingCount = matlayoutBinding.size();
+		matLayoutInfo.pBindings = matlayoutBinding.data();
+
+		VkResult err = vkCreateDescriptorSetLayout(LogicalDevice::Instance()._device, &matLayoutInfo,
+			Context::Instance()._allocator, &_materialLayout);
+		check_vk_result(err);
+
+		VkDescriptorSetAllocateInfo matAllocInfo{};
+		matAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		matAllocInfo.descriptorPool = LogicalDevice::Instance()._descriptorPool;
+		matAllocInfo.descriptorSetCount = 1;
+		matAllocInfo.pSetLayouts = &_materialLayout;
+		err = vkAllocateDescriptorSets(LogicalDevice::Instance()._device, &matAllocInfo, &_materialSet);
+		check_vk_result(err);
+	}
+	
+	// OBJECTS
+	{
+		std::vector<VkDescriptorSetLayoutBinding> objLayoutBinding{ 1 };
+		objLayoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		objLayoutBinding[0].binding = 0;
+		objLayoutBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		objLayoutBinding[0].descriptorCount = 1;
+
+		VkDescriptorSetLayoutCreateInfo objLayoutInfo{};
+		objLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		objLayoutInfo.bindingCount = objLayoutBinding.size();
+		objLayoutInfo.pBindings = objLayoutBinding.data();
+
+		VkResult err = vkCreateDescriptorSetLayout(LogicalDevice::Instance()._device, &objLayoutInfo,
+			Context::Instance()._allocator, &_objectsLayout);
+
+		VkDescriptorSetAllocateInfo objAllocInfo{};
+		objAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		objAllocInfo.descriptorPool = LogicalDevice::Instance()._descriptorPool;
+		objAllocInfo.descriptorSetCount = 1;
+		objAllocInfo.pSetLayouts = &_objectsLayout;
+		err = vkAllocateDescriptorSets(LogicalDevice::Instance()._device, &objAllocInfo, &_objectsSet);
+		check_vk_result(err);
+	}
+}
+
+void Material::CreatePipeline(const Viewport& kViewport, const std::string kVertextShaderPath,
+								const std::string kFragmentShaderPath)
+{
+	VkDescriptorSetLayout _setLayouts[]{ _globalLayout, _materialLayout, _objectsLayout };
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1; // Optional
-	pipelineLayoutInfo.pSetLayouts = &_uboLayout; // Optional
+	pipelineLayoutInfo.setLayoutCount = 3; // Optional
+	pipelineLayoutInfo.pSetLayouts = _setLayouts; // Optional
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
@@ -235,16 +278,54 @@ Material::Material(const Viewport& kViewport, const std::string kVertextShaderPa
 	err = vkCreateGraphicsPipelines(LogicalDevice::Instance()._device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, Context::Instance()._allocator, &_pipeline);
 	check_vk_result(err);
 
-
 	vkDestroyShaderModule(LogicalDevice::Instance()._device, vertShaderModule, Context::Instance()._allocator);
 	vkDestroyShaderModule(LogicalDevice::Instance()._device, fragShaderModule, Context::Instance()._allocator);
 }
 
-Material::~Material()
+void Material::UpdateDescriptors(const Buffer& kCamera, const Buffer& kLight, const std::vector<Texture*>& kTextures, const Buffer& kModel) const
 {
-	vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_uboSet);
-	vkDestroyDescriptorSetLayout(LogicalDevice::Instance()._device, _uboLayout, Context::Instance()._allocator);
+	std::vector<VkWriteDescriptorSet> descriptorWrites{ 2 + kTextures.size() + 1 };
 
-	vkDestroyPipeline(LogicalDevice::Instance()._device, _pipeline, Context::Instance()._allocator);
-	vkDestroyPipelineLayout(LogicalDevice::Instance()._device, _pipelineLayout, Context::Instance()._allocator);
+	// GLOBAL
+	VkDescriptorBufferInfo camBufferInfo = kCamera.CreateDescriptorInfo();
+	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[0].dstSet = _globalSet;
+	descriptorWrites[0].dstBinding = 0;
+	descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrites[0].descriptorCount = 1;
+	descriptorWrites[0].pBufferInfo = &camBufferInfo;
+
+	VkDescriptorBufferInfo lightBufferInfo = kLight.CreateDescriptorInfo();
+	descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[1].dstSet = _globalSet;
+	descriptorWrites[1].dstBinding = 1;
+	descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrites[1].descriptorCount = 1;
+	descriptorWrites[1].pBufferInfo = &lightBufferInfo;
+
+	// MATERIAL
+	std::vector<VkDescriptorImageInfo> imagesInfo{ kTextures.size() };
+	for (size_t i = 0; i < kTextures.size(); ++i)
+	{
+		imagesInfo[i] = kTextures[i]->CreateDescriptorInfo();
+
+		descriptorWrites[i + 2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[i + 2].dstSet = _materialSet;
+		descriptorWrites[i + 2].dstBinding = i;
+		descriptorWrites[i + 2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[i + 2].descriptorCount = 1;
+		descriptorWrites[i + 2].pImageInfo = &imagesInfo[i];
+	}
+
+	// OBJECTS
+	VkDescriptorBufferInfo objBufferInfo = kModel.CreateDescriptorInfo();
+	descriptorWrites[kTextures.size() + 2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[kTextures.size() + 2].dstSet = _objectsSet;
+	descriptorWrites[kTextures.size() + 2].dstBinding = 0;
+	descriptorWrites[kTextures.size() + 2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrites[kTextures.size() + 2].descriptorCount = 1;
+	descriptorWrites[kTextures.size() + 2].pBufferInfo = &objBufferInfo;
+	
+
+	vkUpdateDescriptorSets(LogicalDevice::Instance()._device, descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }

@@ -13,4 +13,7 @@ public:
 public:
 	Texture(const std::string kTexturePath);
 	~Texture();
+
+public:
+	const VkDescriptorImageInfo CreateDescriptorInfo() const;
 };

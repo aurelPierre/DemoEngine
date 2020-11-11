@@ -17,11 +17,9 @@ target_link_libraries(Engine PUBLIC "${PROJECT_SOURCE_DIR}/Lib/glfw/lib/glfw3.li
 										"${PROJECT_SOURCE_DIR}/Lib/vulkan/lib/vulkan-1.lib")
 	
 target_include_directories(Engine PUBLIC	"${CMAKE_CURRENT_SOURCE_DIR}/include"
-											"${PROJECT_BINARY_DIR}"
 											"${PROJECT_SOURCE_DIR}/Lib/glfw/include"
 											"${PROJECT_SOURCE_DIR}/Lib/vulkan/include")
 
-set_target_properties(Engine PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Lib)
 
 # INSTALL
 #install(DIRECTORY include/	DESTINATION ${INSTALL_INCLUDE_DIR})

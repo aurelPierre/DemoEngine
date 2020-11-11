@@ -1,11 +1,17 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(set = 0, binding = 1) uniform sampler2D albedoMap;
-layout(set = 0, binding = 2) uniform sampler2D metallicMap;
-layout(set = 0, binding = 3) uniform sampler2D normalMap;
-layout(set = 0, binding = 4) uniform sampler2D roughnessMap;
-layout(set = 0, binding = 5) uniform sampler2D aoMap;
+layout(set = 1, binding = 0) uniform sampler2D albedoMap;
+layout(set = 1, binding = 1) uniform sampler2D metallicMap;
+layout(set = 1, binding = 2) uniform sampler2D normalMap;
+layout(set = 1, binding = 3) uniform sampler2D roughnessMap;
+layout(set = 1, binding = 4) uniform sampler2D aoMap;
+
+layout(set = 0, binding = 1) uniform LightData {
+	vec3 _pos;
+	vec3 _color;
+	vec3 _range;
+} light;
 
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec2 fragUV;
@@ -16,9 +22,6 @@ layout(location = 0) out vec4 outColor;
 
 const float PI = 3.14159265359;
 
-vec3 lightColor = vec3(0.8, 1.0, 0.8);
-vec3 lightPos = vec3(0.0, 1.0, 3.0);
-float lightRang = 5.0;
 vec3 viewPos = vec3(2.0, 2.0, 2.0);
 
 vec3 getNormalFromNormalMapping()
@@ -63,7 +66,7 @@ float GeometrySmith(float cosTheta, float cosRho, float roughness)
     return ggx1 * ggx2;
 }
 
-float ComputeAttenuation(vec3 lightPosition, float lightRange)
+vec3 ComputeAttenuation(vec3 lightPosition, vec3 lightRange)
 {
 	float distance = length(lightPosition - fragPos);
 
@@ -78,13 +81,13 @@ vec3 pbrShading()
     float roughness = texture(roughnessMap, fragUV).r;
     float ao        = texture(aoMap, fragUV).r;
 
-	vec3 lightV = lightPos - fragPos;
+	vec3 lightV = light._pos - fragPos;
 	vec3 camV = viewPos - fragPos;
 
 	vec3 f0 = mix(vec3(0.16), albedo, metallic);
 
 	// AMBIENT
-	vec3 ambient = lightColor  * albedo;
+	vec3 ambient = light._color  * albedo;
 
 	// BRDF
 	float cosTheta = dot(normal, lightV);
@@ -97,7 +100,7 @@ vec3 pbrShading()
 
 		// DIFFUSE
 		vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);
-		vec3 diffuse = kD * lightColor * albedo / PI;
+		vec3 diffuse = (kD * light._color * albedo) / PI;
 
 		// SPECULAR
 		float cosAlpha = dot(normal, halfV);
@@ -109,13 +112,13 @@ vec3 pbrShading()
 			float NDF = DistributionGGX(cosAlpha, roughness);
 			float G = GeometrySmith(cosTheta, cosRho, roughness);
 		
-			specular = lightColor * (NDF * G * F) / (4.0 * cosTheta * cosRho);
+			specular = light._color * (NDF * G * F) / (4.0 * cosTheta * cosRho);
 		}
 
 		BRDF = (diffuse + specular) * cosTheta;
 	}
 
-	return (ambient + BRDF) * ComputeAttenuation(lightPos, lightRang);
+	return (ambient + BRDF) * ComputeAttenuation(light._pos, light._range);
 }
 
 void main() 

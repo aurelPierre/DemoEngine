@@ -66,3 +66,13 @@ Texture::~Texture()
 {
 	vkDestroySampler(LogicalDevice::Instance()._device, _sampler, Context::Instance()._allocator);
 }
+
+const VkDescriptorImageInfo Texture::CreateDescriptorInfo() const
+{
+	VkDescriptorImageInfo imageInfo{};
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = _image._view;
+	imageInfo.sampler = _sampler;
+
+	return imageInfo;
+}

@@ -31,6 +31,8 @@ public:
 
 	void CopyBuffer(const Queue& kQueue, const Buffer& kSrcBuffer) const;
 
+	const VkDescriptorBufferInfo CreateDescriptorInfo() const;
+
 public:
 	operator const VkBuffer&() const;
 };

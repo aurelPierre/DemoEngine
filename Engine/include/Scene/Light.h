@@ -4,6 +4,8 @@
 
 #include "VkRenderer/Buffer.h"
 
+#include "Editor.h"
+
 class Light
 {
 public:

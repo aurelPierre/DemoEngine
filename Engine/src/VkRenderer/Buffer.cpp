@@ -94,6 +94,16 @@ void Buffer::CopyBuffer(const Queue& kQueue, const Buffer& kSrcBuffer) const
 	CommandBuffer::EndSingleTimeCommands(kQueue, commandBuffer);
 }
 
+const VkDescriptorBufferInfo Buffer::CreateDescriptorInfo() const
+{
+	VkDescriptorBufferInfo bufferInfo{};
+	bufferInfo.buffer = _buffer;
+	bufferInfo.offset = 0;
+	bufferInfo.range = _size;
+
+	return bufferInfo;
+}
+
 Buffer::operator const VkBuffer& () const
 {
 	return _buffer;

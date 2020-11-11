@@ -11,7 +11,6 @@
 
 void Draw(const Scene& scene)
 {
-	UniformBufferObject ubo{};
 	static auto startTime = std::chrono::high_resolution_clock::now();
 
 	auto currentTime = std::chrono::high_resolution_clock::now();
@@ -19,19 +18,19 @@ void Draw(const Scene& scene)
 
 	ImGui::Begin("Scene");
 
-	ImGui::BeginGroup();
+	/*ImGui::BeginGroup();
 	ImGui::Text("LookAt");
 	static float eye[3]{ 15.f, 6.f, 15.f };
 	ImGui::InputFloat3("eye", eye);
 	static float center[3]{ 0.f, 1.5f, 0.f };
 	ImGui::InputFloat3("center", center);
 	static float up[3]{ 0.f, 1.f, 0.f };
-	ImGui::InputFloat3("up", up);
+	ImGui::InputFloat3("up", up);*/
 
-	ubo.view = glm::lookAt(glm::vec3(eye[0], eye[1], eye[2]), glm::vec3(center[0], center[1], center[2]), 
+	/*ubo.view = glm::lookAt(glm::vec3(eye[0], eye[1], eye[2]), glm::vec3(center[0], center[1], center[2]), 
 							glm::vec3(up[0], up[1], up[2]));
 	
-	ImGui::EndGroup();
+	ImGui::EndGroup();*/
 
 	static float rUp[3]{ 0.f, 1.f, 0.f };
 
@@ -39,23 +38,22 @@ void Draw(const Scene& scene)
 	// in the end, may use secondary buffer to avoid record scene foreach viewport
 	for (size_t i = 0; i < scene._viewports.size(); ++i)
 	{
-		ubo.proj = glm::perspective(glm::radians(60.0f), (float)(scene._viewports[i]->_size.width / (float)scene._viewports[i]->_size.height),
+		/*ubo.proj = glm::perspective(glm::radians(60.0f), (float)(scene._viewports[i]->_size.width / (float)scene._viewports[i]->_size.height),
 			0.1f, 512.0f);
-		ubo.proj[1][1] *= -1;
+		ubo.proj[1][1] *= -1;*/
 
 		scene._viewports[i]->StartDraw();
 
 		// foreach mesh draw
 		for (size_t j = 0; j < scene._mesh.size(); ++j)
 		{
-			ImGui::BeginGroup();
+			/*ImGui::BeginGroup();
 			ImGui::Text("Model");
 			ImGui::InputFloat3("rUp", rUp);
-			ImGui::EndGroup();
+			ImGui::EndGroup();*/
 
-			ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(rUp[0], rUp[1], rUp[2]));
+			//ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(rUp[0], rUp[1], rUp[2]));
 
-			scene._mesh[j]->_material->_ubo.Map(&ubo, sizeof(UniformBufferObject));
 			scene._mesh[j]->Draw(scene._viewports[i]->_commandBuffer);
 		}
 
