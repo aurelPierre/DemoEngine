@@ -31,11 +31,11 @@ int main(int, char**)
 
 	Viewport viewport(surface._colorFormat, { 512, 512 });
 
-	Texture color("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Color.jpg");
-	Texture metal("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Metalness.jpg");
-	Texture normal("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Normal.jpg");
-	Texture rough("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Roughness.jpg");
-	Texture aO("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Displacement.jpg");
+	Texture color("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_BaseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+	Texture metal("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Metallic.png", VK_FORMAT_R8_UNORM);
+	Texture normal("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Normal.png", VK_FORMAT_R8G8B8A8_UNORM);
+	Texture rough("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Roughness.png", VK_FORMAT_R8_UNORM);
+	Texture aO("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Default_AmbientOcclusion.png", VK_FORMAT_R8_UNORM);
 
 	Material mat(viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
@@ -52,7 +52,7 @@ int main(int, char**)
 	Camera cam(60.f, 0.1f, 256.f);
 	cam._pos = { 0.f, 3.f, 1.f };
 	cam.Update();
-	Light light({ 0.f, 3.f, 1.f }, 1.f, { 0.f, 1.f, 0.f }, 5.f);
+	Light light({ 0.f, 3.f, 1.f }, 1.f, { 1.f, 1.f, 1.f }, 5.f);
 
 	Buffer modelBuf(sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 	glm::mat4 model(1.f);

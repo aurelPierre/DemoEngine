@@ -8,7 +8,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-Texture::Texture(const std::string kTexturePath)
+Texture::Texture(const std::string kTexturePath, const VkFormat kFormat)
 {
 	ASSERT(!kTexturePath.empty(), "kTexturePath is empty")
 
@@ -25,7 +25,7 @@ Texture::Texture(const std::string kTexturePath)
 	
 	stbi_image_free(pixels);
 
-	ImageBuffer image(VK_FORMAT_R8G8B8A8_UNORM, { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) },
+	ImageBuffer image(kFormat, { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) },
 						VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	_image = std::move(image);
 
