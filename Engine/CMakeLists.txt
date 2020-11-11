@@ -17,7 +17,6 @@ target_link_libraries(Engine PUBLIC "${PROJECT_SOURCE_DIR}/Lib/glfw/lib/glfw3.li
 										"${PROJECT_SOURCE_DIR}/Lib/vulkan/lib/vulkan-1.lib")
 	
 target_include_directories(Engine PUBLIC	"${CMAKE_CURRENT_SOURCE_DIR}/include"
-											"${CMAKE_CURRENT_SOURCE_DIR}/include/VkRenderer"
 											"${PROJECT_BINARY_DIR}"
 											"${PROJECT_SOURCE_DIR}/Lib/glfw/include"
 											"${PROJECT_SOURCE_DIR}/Lib/vulkan/include")

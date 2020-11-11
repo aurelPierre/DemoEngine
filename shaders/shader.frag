@@ -17,9 +17,9 @@ layout(location = 0) out vec4 outColor;
 const float PI = 3.14159265359;
 
 vec3 lightColor = vec3(0.8, 1.0, 0.8);
-vec3 lightPos = vec3(0.0, 0.0, 3.0);
+vec3 lightPos = vec3(0.0, 1.0, 3.0);
 float lightRang = 5.0;
-vec3 viewPos = vec3(0.0, 0.0, 20.0);
+vec3 viewPos = vec3(2.0, 2.0, 2.0);
 
 vec3 getNormalFromNormalMapping()
 {
@@ -32,26 +32,6 @@ vec3 getNormalFromNormalMapping()
 
 	mat3 TBN = mat3(T, B, N);
 	return normalize(TBN * (texture(normalMap, fragUV).rgb * 2.0 - 1.0)); 
-}
-
-vec3 phongShading()
-{
-	float ambientStrength = 0.1;
-    vec3 ambient = ambientStrength * lightColor;
-
-	vec3 norm = normalize(texture(normalMap, fragUV).rgb);
-	vec3 lightDir = normalize(lightPos - fragPos);  
-	float diff = max(dot(norm, lightDir), 0.0);
-	vec3 diffuse = diff * lightColor;
-
-	float specularStrength = 100.0;
-	vec3 viewDir = normalize(viewPos - fragPos);
-	vec3 reflectDir = reflect(-lightDir, norm);  
-
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-	vec3 specular = specularStrength * spec * lightColor;  
-
-	return ambient + diffuse + specular;
 }
 
 vec3 Fresnel(vec3 f0, float cosTheta, float roughness)
@@ -92,7 +72,7 @@ float ComputeAttenuation(vec3 lightPosition, float lightRange)
 
 vec3 pbrShading()
 {
-	vec3 albedo     = pow(texture(albedoMap, fragUV).rgb, vec3(2.2, 2.2, 2.2));
+	vec3 albedo     = texture(albedoMap, fragUV).xyz;
     vec3 normal     = getNormalFromNormalMapping();
     float metallic  = texture(metallicMap, fragUV).r;
     float roughness = texture(roughnessMap, fragUV).r;
@@ -101,10 +81,10 @@ vec3 pbrShading()
 	vec3 lightV = lightPos - fragPos;
 	vec3 camV = viewPos - fragPos;
 
-	vec3 f0 = mix(vec3(0.16 * 1.0 * 1.0), albedo, metallic);
+	vec3 f0 = mix(vec3(0.16), albedo, metallic);
 
 	// AMBIENT
-	vec3 ambient = lightColor * 1.0 * albedo;
+	vec3 ambient = lightColor  * albedo;
 
 	// BRDF
 	float cosTheta = dot(normal, lightV);
@@ -117,7 +97,7 @@ vec3 pbrShading()
 
 		// DIFFUSE
 		vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);
-		vec3 diffuse = kD * lightColor * 1.0 * albedo / PI;
+		vec3 diffuse = kD * lightColor * albedo / PI;
 
 		// SPECULAR
 		float cosAlpha = dot(normal, halfV);
@@ -129,7 +109,7 @@ vec3 pbrShading()
 			float NDF = DistributionGGX(cosAlpha, roughness);
 			float G = GeometrySmith(cosTheta, cosRho, roughness);
 		
-			specular = lightColor * 1.0 * (NDF * G * F) / (4.0 * cosTheta * cosRho);
+			specular = lightColor * (NDF * G * F) / (4.0 * cosTheta * cosRho);
 		}
 
 		BRDF = (diffuse + specular) * cosTheta;

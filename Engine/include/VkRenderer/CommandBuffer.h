@@ -31,4 +31,7 @@ private:
 public:
 	void Begin(const VkCommandBufferUsageFlags kUsage = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) const;
 	void End() const;
+
+public:
+	operator const VkCommandBuffer& () const;
 };

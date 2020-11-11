@@ -10,7 +10,6 @@
 
 #include <array>
 
-#include "Device.h"
 #include "Viewport.h"
 #include "Texture.h"
 #include "Buffer.h"
@@ -85,10 +84,10 @@ public:
 	VkDescriptorSet					_uboSet				= VK_NULL_HANDLE;
 
 public:
-	Material(const Device& kDevice, const Viewport& kViewport, const std::string kVertextShaderPath,
+	Material(const Viewport& kViewport, const std::string kVertextShaderPath,
 		const std::string kFragmentShaderPath, const std::vector<Texture*>& kTextures);
 	~Material();
 };
 
-VkShaderModule loadShader(const VkDevice kDevice, std::string path);
+VkShaderModule loadShader(std::string path);
 VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShaderStageFlagBits flags);

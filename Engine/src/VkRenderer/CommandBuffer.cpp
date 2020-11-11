@@ -1,6 +1,6 @@
-#include "CommandBuffer.h"
+#include "VkRenderer/CommandBuffer.h"
 
-#include "Core.h"
+#include "VkRenderer/Core.h"
 
 CommandBuffer::CommandBuffer(const Queue& kQueue, const VkCommandBufferLevel kLevel)
 	: _commandPool { kQueue._commandPool }
@@ -81,4 +81,9 @@ void CommandBuffer::End() const
 {
 	VkResult err = vkEndCommandBuffer(_commandBuffer);
 	check_vk_result(err);
+}
+
+CommandBuffer::operator const VkCommandBuffer& () const
+{
+	return _commandBuffer;
 }

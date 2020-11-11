@@ -2,9 +2,9 @@
 
 #include <vulkan/vulkan.h>
 
-#include "Editor.h"
-
 #include <vector>
+
+#include "Editor.h"
 
 struct Queue
 {
@@ -42,6 +42,7 @@ class LogicalDevice
 	static const LogicalDevice* _sInstance;
 
 public:
+	const Device*		_physicalDevice		= nullptr;
 	VkDevice			_device				= VK_NULL_HANDLE;
 	Queue				_graphicsQueue;
 	Queue				_computeQueue;

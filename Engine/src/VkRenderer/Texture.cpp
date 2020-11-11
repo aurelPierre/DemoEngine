@@ -1,14 +1,14 @@
-#include "Texture.h"
+#include "VkRenderer/Texture.h"
 
-#include "Context.h"
-#include "Core.h"
+#include "VkRenderer/Core.h"
+#include "VkRenderer/Context.h"
 
-#include "Buffer.h"
+#include "VkRenderer/Buffer.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-Texture::Texture(const Device& kDevice, const std::string kTexturePath)
+Texture::Texture(const std::string kTexturePath)
 {
 	ASSERT(!kTexturePath.empty(), "kTexturePath is empty")
 
@@ -20,12 +20,12 @@ Texture::Texture(const Device& kDevice, const std::string kTexturePath)
 		throw std::runtime_error("failed to load texture image!");
 	}
 
-	Buffer stagingBuffer(kDevice, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	Buffer stagingBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 	stagingBuffer.Map(pixels, static_cast<size_t>(imageSize));
 	
 	stbi_image_free(pixels);
 
-	ImageBuffer image(kDevice, VK_FORMAT_R8G8B8A8_UNORM, { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) },
+	ImageBuffer image(VK_FORMAT_R8G8B8A8_UNORM, { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) },
 						VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	_image = std::move(image);
 

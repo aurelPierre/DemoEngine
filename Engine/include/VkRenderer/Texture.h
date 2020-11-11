@@ -2,7 +2,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include "Device.h"
 #include "ImageBuffer.h"
 
 class Texture
@@ -12,6 +11,6 @@ public:
 	VkSampler			_sampler		= VK_NULL_HANDLE;
 
 public:
-	Texture(const Device& kDevice, const std::string kTexturePath);
+	Texture(const std::string kTexturePath);
 	~Texture();
 };

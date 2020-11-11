@@ -1,10 +1,10 @@
-#include "Buffer.h"
+#include "VkRenderer/Buffer.h"
 
-#include "Context.h"
-#include "Core.h"
-#include "CommandBuffer.h"
+#include "VkRenderer/Core.h"
+#include "VkRenderer/Context.h"
+#include "VkRenderer/CommandBuffer.h"
 
-Buffer::Buffer(const Device& kDevice, const VkDeviceSize kSize, const VkBufferUsageFlags kUsage)
+Buffer::Buffer(const VkDeviceSize kSize, const VkBufferUsageFlags kUsage)
 	: _size{ kSize }
 {
 	ASSERT(_size != 0u, "kSize is 0")
@@ -15,7 +15,7 @@ Buffer::Buffer(const Device& kDevice, const VkDeviceSize kSize, const VkBufferUs
 	bufferInfo.usage = kUsage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	VkResult result = vkCreateBuffer(LogicalDevice::Instance()._device, &bufferInfo, nullptr, &_buffer);
+	VkResult result = vkCreateBuffer(LogicalDevice::Instance()._device, &bufferInfo, Context::Instance()._allocator, &_buffer);
 	check_vk_result(result);
 
 	VkMemoryRequirements memRequirements;
@@ -24,9 +24,10 @@ Buffer::Buffer(const Device& kDevice, const VkDeviceSize kSize, const VkBufferUs
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = kDevice.FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	allocInfo.memoryTypeIndex = LogicalDevice::Instance()._physicalDevice->
+									FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-	result = vkAllocateMemory(LogicalDevice::Instance()._device, &allocInfo, nullptr, &_memory);
+	result = vkAllocateMemory(LogicalDevice::Instance()._device, &allocInfo, Context::Instance()._allocator, &_memory);
 	check_vk_result(result);
 
 	result = vkBindBufferMemory(LogicalDevice::Instance()._device, _buffer, _memory, 0);
@@ -88,7 +89,12 @@ void Buffer::CopyBuffer(const Queue& kQueue, const Buffer& kSrcBuffer) const
 
 	VkBufferCopy copyRegion{};
 	copyRegion.size = _size;
-	vkCmdCopyBuffer(commandBuffer._commandBuffer, kSrcBuffer._buffer, _buffer, 1, &copyRegion);
+	vkCmdCopyBuffer(commandBuffer, kSrcBuffer, _buffer, 1, &copyRegion);
 
 	CommandBuffer::EndSingleTimeCommands(kQueue, commandBuffer);
+}
+
+Buffer::operator const VkBuffer& () const
+{
+	return _buffer;
 }

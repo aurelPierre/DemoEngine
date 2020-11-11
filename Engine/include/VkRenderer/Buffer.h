@@ -7,13 +7,13 @@
 class Buffer
 {
 public:
-	VkDeviceSize	_size = 0;
+	VkDeviceSize	_size	= 0;
 	VkBuffer		_buffer = VK_NULL_HANDLE;
 	VkDeviceMemory	_memory = VK_NULL_HANDLE;
 
 public:
 	Buffer() = default;
-	Buffer(const Device& kDevice, const VkDeviceSize kSize, const VkBufferUsageFlags kUsage);
+	Buffer(const VkDeviceSize kSize, const VkBufferUsageFlags kUsage);
 
 	~Buffer();
 
@@ -30,4 +30,7 @@ public:
 	void Map(void* data, size_t size) const;
 
 	void CopyBuffer(const Queue& kQueue, const Buffer& kSrcBuffer) const;
+
+public:
+	operator const VkBuffer&() const;
 };

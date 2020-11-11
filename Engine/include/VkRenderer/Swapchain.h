@@ -4,7 +4,6 @@
 
 #include <vector>
 
-#include "Device.h"
 #include "Surface.h"
 #include "CommandBuffer.h"
 #include "ImageBuffer.h"
@@ -71,7 +70,7 @@ public:
 	std::vector<FrameImage> _framesImage;
 
 public:
-	Swapchain(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData);
+	Swapchain(const Surface& kSurface, const GLFWWindowData* windowData);
 
 	~Swapchain();
 
@@ -79,11 +78,11 @@ public:
 	Swapchain& operator=(const Swapchain& kSwapchain) = delete;
 
 private:
-	void Init(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData);
+	void Init(const Surface& kSurface, const GLFWWindowData* windowData);
 	void Clean();
 
 public:
-	void	Resize(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData);
+	void	Resize(const Surface& kSurface, const GLFWWindowData* windowData);
 	bool	AcquireNextImage();
 	void	Draw();
 	void	Render();

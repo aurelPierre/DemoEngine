@@ -1,10 +1,10 @@
 #include "ImGuiSystem.h"
 
 #include "GLFWWindowSystem.h"
-#include "Swapchain.h"
-#include "Core.h"
-#include "Context.h"
-#include "CommandBuffer.h"
+#include "VkRenderer/Swapchain.h"
+#include "VkRenderer/Core.h"
+#include "VkRenderer/Context.h"
+#include "VkRenderer/CommandBuffer.h"
 
 void ImGuiSystem::Init(const GLFWWindowData* windowData, const Context& kContext, const Device& kDevice,
 						const LogicalDevice& kLogicalDevice, const Swapchain& kSwapchain)
@@ -67,7 +67,7 @@ void ImGuiSystem::Init(const GLFWWindowData* windowData, const Context& kContext
 	{
 		// Use any command queue
 		CommandBuffer commandBuffer = CommandBuffer::BeginSingleTimeCommands(kLogicalDevice._graphicsQueue);
-		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer._commandBuffer);
+		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
 		CommandBuffer::EndSingleTimeCommands(kLogicalDevice._graphicsQueue, commandBuffer);
 	}
 }
@@ -158,7 +158,7 @@ void ImGuiSystem::Draw(const CommandBuffer& command)
 	ImGui::Render();
 	
 	ImDrawData* draw_data = ImGui::GetDrawData();
-	ImGui_ImplVulkan_RenderDrawData(draw_data, command._commandBuffer);
+	ImGui_ImplVulkan_RenderDrawData(draw_data, command);
 }
 
 void ImGuiSystem::EndFrame()

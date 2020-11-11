@@ -16,7 +16,7 @@ public:
 public:
 	ImageBuffer() = default;
 	ImageBuffer(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage);
-	ImageBuffer(const Device& kDevice, const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage);
+	ImageBuffer(const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage);
 
 	~ImageBuffer();
 

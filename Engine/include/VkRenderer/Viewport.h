@@ -4,8 +4,6 @@
 
 #include <glm/glm.hpp>
 
-#include "Device.h"
-#include "Context.h"
 #include "ImageBuffer.h"
 #include "CommandBuffer.h"
 
@@ -35,15 +33,15 @@ public:
 	VkRenderPass			_renderPass			= VK_NULL_HANDLE;
 
 public:
-	Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent2D kExtent);
+	Viewport(const VkFormat kFormat, const VkExtent2D kExtent);
 	~Viewport();
 
 private:
-	void Init(const Device& kDevice, const VkFormat kFormat);
+	void Init(const VkFormat kFormat);
 	void Clean();
 
 public:
-	void	Resize(const Device& kDevice, const VkFormat kFormat);
+	void	Resize(const VkFormat kFormat);
 
 	bool	UpdateViewportSize();
 

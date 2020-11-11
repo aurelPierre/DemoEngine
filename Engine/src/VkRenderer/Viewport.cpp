@@ -1,21 +1,18 @@
-#include "Viewport.h"
+#include "VkRenderer/Viewport.h"
 
-#include "Context.h"
-
-#include "Core.h"
 #include <array>
 
 #include <imgui_impl_vulkan.h>
 
-#include "Mesh.h"
+#include "VkRenderer/Core.h"
+#include "VkRenderer/Context.h"
 
-
-Viewport::Viewport(const Device& kDevice, const VkFormat kFormat, const VkExtent2D kExtent)
+Viewport::Viewport(const VkFormat kFormat, const VkExtent2D kExtent)
 	: _commandBuffer{ LogicalDevice::Instance()._graphicsQueue }, _size { kExtent }
 {
 	ASSERT(kExtent.width != 0 && kExtent.height != 0, "kExtent.width is 0 or kExtent.height is 0")
 
-	Init(kDevice, kFormat);
+	Init(kFormat);
 
 	VkFenceCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -32,7 +29,7 @@ Viewport::~Viewport()
 	Clean();
 }
 
-void Viewport::Init(const Device& kDevice, const VkFormat kFormat)
+void Viewport::Init(const VkFormat kFormat)
 {
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = kFormat;
@@ -48,7 +45,7 @@ void Viewport::Init(const Device& kDevice, const VkFormat kFormat)
 	attachmentRef[0].attachment = 0;
 	attachmentRef[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-	VkFormat depthFormat = kDevice.FindDepthFormat();
+	VkFormat depthFormat = LogicalDevice::Instance()._physicalDevice->FindDepthFormat();
 
 	VkAttachmentDescription depthAttachment{};
 	depthAttachment.format = depthFormat;
@@ -102,10 +99,10 @@ void Viewport::Init(const Device& kDevice, const VkFormat kFormat)
 	VkResult err = vkCreateRenderPass(LogicalDevice::Instance()._device, &renderPassIinfo, Context::Instance()._allocator, &_renderPass);
 	check_vk_result(err);
 
-	ImageBuffer depthImage(kDevice, depthFormat, _size, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	ImageBuffer depthImage(depthFormat, _size, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	_depthImage = std::move(depthImage);
 
-	ImageBuffer colorImage(kDevice, kFormat, _size, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	ImageBuffer colorImage(kFormat, _size, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	_colorImage = std::move(colorImage);
 
 	VkSamplerCreateInfo samplerInfo{};
@@ -155,7 +152,7 @@ void Viewport::Clean()
 	vkDestroyRenderPass(LogicalDevice::Instance()._device, _renderPass, Context::Instance()._allocator);
 }
 
-void Viewport::Resize(const Device& kDevice, const VkFormat kFormat)
+void Viewport::Resize(const VkFormat kFormat)
 {
 	ImVec2 vMin = ImGui::GetWindowContentRegionMin();
 	ImVec2 vMax = ImGui::GetWindowContentRegionMax();
@@ -171,7 +168,7 @@ void Viewport::Resize(const Device& kDevice, const VkFormat kFormat)
 	_size = size;
 
 	Clean();
-	Init(kDevice, kFormat);
+	Init(kFormat);
 }
 
 bool Viewport::UpdateViewportSize()
@@ -217,8 +214,8 @@ void Viewport::StartDraw()
 	scissor.offset = { 0, 0 };
 	scissor.extent = { _size.width, _size.height };
 
-	vkCmdSetViewport(_commandBuffer._commandBuffer, 0, 1, &vkViewport);
-	vkCmdSetScissor(_commandBuffer._commandBuffer, 0, 1, &scissor);
+	vkCmdSetViewport(_commandBuffer, 0, 1, &vkViewport);
+	vkCmdSetScissor(_commandBuffer, 0, 1, &scissor);
 
 	VkClearValue clearValues[2];
 	clearValues[0].color = { { 0.05f, 0.05f, 0.1f, 1.0f } };
@@ -232,12 +229,12 @@ void Viewport::StartDraw()
 	renderPassBeginInfo.renderArea.extent.height = _size.height;
 	renderPassBeginInfo.clearValueCount = 2;
 	renderPassBeginInfo.pClearValues = clearValues;
-	vkCmdBeginRenderPass(_commandBuffer._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(_commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void Viewport::EndDraw()
 {
-	vkCmdEndRenderPass(_commandBuffer._commandBuffer);
+	vkCmdEndRenderPass(_commandBuffer);
 
 	_commandBuffer.End();
 }

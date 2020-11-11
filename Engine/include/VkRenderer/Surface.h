@@ -2,8 +2,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include "Device.h"
-
 struct GLFWWindowData;
 
 class Surface
@@ -14,6 +12,6 @@ public:
 	VkColorSpaceKHR		_colorSpace		= VK_COLOR_SPACE_MAX_ENUM_KHR;
 
 public:
-	Surface(const Device& kDevice, const GLFWWindowData* windowData);
+	Surface(const GLFWWindowData* windowData);
 	~Surface();
 };

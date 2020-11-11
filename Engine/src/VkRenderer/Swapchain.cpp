@@ -1,7 +1,8 @@
-#include "Swapchain.h"
+#include "VkRenderer/Swapchain.h"
 
-#include "Context.h"
-#include "Core.h"
+#include "VkRenderer/Core.h"
+#include "VkRenderer/Context.h"
+
 #include "GLFWWindowSystem.h"
 #include "ImGuiSystem.h"
 
@@ -118,11 +119,11 @@ void FrameImage::Clean()
 		vkDestroyFramebuffer(LogicalDevice::Instance()._device, _framebuffer, Context::Instance()._allocator);
 }
 
-Swapchain::Swapchain(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData)
+Swapchain::Swapchain(const Surface& kSurface, const GLFWWindowData* windowData)
 {
 	ASSERT(windowData != nullptr, "windowData is nullptr")
 
-	Init(kDevice, kSurface, windowData);
+	Init(kSurface, windowData);
 }
 
 Swapchain::~Swapchain()
@@ -130,19 +131,19 @@ Swapchain::~Swapchain()
 	Clean();
 }
 
-void Swapchain::Init(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData)
+void Swapchain::Init(const Surface& kSurface, const GLFWWindowData* windowData)
 {
 	VkSurfaceCapabilitiesKHR surfCaps;
-	VkResult err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(kDevice._physicalDevice, kSurface._surface, &surfCaps);
+	VkResult err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, kSurface._surface, &surfCaps);
 	check_vk_result(err);
 	// Get available present modes
 	uint32_t presentModeCount;
-	err = vkGetPhysicalDeviceSurfacePresentModesKHR(kDevice._physicalDevice, kSurface._surface, &presentModeCount, NULL);
+	err = vkGetPhysicalDeviceSurfacePresentModesKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, kSurface._surface, &presentModeCount, NULL);
 	check_vk_result(err);
 	assert(presentModeCount > 0);
 
 	std::vector<VkPresentModeKHR> presentModes(presentModeCount);
-	err = vkGetPhysicalDeviceSurfacePresentModesKHR(kDevice._physicalDevice, kSurface._surface, &presentModeCount, presentModes.data());
+	err = vkGetPhysicalDeviceSurfacePresentModesKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, kSurface._surface, &presentModeCount, presentModes.data());
 	check_vk_result(err);
 
 	int w, h;
@@ -307,12 +308,12 @@ void Swapchain::Clean()
 	vkDestroySwapchainKHR(LogicalDevice::Instance()._device, _swapchain, Context::Instance()._allocator);
 }
 
-void Swapchain::Resize(const Device& kDevice, const Surface& kSurface, const GLFWWindowData* windowData)
+void Swapchain::Resize(const Surface& kSurface, const GLFWWindowData* windowData)
 {
 	ASSERT(windowData != nullptr, "windowData is nullptr")
 
 	Clean();
-	Init(kDevice, kSurface, windowData);
+	Init(kSurface, windowData);
 }
 
 bool Swapchain::AcquireNextImage()
@@ -345,8 +346,8 @@ void Swapchain::Draw()
 	scissor.offset = { 0, 0 };
 	scissor.extent = { _size.width, _size.height };
 
-	vkCmdSetViewport(_framesData[_currentFrame]._commandBuffer._commandBuffer, 0, 1, &viewport);
-	vkCmdSetScissor(_framesData[_currentFrame]._commandBuffer._commandBuffer, 0, 1, &scissor);
+	vkCmdSetViewport(_framesData[_currentFrame]._commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(_framesData[_currentFrame]._commandBuffer, 0, 1, &scissor);
 
 	VkClearValue clearValues[2];
 	clearValues[0].color = { { 0.0f, 0.0f, 0.f, 0.0f } };
@@ -360,7 +361,7 @@ void Swapchain::Draw()
 	renderPassBeginInfo.renderArea.extent.height = _size.height;
 	renderPassBeginInfo.clearValueCount = 2;
 	renderPassBeginInfo.pClearValues = clearValues;
-	vkCmdBeginRenderPass(_framesData[_currentFrame]._commandBuffer._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(_framesData[_currentFrame]._commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	/**********************************************/
 	/* Foreach objects in this renderpass to draw */
@@ -371,10 +372,10 @@ void Swapchain::Draw()
 	{
 		ImGui::Render();
 		ImDrawData* draw_data = ImGui::GetDrawData();
-		ImGui_ImplVulkan_RenderDrawData(draw_data, _framesData[_currentFrame]._commandBuffer._commandBuffer);
+		ImGui_ImplVulkan_RenderDrawData(draw_data, _framesData[_currentFrame]._commandBuffer);
 	}
 
-	vkCmdEndRenderPass(_framesData[_currentFrame]._commandBuffer._commandBuffer);
+	vkCmdEndRenderPass(_framesData[_currentFrame]._commandBuffer);
 
 	_framesData[_currentFrame]._commandBuffer.End();
 }
@@ -391,7 +392,7 @@ void Swapchain::Render()
 	submitInfo.pWaitDstStageMask = waitStages;
 
 	std::vector<VkCommandBuffer> commands(1);
-	commands[0] = _framesData[_currentFrame]._commandBuffer._commandBuffer;
+	commands[0] = _framesData[_currentFrame]._commandBuffer;
 
 	submitInfo.commandBufferCount = commands.size();
 	submitInfo.pCommandBuffers = commands.data();

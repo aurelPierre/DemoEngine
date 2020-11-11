@@ -1,11 +1,12 @@
-#include "Surface.h"
+#include "VkRenderer/Surface.h"
 
-#include "Context.h"
+#include "VkRenderer/Core.h"
+#include "VkRenderer/Context.h"
+#include "VkRenderer/Device.h"
 
-#include "Core.h"
 #include "GLFWWindowSystem.h"
 
-Surface::Surface(const Device& kDevice, const GLFWWindowData* windowData)
+Surface::Surface(const GLFWWindowData* windowData)
 {
 	ASSERT(windowData != nullptr, "windowData is nullptr")
 
@@ -13,7 +14,7 @@ Surface::Surface(const Device& kDevice, const GLFWWindowData* windowData)
 	check_vk_result(err);
 
 	VkBool32 res;
-	err = vkGetPhysicalDeviceSurfaceSupportKHR(kDevice._physicalDevice, LogicalDevice::Instance()._graphicsQueue._indice, _surface, &res);
+	err = vkGetPhysicalDeviceSurfaceSupportKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, LogicalDevice::Instance()._graphicsQueue._indice, _surface, &res);
 	check_vk_result(err);
 	if (res != VK_TRUE)
 	{
@@ -23,12 +24,12 @@ Surface::Surface(const Device& kDevice, const GLFWWindowData* windowData)
 
 	// Get list of supported surface formats
 	uint32_t formatCount;
-	err = vkGetPhysicalDeviceSurfaceFormatsKHR(kDevice._physicalDevice, _surface, &formatCount, NULL);
+	err = vkGetPhysicalDeviceSurfaceFormatsKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, _surface, &formatCount, NULL);
 	check_vk_result(err);
 	assert(formatCount > 0);
 
 	std::vector<VkSurfaceFormatKHR> surfaceFormats(formatCount);
-	err = vkGetPhysicalDeviceSurfaceFormatsKHR(kDevice._physicalDevice, _surface, &formatCount, surfaceFormats.data());
+	err = vkGetPhysicalDeviceSurfaceFormatsKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, _surface, &formatCount, surfaceFormats.data());
 	check_vk_result(err);
 
 	// If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,

@@ -1,8 +1,8 @@
-#include "ImageBuffer.h"
+#include "VkRenderer/ImageBuffer.h"
 
-#include "Context.h"
-#include "Core.h"
-#include "CommandBuffer.h"
+#include "VkRenderer/Core.h"
+#include "VkRenderer/Context.h"
+#include "VkRenderer/CommandBuffer.h"
 
 ImageBuffer::ImageBuffer(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage)
 	: _size{ kExtent }, _image{ kImage }
@@ -13,7 +13,7 @@ ImageBuffer::ImageBuffer(const VkImage kImage, const VkFormat kFormat, const VkE
 	CreateView(kFormat, kUsage);
 }
 
-ImageBuffer::ImageBuffer(const Device& kDevice, const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage)
+ImageBuffer::ImageBuffer(const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage)
 	: _size{ kExtent }
 {
 	ASSERT(kExtent.width != 0u && kExtent.height != 0, "kExtent.width is 0 or kExtent.height is 0")
@@ -41,7 +41,8 @@ ImageBuffer::ImageBuffer(const Device& kDevice, const VkFormat kFormat, const Vk
 	memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memAlloc.allocationSize = memReqs.size;
 
-	memAlloc.memoryTypeIndex = kDevice.FindMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memAlloc.memoryTypeIndex = LogicalDevice::Instance()._physicalDevice->
+									FindMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	err = vkAllocateMemory(LogicalDevice::Instance()._device, &memAlloc, Context::Instance()._allocator, &_memory);
 	check_vk_result(err);
@@ -167,7 +168,7 @@ void ImageBuffer::TransitionLayout(const Queue& kQueue, const VkImageLayout kOld
 	}
 
 	vkCmdPipelineBarrier(
-		commandBuffer._commandBuffer,
+		commandBuffer,
 		sourceStage, destinationStage,
 		0,
 		0, nullptr,
@@ -200,8 +201,8 @@ void ImageBuffer::CopyBuffer(const Queue& kQueue, const Buffer& kBuffer) const
 	};
 
 	vkCmdCopyBufferToImage(
-		commandBuffer._commandBuffer,
-		kBuffer._buffer,
+		commandBuffer,
+		kBuffer,
 		_image,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		1,

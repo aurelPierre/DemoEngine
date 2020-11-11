@@ -1,10 +1,10 @@
-#include "Material.h"
+#include "VkRenderer/Material.h"
 
-#include "Context.h"
+#include "VkRenderer/Context.h"
 
-#include "Core.h"
+#include "VkRenderer/Core.h"
 
-VkShaderModule loadShader(const VkDevice kDevice, std::string path)
+VkShaderModule loadShader(std::string path)
 {
 	ASSERT(!path.empty(), "path is empty")
 
@@ -17,7 +17,7 @@ VkShaderModule loadShader(const VkDevice kDevice, std::string path)
 
 	VkShaderModule shaderModule;
 
-	VkResult err = vkCreateShaderModule(kDevice, &createInfo, nullptr, &shaderModule);
+	VkResult err = vkCreateShaderModule(LogicalDevice::Instance()._device, &createInfo, Context::Instance()._allocator, &shaderModule);
 	check_vk_result(err);
 
 	return shaderModule;
@@ -35,13 +35,13 @@ VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShad
 	return shaderStageInfo;
 }
 
-Material::Material(const Device& kDevice, const Viewport& kViewport, const std::string kVertextShaderPath,
+Material::Material(const Viewport& kViewport, const std::string kVertextShaderPath,
 						const std::string kFragmentShaderPath, const std::vector<Texture*>& kTextures)
 {
 	ASSERT(!kVertextShaderPath.empty(), "kVertextShaderPath is empty")
 	ASSERT(!kFragmentShaderPath.empty(), "kFragmentShaderPath is empty")
 
-	Buffer ubo(kDevice, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	Buffer ubo(sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 	_ubo = std::move(ubo);
 	
 	{
@@ -227,8 +227,8 @@ Material::Material(const Device& kDevice, const Viewport& kViewport, const std::
 
 	pipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
 
-	VkShaderModule vertShaderModule = loadShader(LogicalDevice::Instance()._device, kVertextShaderPath);
-	VkShaderModule fragShaderModule = loadShader(LogicalDevice::Instance()._device, kFragmentShaderPath);
+	VkShaderModule vertShaderModule = loadShader(kVertextShaderPath);
+	VkShaderModule fragShaderModule = loadShader(kFragmentShaderPath);
 
 	shaderStages[0] = createShader(vertShaderModule, VK_SHADER_STAGE_VERTEX_BIT);
 	shaderStages[1] = createShader(fragShaderModule, VK_SHADER_STAGE_FRAGMENT_BIT);

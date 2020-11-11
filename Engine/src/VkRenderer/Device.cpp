@@ -1,7 +1,7 @@
-#include "Device.h"
+#include "VkRenderer/Device.h"
 
-#include "Core.h"
-#include "Context.h"
+#include "VkRenderer/Core.h"
+#include "VkRenderer/Context.h"
 
 #include <map>
 
@@ -130,6 +130,7 @@ const LogicalDevice& LogicalDevice::Instance()
 }
 
 LogicalDevice::LogicalDevice(const Device& kDevice)
+	: _physicalDevice { &kDevice }
 {
 	_sInstance = this;
 
