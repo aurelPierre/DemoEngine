@@ -52,7 +52,7 @@ int main(int, char**)
 	Camera cam(60.f, 0.1f, 256.f);
 	cam._pos = { 0.f, 3.f, 1.f };
 	cam.Update();
-	Light light({ 0.f, 3.f, 1.f }, { 1.f, 1.f, 1.f }, { 5.f, 5.f, 5.f });
+	Light light({ 0.f, 3.f, 1.f }, 1.f, { 0.f, 1.f, 0.f }, 5.f);
 
 	Buffer modelBuf(sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 	glm::mat4 model(1.f);

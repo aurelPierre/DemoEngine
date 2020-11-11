@@ -1,8 +1,10 @@
 #include "Scene/Light.h"
 
-Light::Light(const glm::vec3& pos, const glm::vec3& color, const glm::vec3& range)
-	: _pos { pos }, _color{ color }, _range { range }, _ubo{ sizeof(glm::vec3) * 3, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT }
+Light::Light(const glm::vec3& pos, const float intensity, const glm::vec3& color, const float range)
+	: _pos{ pos }, _intensity{ intensity}, _color{ color },
+		_range{ range }, _ubo{ sizeof(float) * 8, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT }
 {
-	glm::vec3 data[]{ pos, color, range };
-	_ubo.Map(&data, sizeof(glm::vec3) * 3);
+	float data[]{ _pos.x, _pos.y, _pos.z, _intensity, 
+		_color.x, _color.y, _color.z, _range,};
+	_ubo.Map(&data, sizeof(float) * 8);
 }

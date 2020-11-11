@@ -9,8 +9,9 @@ layout(set = 1, binding = 4) uniform sampler2D aoMap;
 
 layout(set = 0, binding = 1) uniform LightData {
 	vec3 _pos;
+	float _intensity;
 	vec3 _color;
-	vec3 _range;
+	float _range;
 } light;
 
 layout(location = 0) in vec3 fragPos;
@@ -66,7 +67,7 @@ float GeometrySmith(float cosTheta, float cosRho, float roughness)
     return ggx1 * ggx2;
 }
 
-vec3 ComputeAttenuation(vec3 lightPosition, vec3 lightRange)
+float ComputeAttenuation(vec3 lightPosition, float lightRange)
 {
 	float distance = length(lightPosition - fragPos);
 
@@ -75,7 +76,7 @@ vec3 ComputeAttenuation(vec3 lightPosition, vec3 lightRange)
 
 vec3 pbrShading()
 {
-	vec3 albedo     = texture(albedoMap, fragUV).xyz;
+	vec3 albedo     = texture(albedoMap, fragUV).rgb;
     vec3 normal     = getNormalFromNormalMapping();
     float metallic  = texture(metallicMap, fragUV).r;
     float roughness = texture(roughnessMap, fragUV).r;
@@ -118,7 +119,7 @@ vec3 pbrShading()
 		BRDF = (diffuse + specular) * cosTheta;
 	}
 
-	return (ambient + BRDF) * ComputeAttenuation(light._pos, light._range);
+	return (ambient + BRDF) * ComputeAttenuation(light._pos, light._range) * light._intensity;
 }
 
 void main() 
