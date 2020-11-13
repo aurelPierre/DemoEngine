@@ -34,12 +34,12 @@ Device::Device()
 {
 	uint32_t gpu_count;
 	VkResult err = vkEnumeratePhysicalDevices(Context::Instance()._instance, &gpu_count, NULL);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when enumerating physical devices");
 	//IM_ASSERT(gpu_count > 0);
 
 	std::vector<VkPhysicalDevice> physicalDevices(gpu_count);
 	err = vkEnumeratePhysicalDevices(Context::Instance()._instance, &gpu_count, physicalDevices.data());
-	check_vk_result(err);
+	VK_ASSERT(err, "error when enumerating physical devices");
 
 	// Use an ordered map to automatically sort candidates by increasing score
 	std::multimap<int, VkPhysicalDevice> candidates;
@@ -70,13 +70,13 @@ Device::Device()
 	// Get list of supported extensions
 	uint32_t extCount = 0;
 	err = vkEnumerateDeviceExtensionProperties(_physicalDevice, nullptr, &extCount, nullptr);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when enumerating device extension properties");
 	if (extCount > 0)
 	{
 		std::vector<VkExtensionProperties> extensions(extCount);
 
 		err = vkEnumerateDeviceExtensionProperties(_physicalDevice, nullptr, &extCount, &extensions.front());
-		check_vk_result(err);
+		VK_ASSERT(err, "error when enumerating device extension properties");
 
 		for (VkExtensionProperties& ext : extensions)
 			_supportedExtensions.push_back(ext.extensionName);
@@ -215,7 +215,7 @@ LogicalDevice::LogicalDevice(const Device& kDevice)
 	deviceCreateInfo.ppEnabledLayerNames = validationLayers.data();
 
 	VkResult err = vkCreateDevice(kDevice._physicalDevice, &deviceCreateInfo, Context::Instance()._allocator, &_device);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating device");
 
 	vkGetDeviceQueue(_device, _graphicsQueue._indice, 0, &_graphicsQueue._queue);
 	vkGetDeviceQueue(_device, _computeQueue._indice, 0, &_computeQueue._queue);
@@ -227,7 +227,7 @@ LogicalDevice::LogicalDevice(const Device& kDevice)
 	info.queueFamilyIndex = _graphicsQueue._indice;
 	err = vkCreateCommandPool(_device, &info, Context::Instance()._allocator,
 								&_graphicsQueue._commandPool);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating command pool");
 
 	if (_computeQueue._indice != _graphicsQueue._indice)
 	{
@@ -236,7 +236,7 @@ LogicalDevice::LogicalDevice(const Device& kDevice)
 		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		info.queueFamilyIndex = _computeQueue._indice;
 		err = vkCreateCommandPool(_device, &info, Context::Instance()._allocator, &_computeQueue._commandPool);
-		check_vk_result(err);
+		VK_ASSERT(err, "error when creating command pool");
 	}
 	else
 		_computeQueue._commandPool = _graphicsQueue._commandPool;
@@ -256,7 +256,7 @@ LogicalDevice::LogicalDevice(const Device& kDevice)
 		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		info.queueFamilyIndex = _transferQueue._indice;
 		err = vkCreateCommandPool(_device, &info, Context::Instance()._allocator, &_transferQueue._commandPool);
-		check_vk_result(err);
+		VK_ASSERT(err, "error when creating command pool");
 	}
 
 	{
@@ -281,7 +281,7 @@ LogicalDevice::LogicalDevice(const Device& kDevice)
 		pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
 		pool_info.pPoolSizes = pool_sizes;
 		err = vkCreateDescriptorPool(_device, &pool_info, Context::Instance()._allocator, &_descriptorPool);
-		check_vk_result(err);
+		VK_ASSERT(err, "error when creating descriptor pool");
 	}
 }
 

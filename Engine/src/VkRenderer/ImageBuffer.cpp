@@ -32,7 +32,7 @@ ImageBuffer::ImageBuffer(const VkFormat kFormat, const VkExtent2D& kExtent, cons
 	image.usage = kUsage;
 
 	VkResult err = vkCreateImage(LogicalDevice::Instance()._device, &image, Context::Instance()._allocator, &_image);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating image");
 
 	VkMemoryAllocateInfo memAlloc{};
 	VkMemoryRequirements memReqs;
@@ -45,10 +45,10 @@ ImageBuffer::ImageBuffer(const VkFormat kFormat, const VkExtent2D& kExtent, cons
 									FindMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	err = vkAllocateMemory(LogicalDevice::Instance()._device, &memAlloc, Context::Instance()._allocator, &_memory);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when allocating memory");
 
 	err = vkBindImageMemory(LogicalDevice::Instance()._device, _image, _memory, 0);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when binding image memory");
 
 	CreateView(kFormat, kUsage);
 }
@@ -109,7 +109,7 @@ void ImageBuffer::CreateView(const VkFormat kFormat, const VkImageUsageFlags kUs
 	colorAttachmentView.image = _image;
 
 	VkResult err = vkCreateImageView(LogicalDevice::Instance()._device, &colorAttachmentView, Context::Instance()._allocator, &_view);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating image view");
 }
 
 void ImageBuffer::Clean()

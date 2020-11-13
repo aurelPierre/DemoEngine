@@ -45,7 +45,7 @@ void ImGuiSystem::Init(const GLFWWindowData* windowData, const Context& kContext
 	init_info.Allocator = kContext._allocator;
 	init_info.MinImageCount = kSwapchain._imageCount; // Sure ?
 	init_info.ImageCount = kSwapchain._imageCount;
-	init_info.CheckVkResultFn = check_vk_result;
+	init_info.CheckVkResultFn = nullptr;
 	ImGui_ImplVulkan_Init(&init_info, kSwapchain._renderPass);
 
 	// Load Fonts

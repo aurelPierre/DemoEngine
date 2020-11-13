@@ -16,7 +16,7 @@ Buffer::Buffer(const VkDeviceSize kSize, const VkBufferUsageFlags kUsage)
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	VkResult result = vkCreateBuffer(LogicalDevice::Instance()._device, &bufferInfo, Context::Instance()._allocator, &_buffer);
-	check_vk_result(result);
+	VK_ASSERT(result, "error when creating VkBuffer");
 
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(LogicalDevice::Instance()._device, _buffer, &memRequirements);
@@ -28,10 +28,10 @@ Buffer::Buffer(const VkDeviceSize kSize, const VkBufferUsageFlags kUsage)
 									FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	result = vkAllocateMemory(LogicalDevice::Instance()._device, &allocInfo, Context::Instance()._allocator, &_memory);
-	check_vk_result(result);
+	VK_ASSERT(result, "error when allocating memory");
 
 	result = vkBindBufferMemory(LogicalDevice::Instance()._device, _buffer, _memory, 0);
-	check_vk_result(result);
+	VK_ASSERT(result, "error when binding memory");
 }
 
 Buffer::~Buffer()

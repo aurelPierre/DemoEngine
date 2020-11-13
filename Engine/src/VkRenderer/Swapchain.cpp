@@ -14,16 +14,16 @@ FrameData::FrameData()
 	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 	VkResult err = vkCreateFence(LogicalDevice::Instance()._device, &fenceInfo, Context::Instance()._allocator, &_fence);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating fence");
 
 	VkSemaphoreCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 	err = vkCreateSemaphore(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_presentComplete);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating semaphore");
 
 	err = vkCreateSemaphore(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_renderComplete);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating semaphore");
 }
 
 FrameData::~FrameData()
@@ -87,7 +87,7 @@ FrameImage::FrameImage(const VkImage kImage, const VkFormat kFormat, const VkExt
 	info.layers = 1;
 
 	VkResult err = vkCreateFramebuffer(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_framebuffer);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating framebuffer");
 }
 
 FrameImage::~FrameImage()
@@ -135,16 +135,16 @@ void Swapchain::Init(const Surface& kSurface, const GLFWWindowData* windowData)
 {
 	VkSurfaceCapabilitiesKHR surfCaps;
 	VkResult err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, kSurface._surface, &surfCaps);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when getting physical device surface capabilities KHR");
 	// Get available present modes
 	uint32_t presentModeCount;
 	err = vkGetPhysicalDeviceSurfacePresentModesKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, kSurface._surface, &presentModeCount, NULL);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when getting physical device surface present modes KHR");
 	assert(presentModeCount > 0);
 
 	std::vector<VkPresentModeKHR> presentModes(presentModeCount);
 	err = vkGetPhysicalDeviceSurfacePresentModesKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, kSurface._surface, &presentModeCount, presentModes.data());
-	check_vk_result(err);
+	VK_ASSERT(err, "error when getting physical device surface present modes KHR");
 
 	int w, h;
 	glfwGetFramebufferSize(windowData->_window, &w, &h);
@@ -238,7 +238,7 @@ void Swapchain::Init(const Surface& kSurface, const GLFWWindowData* windowData)
 	}
 
 	err = vkCreateSwapchainKHR(LogicalDevice::Instance()._device, &swapchainCI, Context::Instance()._allocator, &_swapchain);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating swapchain KHR");
 
 	VkAttachmentDescription attachment = {};
 	attachment.format = kSurface._colorFormat;
@@ -278,15 +278,15 @@ void Swapchain::Init(const Surface& kSurface, const GLFWWindowData* windowData)
 	info.pDependencies = &dependency;
 
 	err = vkCreateRenderPass(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_renderPass);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating render pass");
 
 	err = vkGetSwapchainImagesKHR(LogicalDevice::Instance()._device, _swapchain, &_imageCount, NULL);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when getting swapchain images KHR");
 
 	// Get the swap chain images
 	std::vector<VkImage> images(_imageCount);
 	err = vkGetSwapchainImagesKHR(LogicalDevice::Instance()._device, _swapchain, &_imageCount, images.data());
-	check_vk_result(err);
+	VK_ASSERT(err, "error when gettings swapchain images KHR");
 
 	_framesData.reserve(_imageCount);
 	_framesImage.reserve(_imageCount);
@@ -326,7 +326,7 @@ bool Swapchain::AcquireNextImage()
 	if (err == VK_ERROR_OUT_OF_DATE_KHR)
 		return false;
 
-	check_vk_result(err);
+	VK_ASSERT(err, "error when acquiring next image KHR");
 	return true;
 }
 
@@ -404,7 +404,7 @@ void Swapchain::Render()
 	vkResetFences(LogicalDevice::Instance()._device, 1, &_framesData[_currentFrame]._fence);
 	VkResult err = vkQueueSubmit(LogicalDevice::Instance()._graphicsQueue._queue, 1, &submitInfo,
 		_framesData[_currentFrame]._fence);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when submitting queue");
 }
 
 bool Swapchain::Present()
@@ -429,7 +429,7 @@ bool Swapchain::Present()
 	if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR)
 		return false;
 	else if (err != VK_SUCCESS)
-		check_vk_result(err);
+		VK_ASSERT(err, "error when presenting queue KHR");
 
 	return true;
 }

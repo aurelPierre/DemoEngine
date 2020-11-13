@@ -30,11 +30,11 @@ Context::Context()
 
 	uint32_t layerCount;
 	VkResult err = vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when enumerating instance layer properties");
 
 	std::vector<VkLayerProperties> availableLayers(layerCount);
 	err = vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-	check_vk_result(err);
+	VK_ASSERT(err, "error when enumerating instance layer properties");
 
 	for (const char* layerName : validationLayers) {
 		bool layerFound = false;
@@ -66,7 +66,7 @@ Context::Context()
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
 	err = vkCreateInstance(&createInfo, _allocator, &_instance);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating instance");
 
 	/************ Debug ************/
 	{
@@ -80,7 +80,7 @@ Context::Context()
 		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance, "vkCreateDebugUtilsMessengerEXT");
 		if (func != nullptr) {
 			VkResult err = func(_instance, &createInfo, _allocator, &_debugMessenger);
-			check_vk_result(err);
+			VK_ASSERT(err, "error when getting instance proc addr");
 		}
 		else {
 			throw std::runtime_error("validation layers requested, but not available!");

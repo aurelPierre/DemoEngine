@@ -15,8 +15,12 @@
 			ez::LogSystem::Save(); \
 			std::abort(); \
 		}
+
+	#define VK_ASSERT(err, msg) ASSERT(err == VK_SUCCESS, msg)
 #else
-	#define ASSERT(predicate, msg)	
+	#define ASSERT(predicate, msg)
+	
+	#define VK_ASSERT(err, msg)
 #endif
 
 const std::vector<const char*> validationLayers = {
@@ -28,7 +32,5 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	VkDebugUtilsMessageTypeFlagsEXT messageType,
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData);
-
-void check_vk_result(const VkResult err);
 
 std::vector<char> readFile(const std::string& filename);

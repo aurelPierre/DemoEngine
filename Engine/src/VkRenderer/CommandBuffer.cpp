@@ -12,7 +12,7 @@ CommandBuffer::CommandBuffer(const Queue& kQueue, const VkCommandBufferLevel kLe
 	info.commandBufferCount = 1;
 
 	VkResult err = vkAllocateCommandBuffers(LogicalDevice::Instance()._device, &info, &_commandBuffer);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when allocating command buffer");
 }
 
 CommandBuffer::~CommandBuffer()
@@ -55,10 +55,10 @@ void CommandBuffer::EndSingleTimeCommands(const Queue& kQueue, const CommandBuff
 	submitInfo.pCommandBuffers = &kCommandBuffer._commandBuffer;
 
 	VkResult err = vkQueueSubmit(kQueue._queue, 1, &submitInfo, VK_NULL_HANDLE);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when submitting queue");
 
 	err = vkQueueWaitIdle(kQueue._queue);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when waiting idle queue");
 }
 
 void CommandBuffer::Clean()
@@ -74,13 +74,13 @@ void CommandBuffer::Begin(const VkCommandBufferUsageFlags kUsage) const
 	beginInfo.flags = kUsage;
 
 	VkResult err = vkBeginCommandBuffer(_commandBuffer, &beginInfo);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when beginning command buffer");
 }
 
 void CommandBuffer::End() const
 {
 	VkResult err = vkEndCommandBuffer(_commandBuffer);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when ending command buffer");
 }
 
 CommandBuffer::operator const VkCommandBuffer& () const

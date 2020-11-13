@@ -19,7 +19,7 @@ Viewport::Viewport(const VkFormat kFormat, const VkExtent2D kExtent)
 	info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 	VkResult err = vkCreateFence(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_fence);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating fence");
 }
 
 Viewport::~Viewport()
@@ -97,7 +97,7 @@ void Viewport::Init(const VkFormat kFormat)
 	renderPassIinfo.pDependencies = dependencies.data();
 
 	VkResult err = vkCreateRenderPass(LogicalDevice::Instance()._device, &renderPassIinfo, Context::Instance()._allocator, &_renderPass);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating render pass");
 
 	ImageBuffer depthImage(depthFormat, _size, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	_depthImage = std::move(depthImage);
@@ -118,7 +118,8 @@ void Viewport::Init(const VkFormat kFormat)
 	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = 1.0f;
 	samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	check_vk_result(vkCreateSampler(LogicalDevice::Instance()._device, &samplerInfo, Context::Instance()._allocator, &_sampler));
+	err = vkCreateSampler(LogicalDevice::Instance()._device, &samplerInfo, Context::Instance()._allocator, &_sampler);
+	VK_ASSERT(err, "error when creating sampler")
 
 	VkImageView attachment[2];
 	attachment[0] = _colorImage._view;
@@ -134,7 +135,7 @@ void Viewport::Init(const VkFormat kFormat)
 	info.layers = 1;
 
 	err = vkCreateFramebuffer(LogicalDevice::Instance()._device, &info, Context::Instance()._allocator, &_framebuffer);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating framebuffer");
 
 	_set = (VkDescriptorSet)ImGui_ImplVulkan_AddTexture(_sampler, _colorImage._view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
@@ -144,7 +145,7 @@ void Viewport::Clean()
 	vkDeviceWaitIdle(LogicalDevice::Instance()._device);
 
 	VkResult err = vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_set);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when freeing descriptor sets");
 
 	vkDestroySampler(LogicalDevice::Instance()._device, _sampler, Context::Instance()._allocator);
 	vkDestroyFramebuffer(LogicalDevice::Instance()._device, _framebuffer, Context::Instance()._allocator);
@@ -196,7 +197,7 @@ bool Viewport::UpdateViewportSize()
 void Viewport::StartDraw()
 {
 	VkResult err = vkWaitForFences(LogicalDevice::Instance()._device, 1, &_fence, VK_TRUE, UINT64_MAX);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when waiting for fences");
 
 	/**********************************************************************************************/
 
@@ -254,7 +255,7 @@ void Viewport::Render()
 	submitInfo.signalSemaphoreCount = 0;
 
 	VkResult err = vkResetFences(LogicalDevice::Instance()._device, 1, &_fence);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when reseting fences");
 	err = vkQueueSubmit(LogicalDevice::Instance()._graphicsQueue._queue, 1, &submitInfo, _fence);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when submitting queue");
 }

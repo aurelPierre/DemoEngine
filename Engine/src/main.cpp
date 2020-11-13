@@ -31,11 +31,11 @@ int main(int, char**)
 
 	Viewport viewport(surface._colorFormat, { 512, 512 });
 
-	Texture color("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_BaseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-	Texture metal("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Metallic.png", VK_FORMAT_R8_UNORM);
-	Texture normal("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Normal.png", VK_FORMAT_R8G8B8A8_UNORM);
-	Texture rough("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Roughness.png", VK_FORMAT_R8_UNORM);
-	Texture aO("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Default_AmbientOcclusion.png", VK_FORMAT_R8_UNORM);
+	Texture color("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_BaseColor.png");
+	Texture metal("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Metallic.png");
+	Texture normal("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Normal.png");
+	Texture rough("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Roughness.png");
+	Texture aO("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Default_AmbientOcclusion.png");
 
 	Material mat(viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
@@ -50,7 +50,7 @@ int main(int, char**)
 	scene._mesh.emplace_back(&mesh);
 
 	Camera cam(60.f, 0.1f, 256.f);
-	cam._pos = { 0.f, 3.f, 1.f };
+	cam._pos = { 0.f, 2.f, 0.f };
 	cam.Update();
 	Light light({ 0.f, 3.f, 1.f }, 1.f, { 1.f, 1.f, 1.f }, 5.f);
 
@@ -70,9 +70,14 @@ int main(int, char**)
 		DrawWindow("Scene", viewport, &light);
 	});*/
 
+	ez::Timer time;
+	float deltaTime = 0.f;
 	while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
 	{
 		TRACE("main::loop")
+		
+		deltaTime = time.Duration<std::chrono::seconds::period>();
+		time.Start();
 
 		// Clear
 		imGui.StartFrame();
@@ -96,6 +101,9 @@ int main(int, char**)
 		cam._pos = { p[0], p[1], p[2] };
 		ImGui::End();
 		cam.Update();
+
+		model = glm::rotate(model, deltaTime * glm::radians(20.0f), { 0.f, 0.f, 1.f });
+		modelBuf.Map(&model, sizeof(glm::mat4));
 
 		// Draw
 		Draw(scene);
@@ -124,6 +132,7 @@ int main(int, char**)
 			windowData->_shouldUpdate = true;
 
 		imGui.EndFrame();
+		time.Stop();
 	}
 
 	vkDeviceWaitIdle(logicalDevice._device);

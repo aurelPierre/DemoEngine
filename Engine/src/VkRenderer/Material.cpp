@@ -18,7 +18,7 @@ VkShaderModule loadShader(std::string path)
 	VkShaderModule shaderModule;
 
 	VkResult err = vkCreateShaderModule(LogicalDevice::Instance()._device, &createInfo, Context::Instance()._allocator, &shaderModule);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating shader module");
 
 	return shaderModule;
 }
@@ -82,15 +82,16 @@ void Material::CreateDescriptors(const size_t kTextureSize)
 
 		VkResult err = vkCreateDescriptorSetLayout(LogicalDevice::Instance()._device, &gloLayoutInfo,
 			Context::Instance()._allocator, &_globalLayout);
-		check_vk_result(err);
+		VK_ASSERT(err, "error when creating descriptor set layout");
 
 		VkDescriptorSetAllocateInfo gloAllocInfo{};
 		gloAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		gloAllocInfo.descriptorPool = LogicalDevice::Instance()._descriptorPool;
 		gloAllocInfo.descriptorSetCount = 1;
 		gloAllocInfo.pSetLayouts = &_globalLayout;
+
 		err = vkAllocateDescriptorSets(LogicalDevice::Instance()._device, &gloAllocInfo, &_globalSet);
-		check_vk_result(err);
+		VK_ASSERT(err, "error when allocating descriptor sets");
 	}
 	
 	// MATERIAL
@@ -111,15 +112,16 @@ void Material::CreateDescriptors(const size_t kTextureSize)
 
 		VkResult err = vkCreateDescriptorSetLayout(LogicalDevice::Instance()._device, &matLayoutInfo,
 			Context::Instance()._allocator, &_materialLayout);
-		check_vk_result(err);
+		VK_ASSERT(err, "error when creating descriptor set layout");
 
 		VkDescriptorSetAllocateInfo matAllocInfo{};
 		matAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		matAllocInfo.descriptorPool = LogicalDevice::Instance()._descriptorPool;
 		matAllocInfo.descriptorSetCount = 1;
 		matAllocInfo.pSetLayouts = &_materialLayout;
+
 		err = vkAllocateDescriptorSets(LogicalDevice::Instance()._device, &matAllocInfo, &_materialSet);
-		check_vk_result(err);
+		VK_ASSERT(err, "error when allocating descriptor sets");
 	}
 	
 	// OBJECTS
@@ -143,8 +145,9 @@ void Material::CreateDescriptors(const size_t kTextureSize)
 		objAllocInfo.descriptorPool = LogicalDevice::Instance()._descriptorPool;
 		objAllocInfo.descriptorSetCount = 1;
 		objAllocInfo.pSetLayouts = &_objectsLayout;
+
 		err = vkAllocateDescriptorSets(LogicalDevice::Instance()._device, &objAllocInfo, &_objectsSet);
-		check_vk_result(err);
+		VK_ASSERT(err, "allocating descriptor sets");
 	}
 }
 
@@ -161,7 +164,7 @@ void Material::CreatePipeline(const Viewport& kViewport, const std::string kVert
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
 	VkResult err = vkCreatePipelineLayout(LogicalDevice::Instance()._device, &pipelineLayoutInfo, Context::Instance()._allocator, &_pipelineLayout);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating pipeline layout");
 
 	// Rendering
 	VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo{};
@@ -259,7 +262,7 @@ void Material::CreatePipeline(const Viewport& kViewport, const std::string kVert
 	pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 
 	/*err = vkCreatePipelineCache(kLogicalDevice._device, &pipelineCacheCreateInfo, _contextData._allocator, &_windowData._pipelineCache);
-	check_vk_result(err);*/
+	VK_ASSERT(err);*/
 
 	VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo{};
 	pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -276,7 +279,7 @@ void Material::CreatePipeline(const Viewport& kViewport, const std::string kVert
 	shaderStages[0] = createShader(vertShaderModule, VK_SHADER_STAGE_VERTEX_BIT);
 	shaderStages[1] = createShader(fragShaderModule, VK_SHADER_STAGE_FRAGMENT_BIT);
 	err = vkCreateGraphicsPipelines(LogicalDevice::Instance()._device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, Context::Instance()._allocator, &_pipeline);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating graphics pipelines");
 
 	vkDestroyShaderModule(LogicalDevice::Instance()._device, vertShaderModule, Context::Instance()._allocator);
 	vkDestroyShaderModule(LogicalDevice::Instance()._device, fragShaderModule, Context::Instance()._allocator);

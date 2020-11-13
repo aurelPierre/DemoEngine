@@ -11,7 +11,7 @@ public:
 	VkSampler			_sampler		= VK_NULL_HANDLE;
 
 public:
-	Texture(const std::string kTexturePath, const VkFormat kFormat);
+	Texture(const std::string kTexturePath, const bool kUseSRGB = false);
 	~Texture();
 
 public:

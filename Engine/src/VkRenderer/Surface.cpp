@@ -11,11 +11,11 @@ Surface::Surface(const GLFWWindowData* windowData)
 	ASSERT(windowData != nullptr, "windowData is nullptr")
 
 	VkResult err = glfwCreateWindowSurface(Context::Instance()._instance, windowData->_window, Context::Instance()._allocator, &_surface);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when creating window surface");
 
 	VkBool32 res;
 	err = vkGetPhysicalDeviceSurfaceSupportKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, LogicalDevice::Instance()._graphicsQueue._indice, _surface, &res);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when getting physical device surface support KHR");
 	if (res != VK_TRUE)
 	{
 		LOG(ez::ERROR, std::string("Error no WSI support on physical device 0"))
@@ -25,12 +25,12 @@ Surface::Surface(const GLFWWindowData* windowData)
 	// Get list of supported surface formats
 	uint32_t formatCount;
 	err = vkGetPhysicalDeviceSurfaceFormatsKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, _surface, &formatCount, NULL);
-	check_vk_result(err);
+	VK_ASSERT(err, "error when getting physical device surface formats KHR");
 	assert(formatCount > 0);
 
 	std::vector<VkSurfaceFormatKHR> surfaceFormats(formatCount);
 	err = vkGetPhysicalDeviceSurfaceFormatsKHR(LogicalDevice::Instance()._physicalDevice->_physicalDevice, _surface, &formatCount, surfaceFormats.data());
-	check_vk_result(err);
+	VK_ASSERT(err, "error when getting physical device surface formats KHR");
 
 	// If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,
 	// there is no preferered format, so we assume VK_FORMAT_B8G8R8A8_UNORM

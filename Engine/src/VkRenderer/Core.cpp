@@ -28,14 +28,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	return VK_FALSE;
 }
 
-void check_vk_result(const VkResult err)
-{
-	if (err == VK_SUCCESS)
-		return;
-
-	throw std::runtime_error("VkResult " + std::to_string((int)err));
-}
-
 std::vector<char> readFile(const std::string& filename)
 {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
