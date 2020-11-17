@@ -51,6 +51,13 @@ endif()
 target_compile_features(Engine PUBLIC c_std_11)
 target_compile_features(Engine PUBLIC cxx_std_17)
 
+# Code coverage
+if(MSVC)
+	target_compile_options(Engine PRIVATE /coverage)
+else()
+	target_compile_options(Engine PRIVATE -coverage)
+endif()
+
 # Warnings
 if(MSVC)
 	target_compile_options(Engine PRIVATE /W4)
