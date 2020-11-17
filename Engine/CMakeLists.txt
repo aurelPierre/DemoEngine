@@ -12,13 +12,14 @@ target_sources(Engine PUBLIC ${SOURCES})
 
 # Third Party
 target_link_libraries(Engine PUBLIC glm)
+target_link_libraries(Engine PUBLIC ${Vulkan_LIBRARIES})
+target_link_libraries(Engine PUBLIC glfw)
 target_link_libraries(Engine PUBLIC imgui)
-target_link_libraries(Engine PUBLIC "${PROJECT_SOURCE_DIR}/Lib/glfw/lib/glfw3.lib"
-										"${PROJECT_SOURCE_DIR}/Lib/vulkan/lib/vulkan-1.lib")
-	
-target_include_directories(Engine PUBLIC	"${CMAKE_CURRENT_SOURCE_DIR}/include"
-											"${PROJECT_SOURCE_DIR}/Lib/glfw/include"
-											"${PROJECT_SOURCE_DIR}/Lib/vulkan/include")
+
+#"${PROJECT_SOURCE_DIR}/Lib/glfw/lib/glfw3.lib"
+
+target_include_directories(Engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(Engine PUBLIC "${Vulkan_INCLUDE_DIRS}")
 
 
 # INSTALL
@@ -52,11 +53,7 @@ target_compile_features(Engine PUBLIC c_std_11)
 target_compile_features(Engine PUBLIC cxx_std_17)
 
 # Code coverage
-if(MSVC)
-	target_compile_options(Engine PRIVATE /coverage)
-else()
-	target_compile_options(Engine PRIVATE -coverage)
-endif()
+#target_compile_options(Engine PRIVATE -coverage)
 
 # Warnings
 if(MSVC)

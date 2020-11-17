@@ -33,5 +33,38 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Build/${CMAKE_BUILD_TYPE
 #	set(CMAKE_CXX_FLAGS "/std:c++17 /EHsc /W4")
 #endif()
 
-add_subdirectory ("Lib")
+# Vulkan
+find_package(Vulkan)
+
+IF (NOT Vulkan_FOUND)
+	message(FATAL_ERROR "Could not find Vulkan library!")
+ELSE()
+	message(STATUS ${Vulkan_LIBRARIES})
+	message(STATUS ${Vulkan_INCLUDE_DIRS})
+ENDIF()
+
+# GLFW
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+add_subdirectory("ThirdParty/glfw")
+
+# GLM
+add_subdirectory("ThirdParty/glm")
+
+# IMGUI
+file(GLOB SOURCES "ThirdParty/imgui/imgui.cpp"
+	"ThirdParty/imgui/imgui_demo.cpp"
+	"ThirdParty/imgui/imgui_draw.cpp"
+	"ThirdParty/imgui/imgui_widgets.cpp"
+	"ThirdParty/imgui/backends/imgui_impl_glfw.cpp"
+	"ThirdParty/imgui/backends/imgui_impl_vulkan.cpp")
+
+add_library(imgui INTERFACE)
+
+target_sources(imgui INTERFACE ${SOURCES})
+target_include_directories(imgui INTERFACE "ThirdParty/imgui")
+
+# ENGINE
 add_subdirectory ("Engine")

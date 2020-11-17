@@ -1,6 +1,37 @@
 language: cpp
-compiler: clang
+
+os:
+  - linux
+  - osx
+  #- windows
+
+compiler:
+  - gcc
+  - clang
+
+addons:
+  apt:
+    packages:
+      - valgrind
+
+env:
+
+  global:
+
+  jobs:
+    - CONFIG=Debug
+    - CONFIG=Release
+
+before_install:
+
+install:
+
+before_script:
+
 script:
   - ./build.sh
+
+jobs:
+
 after_success:
   - bash <(curl -s https://codecov.io/bash)
