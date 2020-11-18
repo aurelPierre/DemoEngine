@@ -4,13 +4,13 @@ git:
 
 language: cpp
 
-#os:
-#  - linux
-#  - osx
+os:
+  - linux
+  - osx
 
-#compiler:
-#  - gcc
-#  - clang
+compiler:
+  - gcc
+  - clang
 
 matrix:
   include:
@@ -38,7 +38,7 @@ matrix:
           osx_image: xcode8
           env:
             - MATRIX_EVAL="brew install gcc && CC=gcc-8 && CXX=g++-8"
-            
+
     - os: osx
         osx_image: xcode10.1
 
