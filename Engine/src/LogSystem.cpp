@@ -64,9 +64,8 @@ namespace ez
 	std::string Log::Text()
 	{
 		std::stringstream ss;
-		struct tm newtime;
-		localtime_s(&newtime, &_logTimestamp);
-		ss << std::put_time(&newtime, "%T");
+		struct tm* newtime = localtime(&_logTimestamp);
+		ss << std::put_time(newtime, "%T");
 		return ss.str() + ' ' + Header() + ' ' + _logText;
 	}
 
@@ -196,13 +195,11 @@ namespace ez
 	{
 		if (_buffer.empty())
 			return;
-
 		std::time_t otime = time(0);
-		struct tm newtime;
-		localtime_s(&newtime, &otime);
+		struct tm* newtime = localtime(&otime);
 		
 		std::stringstream ss;
-		ss << std::put_time(&newtime, "%Y_%m_%d_%H_%M_%S");
+		ss << std::put_time(newtime, "%Y_%m_%d_%H_%M_%S");
 
 		std::ofstream file;
 		file.open(ss.str() + ".log");
