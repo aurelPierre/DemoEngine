@@ -33,15 +33,31 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Build/${CMAKE_BUILD_TYPE
 #	set(CMAKE_CXX_FLAGS "/std:c++17 /EHsc /W4")
 #endif()
 
+IF(UNIX AND NOT APPLE)
+	set(LINUX TRUE)
+ENDIF()
+
+
 # Vulkan
 find_package(Vulkan)
 
-IF (NOT Vulkan_FOUND)
-	find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan PATHS ${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/lib)
-	set(Vulkan_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/include)
-	IF (Vulkan_LIBRARY)
-		set(Vulkan_FOUND ON)
-		MESSAGE("Using bundled Vulkan library version")
+IF(WIN32)
+	IF (NOT Vulkan_FOUND)
+		find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan PATHS ${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/lib)
+		set(Vulkan_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/include)
+		IF (Vulkan_LIBRARY)
+			set(Vulkan_FOUND ON)
+			MESSAGE("Using bundled Vulkan library version")
+		ENDIF()
+	ENDIF()
+ELSEIF(LINUX)
+	IF (NOT Vulkan_FOUND)
+		find_library(Vulkan_LIBRARY NAMES vulkan HINTS "$ENV{VULKAN_SDK}/lib" "${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/lib" REQUIRED)
+		set(Vulkan_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/include)
+		IF (Vulkan_LIBRARY)
+			set(Vulkan_FOUND ON)
+			MESSAGE("Using bundled Vulkan library version")
+		ENDIF()
 	ENDIF()
 ENDIF()
 

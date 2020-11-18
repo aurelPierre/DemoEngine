@@ -6,8 +6,7 @@ language: cpp
 
 os:
   - linux
-  - osx
-  #- windows
+  #- osx
 
 compiler:
   - gcc
