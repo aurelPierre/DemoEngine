@@ -27,6 +27,11 @@ jobs:
             build_type: "Release", cc: "gcc", cxx: "g++"
           }
         - {
+            name: "Ubuntu Latest Clang", artifact: "Linux.tar.xz",
+            os: ubuntu-latest,
+            build_type: "Release", cc: "clang", cxx: "clang++"
+          }
+        - {
             name: "macOS Latest Clang", artifact: "macOS.tar.xz",
             os: macos-latest,
             build_type: "Release", cc: "clang", cxx: "clang++"
@@ -35,9 +40,11 @@ jobs:
     steps:
     - name: Checkout reposistory
       uses: actions/checkout@master
-      
+
     - name: Checkout submodules
-      run: git submodule update --init --recursive
+      run: |
+        sed -i'.back' 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+        git submodule update --init --recursive
 
     - name: Download Ninja and CMake
       id: cmake_and_ninja
@@ -98,6 +105,13 @@ jobs:
               set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
             endif()
           endforeach()
+        endif()
+
+        if ("${{ runner.os }}" STREQUAL "Windows")
+        elseif ("${{ runner.os }}" STREQUAL "Linux")
+          sudo apt-get -qq update
+          sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+        elseif ("${{ runner.os }}" STREQUAL "macOS")
         endif()
 
         file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
