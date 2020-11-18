@@ -37,9 +37,7 @@ jobs:
       uses: actions/checkout@master
       
     - name: Checkout submodules
-      uses: textbook/git-checkout-submodule-action@master
-      with:
-        remote: true
+      run: git submodule update --init --recursive
 
     - name: Download Ninja and CMake
       id: cmake_and_ninja

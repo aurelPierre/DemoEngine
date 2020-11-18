@@ -1,10 +1,10 @@
 [submodule "ThirdParty/glm"]
 	path = ThirdParty/glm
-	url = git@github.com:g-truc/glm.git
+	url = https://github.com/g-truc/glm.git
 [submodule "ThirdParty/glfw"]
 	path = ThirdParty/glfw
-	url = git@github.com:glfw/glfw.git
+	url = https://github.com/glfw/glfw.git
 [submodule "ThirdParty/imgui"]
 	path = ThirdParty/imgui
-	url = git@github.com:ocornut/imgui.git
+	url = https://github.com/ocornut/imgui.git
 	branch = docking
