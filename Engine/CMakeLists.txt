@@ -12,14 +12,14 @@ target_sources(Engine PUBLIC ${SOURCES})
 
 # Third Party
 target_link_libraries(Engine PUBLIC glm)
-target_link_libraries(Engine PUBLIC ${Vulkan_LIBRARIES})
+target_link_libraries(Engine PUBLIC ${Vulkan_LIBRARY})
 target_link_libraries(Engine PUBLIC glfw)
 target_link_libraries(Engine PUBLIC imgui)
 
 #"${PROJECT_SOURCE_DIR}/Lib/glfw/lib/glfw3.lib"
 
 target_include_directories(Engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_include_directories(Engine PUBLIC "${Vulkan_INCLUDE_DIRS}")
+target_include_directories(Engine PUBLIC "${Vulkan_INCLUDE_DIR}")
 
 
 # INSTALL

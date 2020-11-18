@@ -37,10 +37,20 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Build/${CMAKE_BUILD_TYPE
 find_package(Vulkan)
 
 IF (NOT Vulkan_FOUND)
+	find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan PATHS ${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/lib)
+	set(Vulkan_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/include)
+	IF (Vulkan_LIBRARY)
+		set(Vulkan_FOUND ON)
+		MESSAGE("Using bundled Vulkan library version")
+	ENDIF()
+ENDIF()
+
+
+IF (NOT Vulkan_FOUND)
 	message(FATAL_ERROR "Could not find Vulkan library!")
 ELSE()
-	message(STATUS ${Vulkan_LIBRARIES})
-	message(STATUS ${Vulkan_INCLUDE_DIRS})
+	message(STATUS ${Vulkan_LIBRARY})
+	message(STATUS ${Vulkan_INCLUDE_DIR})
 ENDIF()
 
 # GLFW
