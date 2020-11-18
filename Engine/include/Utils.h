@@ -9,8 +9,8 @@ namespace ez
 
 	class Timer final
 	{
-		std::chrono::steady_clock::time_point _startTimestamp;
-		std::chrono::steady_clock::time_point _endTimestamp;
+		std::chrono::high_resolution_clock::time_point _startTimestamp;
+		std::chrono::high_resolution_clock::time_point _endTimestamp;
 
 	public:
 		void Start();
