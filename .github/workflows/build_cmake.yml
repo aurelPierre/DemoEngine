@@ -107,11 +107,9 @@ jobs:
           endforeach()
         endif()
 
-        if ("${{ runner.os }}" STREQUAL "Windows")
-        elseif ("${{ runner.os }}" STREQUAL "Linux")
-          sudo apt-get -qq update
-          sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
-        elseif ("${{ runner.os }}" STREQUAL "macOS")
+        if ("${{ runner.os }}" STREQUAL "Linux")
+          apt-get -qq update
+          apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
         endif()
 
         file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
