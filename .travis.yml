@@ -15,32 +15,32 @@ compiler:
 matrix:
   include:
     - os: linux
-        addons:
-          apt:
-            sources:
-              - ubuntu-toolchain-r-test
-            packages:
-              - g++-8
-        env:
-          - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+      env:
+        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
 
     - os: linux
-        addons:
-          apt:
-            sources:
-              - llvm-toolchain-trusty-10.0
-            packages:
-              - clang-10.0
-        env:
-          - MATRIX_EVAL="CC=clang-10.0 && CXX=clang++-10.0"
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-10.0
+          packages:
+            - clang-10.0
+      env:
+        - MATRIX_EVAL="CC=clang-10.0 && CXX=clang++-10.0"
 
     - os: osx
-          osx_image: xcode8
-          env:
+      osx_image: xcode8
+      env:
             - MATRIX_EVAL="brew install gcc && CC=gcc-8 && CXX=g++-8"
 
     - os: osx
-        osx_image: xcode10.1
+      osx_image: xcode10.1
 
 env:
 
