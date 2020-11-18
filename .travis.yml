@@ -4,18 +4,43 @@ git:
 
 language: cpp
 
-os:
-  - linux
-  - osx
+#os:
+#  - linux
+#  - osx
 
-compiler:
-  - gcc
-  - clang
+#compiler:
+#  - gcc
+#  - clang
 
-addons:
-  apt:
-    packages:
-      - valgrind
+matrix:
+  include:
+    - os: linux
+        addons:
+          apt:
+            sources:
+              - ubuntu-toolchain-r-test
+            packages:
+              - g++-8
+        env:
+          - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+
+    - os: linux
+        addons:
+          apt:
+            sources:
+              - llvm-toolchain-trusty-10.0
+            packages:
+              - clang-10.0
+        env:
+          - MATRIX_EVAL="CC=clang-10.0 && CXX=clang++-10.0"
+
+    - os: osx
+          osx_image: xcode8
+          env:
+            - MATRIX_EVAL="brew install gcc && CC=gcc-8 && CXX=g++-8"
+            
+    - os: osx
+        osx_image: xcode10.1
 
 env:
 
@@ -28,14 +53,19 @@ env:
 # Use sed to replace the SSH URL with the public URL, then initialize submodules
 before_install:
   - set -e
+  - eval "${MATRIX_EVAL}"
   - sed -i'.back' 's/git@github.com:/https:\/\/github.com\//' .gitmodules
   - git submodule update --init --recursive
 
 install:
 
 before_script:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+  - |
+      if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then
+        sudo apt-get -qq update
+        sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+      fi
+  
 
 script:
   - ./build.sh
