@@ -48,38 +48,72 @@ jobs:
           COMMAND chmod +x ${cmake_dir}/cmake
         )
 
-      - name: Install missing software on ubuntu
-        run: |
-          sudo apt-get update
-          sudo apt-get install libxml2-utils
-          sudo apt-get install z3 libz3-dev
-          sudo apt-get install lcov
-          sudo apt-get -qq update
-          sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
-          pip install lcov_cobertura
+    - name: Configure
+      shell: cmake -P {0}
+      run: |
+        set(ENV{CC} ${{ matrix.config.cc }})
+        set(ENV{CXX} ${{ matrix.config.cxx }})
 
-      - name: Compile instrumented
-        run: |
-          ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja -D CMAKE_MAKE_PROGRAM=${ninja_program}
-          ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build -j$(nproc) CXXFLAGS="-g -fprofile-arcs -ftest-coverage"
-          
-      - name: Generate coverage report
-        run: |
-          rm -rf coverage_report
-          ./testrunner
-          lcov --directory ./ --capture --output-file lcov_tmp.info -b ./
-          lcov --extract lcov_tmp.info "$(pwd)/*" --output-file lcov.info
-          genhtml lcov.info -o coverage_report --frame --legend --demangle-cpp
-          
-      - uses: actions/upload-artifact@v1
-        with:
-         name: Coverage results
-         path: coverage_report
-         
-      - uses: codecov/codecov-action@v1
-        with:
-          # token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
-          # file: ./coverage.xml # optional
-          flags: unittests # optional
-          name: ${{ github.repository }} # optional
-          fail_ci_if_error: true # optional (default = false):  
+        execute_process(
+          COMMAND sudo apt-get -qq update
+          COMMAND sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+        )
+
+        file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
+
+        execute_process(
+          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
+            -S .
+            -B build
+            -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
+            -G Ninja
+            -D CMAKE_MAKE_PROGRAM=${ninja_program}
+          RESULT_VARIABLE result
+        )
+        if (NOT result EQUAL 0)
+          message(FATAL_ERROR "Bad exit status")
+        endif()
+
+    - name: Install missing software on ubuntu
+      run: |
+        sudo apt-get update
+        sudo apt-get install libxml2-utils
+        sudo apt-get install z3 libz3-dev
+        sudo apt-get install lcov
+        sudo apt-get -qq update
+        sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+        pip install lcov_cobertura
+
+    - name: Compile instrumented
+      shell: cmake -P {0}
+      run: |
+        set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+
+        execute_process(
+          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build -j$(nproc) CXXFLAGS="-g -fprofile-arcs -ftest-coverage"
+          RESULT_VARIABLE result
+        )
+        if (NOT result EQUAL 0)
+          message(FATAL_ERROR "Bad exit status")
+        endif()
+
+    - name: Generate coverage report
+      run: |
+        rm -rf coverage_report
+        ./testrunner
+        lcov --directory ./ --capture --output-file lcov_tmp.info -b ./
+        lcov --extract lcov_tmp.info "$(pwd)/*" --output-file lcov.info
+        genhtml lcov.info -o coverage_report --frame --legend --demangle-cpp
+        
+    - uses: actions/upload-artifact@v1
+      with:
+       name: Coverage results
+       path: coverage_report
+       
+    - uses: codecov/codecov-action@v1
+      with:
+        # token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+        # file: ./coverage.xml # optional
+        flags: unittests # optional
+        name: ${{ github.repository }} # optional
+        fail_ci_if_error: true # optional (default = false):  
