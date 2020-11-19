@@ -39,6 +39,6 @@ jobs:
         setup-python-dependencies: false 
 
     - run: |
-         make -j$(nproc) HAVE_RULES=yes
+        cmake --build build -j$(nproc) HAVE_RULES=yes
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1

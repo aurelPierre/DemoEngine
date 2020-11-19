@@ -24,7 +24,7 @@ jobs:
 
       - name: Compile instrumented
         run: |
-          make CXXFLAGS="-g -fprofile-arcs -ftest-coverage" HAVE_RULES=yes -j$(nproc)
+          cmake --build build CXXFLAGS="-g -fprofile-arcs -ftest-coverage" HAVE_RULES=yes -j$(nproc)
           
       - name: Generate coverage report
         run: |
