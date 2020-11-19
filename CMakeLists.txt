@@ -76,6 +76,8 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory("ThirdParty/glfw")
 
+add_definitions(-DGLFW_INCLUDE_NONE)
+
 # GLM
 add_subdirectory("ThirdParty/glm")
 
