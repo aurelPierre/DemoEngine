@@ -95,5 +95,9 @@ target_include_directories(imgui INTERFACE "ThirdParty/imgui")
 # TINYOBJLOADER
 add_subdirectory("ThirdParty/tinyobjloader")
 
+# STB
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE "ThirdParty/stb")
+
 # ENGINE
 add_subdirectory ("Engine")
