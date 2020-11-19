@@ -1,4 +1,4 @@
-name: CMake Build Matrix
+name: BuildMatrix
 
 on: ["push", "pull_request"]
 
