@@ -21,10 +21,10 @@ jobs:
           sudo apt-get -qq update
           sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
           pip install lcov_cobertura
+
       - name: Compile instrumented
         run: |
-          cp externals/z3_version_old.h externals/z3_version.h
-          make test CXXFLAGS="-g -fprofile-arcs -ftest-coverage" USE_Z3=yes HAVE_RULES=yes -j$(nproc)
+          make test CXXFLAGS="-g -fprofile-arcs -ftest-coverage" HAVE_RULES=yes -j$(nproc)
           
       - name: Generate coverage report
         run: |
