@@ -90,9 +90,10 @@ jobs:
       shell: cmake -P {0}
       run: |
         set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+        set(ENV(CXXFLAGS) "-g -fprofile-arcs -ftest-coverage")
 
         execute_process(
-          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build CXXFLAGS="-g -fprofile-arcs -ftest-coverage"
+          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build
           RESULT_VARIABLE result
         )
         if (NOT result EQUAL 0)
