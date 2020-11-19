@@ -92,5 +92,8 @@ add_library(imgui INTERFACE)
 target_sources(imgui INTERFACE ${SOURCES})
 target_include_directories(imgui INTERFACE "ThirdParty/imgui")
 
+# TINYOBJLOADER
+add_subdirectory("ThirdParty/tinyobjloader")
+
 # ENGINE
 add_subdirectory ("Engine")

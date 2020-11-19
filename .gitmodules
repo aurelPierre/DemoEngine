@@ -8,3 +8,6 @@
 	path = ThirdParty/imgui
 	url = git@github.com:ocornut/imgui.git
 	branch = docking
+[submodule "ThirdParty/tinyobjloader"]
+	path = ThirdParty/tinyobjloader
+	url = git@github.com:tinyobjloader/tinyobjloader.git

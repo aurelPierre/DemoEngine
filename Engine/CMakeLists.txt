@@ -15,6 +15,7 @@ target_link_libraries(Engine PUBLIC glm)
 target_link_libraries(Engine PUBLIC ${Vulkan_LIBRARY})
 target_link_libraries(Engine PUBLIC glfw)
 target_link_libraries(Engine PUBLIC imgui)
+target_link_libraries(Engine PUBLIC tinyobjloader)
 
 #"${PROJECT_SOURCE_DIR}/Lib/glfw/lib/glfw3.lib"
 
