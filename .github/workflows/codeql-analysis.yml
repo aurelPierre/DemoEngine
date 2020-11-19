@@ -65,6 +65,7 @@ jobs:
 
         execute_process(
           COMMAND sudo apt-get -qq update
+          COMMAND sudo apt-get install libxml2-utils
           COMMAND sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
         )
 
@@ -83,14 +84,6 @@ jobs:
           message(FATAL_ERROR "Bad exit status")
         endif()
       
-    - name: Install missing software on ubuntu
-      run: |
-         sudo apt-get update
-         sudo apt-get install libxml2-utils
-         sudo apt-get install z3 libz3-dev
-         sudo apt-get -qq update
-         sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
-
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
