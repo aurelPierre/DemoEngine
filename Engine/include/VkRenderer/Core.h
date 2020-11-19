@@ -20,7 +20,7 @@
 #else
 	#define ASSERT(predicate, msg)
 	
-	#define VK_ASSERT(err, msg)
+	#define VK_ASSERT(err, msg) (void)err;
 #endif
 
 const std::vector<const char*> validationLayers = {
