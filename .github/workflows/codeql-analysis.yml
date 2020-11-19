@@ -100,7 +100,7 @@ jobs:
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
         setup-python-dependencies: false 
 
-   - name: Compile instrumented
+    - name: Compile instrumented
       shell: cmake -P {0}
       run: |
         set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
