@@ -24,14 +24,12 @@ jobs:
 
       - name: Compile instrumented
         run: |
-          make test CXXFLAGS="-g -fprofile-arcs -ftest-coverage" HAVE_RULES=yes -j$(nproc)
+          make CXXFLAGS="-g -fprofile-arcs -ftest-coverage" HAVE_RULES=yes -j$(nproc)
           
       - name: Generate coverage report
         run: |
           rm -rf coverage_report
           ./testrunner
-          test/cfg/runtests.sh
-          gcov lib/*.cpp -o lib/
           lcov --directory ./ --capture --output-file lcov_tmp.info -b ./
           lcov --extract lcov_tmp.info "$(pwd)/*" --output-file lcov.info
           genhtml lcov.info -o coverage_report --frame --legend --demangle-cpp
