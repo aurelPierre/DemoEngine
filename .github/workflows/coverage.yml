@@ -6,8 +6,17 @@ on: ["push", "pull_request"]
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: "Coverage", artifact: "Linux.tar.xz",
+            os: ubuntu-latest,
+            build_type: "Release", cc: "clang", cxx: "clang++"
+          }
 
     steps:
     - name: Checkout reposistory
@@ -80,8 +89,6 @@ jobs:
         sudo apt-get install libxml2-utils
         sudo apt-get install z3 libz3-dev
         sudo apt-get install lcov
-        sudo apt-get -qq update
-        sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
         pip install lcov_cobertura
 
     - name: Compile instrumented
