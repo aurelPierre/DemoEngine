@@ -111,7 +111,7 @@ jobs:
         elseif ("${{ runner.os }}" STREQUAL "Linux")
           execute_process(
             COMMAND sudo apt-get -qq update
-            COMMAND sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev vulkan-sdk
+            COMMAND sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
           )
         elseif ("${{ runner.os }}" STREQUAL "macOS")
         endif()
