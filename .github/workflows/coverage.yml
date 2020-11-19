@@ -66,6 +66,11 @@ jobs:
         execute_process(
           COMMAND sudo apt-get -qq update
           COMMAND sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+          COMMAND sudo apt-get update
+          COMMAND sudo apt-get install libxml2-utils
+          COMMAND sudo apt-get install z3 libz3-dev
+          COMMAND sudo apt-get install lcov
+          COMMAND pip install lcov_cobertura
         )
 
         file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
@@ -82,14 +87,6 @@ jobs:
         if (NOT result EQUAL 0)
           message(FATAL_ERROR "Bad exit status")
         endif()
-
-    - name: Install missing software on ubuntu
-      run: |
-        sudo apt-get update
-        sudo apt-get install libxml2-utils
-        sudo apt-get install z3 libz3-dev
-        sudo apt-get install lcov
-        pip install lcov_cobertura
 
     - name: Compile instrumented
       shell: cmake -P {0}
