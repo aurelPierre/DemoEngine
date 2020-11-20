@@ -1,9 +1,9 @@
-#include "VkRenderer/Context.h"
+
+#include <cstdlib>
 
 int main(int, char**)
 {
 	{
-		GLFWWindowSystem glfwWindow;
 		//Context context;
 	}
 
