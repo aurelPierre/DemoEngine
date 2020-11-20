@@ -5,7 +5,7 @@ file(GLOB_RECURSE SOURCES src/*)
 add_executable(Editor ${SOURCES})
 
 if(CODE_COVERAGE)
-	set_target_properties(Editor LINK_FLAGS "-lgcov --coverage")
+	set_target_properties(Editor PROPERTIES LINK_FLAGS "-lgcov --coverage")
 	target_code_coverage(Editor EXCLUDE test/*)
 endif()
 
