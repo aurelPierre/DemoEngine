@@ -1,9 +1,8 @@
 function(createTest NAME)
 	set(SAMPLE_NAME test-${NAME})
 	add_executable(${SAMPLE_NAME} src/${NAME}.cpp)
-	target_code_coverage(${SAMPLE_NAME} EXCLUDE test/*)
 
-	#target_link_libraries(${SAMPLE_NAME} Engine)
+	target_link_libraries(${SAMPLE_NAME} Engine)
 
 	set_target_properties(${SAMPLE_NAME} PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/Build/test/Engine/${SAMPLE_NAME})
