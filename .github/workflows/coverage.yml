@@ -60,7 +60,7 @@ jobs:
     - name: Install missing package
       run: |
         sudo apt-get -qq update
-        sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxml2-utils
+        sudo apt-get install libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev libxml2-utils
         pip install lcov_cobertura
 
     - name: Configure
@@ -101,7 +101,6 @@ jobs:
     - name: Generate coverage report
       run: |
         rm -rf coverage_report
-        ./testrunner
         lcov --directory ./ --capture --output-file lcov_tmp.info -b ./
         lcov --extract lcov_tmp.info "$(pwd)/*" --output-file lcov.info
         genhtml lcov.info -o coverage_report --frame --legend --demangle-cpp

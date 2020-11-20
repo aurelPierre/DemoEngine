@@ -26,16 +26,16 @@ jobs:
             os: ubuntu-latest,
             build_type: "Release", cc: "gcc", cxx: "g++"
           }
-        - {
-            name: "Ubuntu Latest Clang", artifact: "Linux.tar.xz",
-            os: ubuntu-latest,
-            build_type: "Release", cc: "clang", cxx: "clang++"
-          }
-        - {
-            name: "macOS Latest Clang", artifact: "macOS.tar.xz",
-            os: macos-latest,
-            build_type: "Release", cc: "clang", cxx: "clang++"
-          }
+        #- {
+        #    name: "Ubuntu Latest Clang", artifact: "Linux.tar.xz",
+        #    os: ubuntu-latest,
+        #    build_type: "Release", cc: "clang", cxx: "clang++"
+        #  }
+        #- {
+        #    name: "macOS Latest Clang", artifact: "macOS.tar.xz",
+        #    os: macos-latest,
+        #    build_type: "Release", cc: "clang", cxx: "clang++"
+        #  }
 
     steps:
     - name: Checkout reposistory
@@ -95,7 +95,7 @@ jobs:
         elseif ("${{ runner.os }}" STREQUAL "Linux")
           execute_process(
             COMMAND sudo apt-get -qq update
-            COMMAND sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+            COMMAND sudo apt-get install libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev
           )
         elseif ("${{ runner.os }}" STREQUAL "macOS")
         endif()
