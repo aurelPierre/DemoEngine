@@ -3,7 +3,7 @@
 int main(int, char**)
 {
 	{
-		Context context;
+		//Context context;
 	}
 
 	return EXIT_SUCCESS;
