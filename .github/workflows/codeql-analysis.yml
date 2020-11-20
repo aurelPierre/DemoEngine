@@ -99,8 +99,11 @@ jobs:
       run: |
         set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
 
+        include(ProcessorCount)
+        ProcessorCount(N)
+
         execute_process(
-          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build
+          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build -j ${N}
           RESULT_VARIABLE result
         )
         if (NOT result EQUAL 0)
