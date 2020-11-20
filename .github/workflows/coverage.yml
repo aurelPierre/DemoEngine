@@ -57,19 +57,17 @@ jobs:
           COMMAND chmod +x ${cmake_dir}/cmake
         )
 
+    - name: Install missing package
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxml2-utils
+        pip install lcov_cobertura
+
     - name: Configure
       shell: cmake -P {0}
       run: |
         set(ENV{CC} ${{ matrix.config.cc }})
         set(ENV{CXX} ${{ matrix.config.cxx }})
-
-        execute_process(
-          COMMAND sudo apt-get -qq update
-          COMMAND sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxml2-utils lcov
-        )
-        execute_process(
-          COMMAND pip install lcov_cobertura
-        )
 
         file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
 
