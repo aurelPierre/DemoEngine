@@ -110,7 +110,7 @@ jobs:
 
         execute_process(
           COMMAND cd build
-          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest -j ${N}
+          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest -j ${N} --output-on-failure
           RESULT_VARIABLE result
         )
         if (NOT result EQUAL 0)
