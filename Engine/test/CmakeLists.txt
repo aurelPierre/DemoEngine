@@ -10,7 +10,7 @@ function(createTest NAME)
 	add_test(
 		NAME ${SAMPLE_NAME}
 		COMMAND $<TARGET_FILE:${SAMPLE_NAME}> 
-		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/${SAMPLE_NAME})
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/Build/test/Engine/${SAMPLE_NAME})
 
 endfunction()
 
