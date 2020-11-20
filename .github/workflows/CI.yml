@@ -92,7 +92,7 @@ jobs:
       if: contains(runner.os, 'Linux')
       run: |
         sudo apt-get -qq update
-        sudo apt-get install libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev
+        sudo apt-get install -y libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev
 
     - name: Configure
       shell: cmake -P {0}
