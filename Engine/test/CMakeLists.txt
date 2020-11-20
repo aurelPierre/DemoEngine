@@ -1,6 +1,7 @@
 function(createTest NAME)
 	set(SAMPLE_NAME test-${NAME})
 	add_executable(${SAMPLE_NAME} src/${NAME}.cpp)
+	target_code_coverage(${SAMPLE_NAME} EXCLUDE test/*)
 
 	target_link_libraries(${SAMPLE_NAME} Engine)
 
