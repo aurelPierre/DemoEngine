@@ -143,4 +143,4 @@ else()
 
 endif()
 
-add_subdirectory("test")
+add_subdirectory("tests")

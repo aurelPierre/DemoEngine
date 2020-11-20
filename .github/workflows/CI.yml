@@ -162,6 +162,7 @@ jobs:
         ProcessorCount(N)
 
         execute_process(
+          COMMAND cd build
           COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest -j ${N}
           RESULT_VARIABLE result
         )
