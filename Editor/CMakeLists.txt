@@ -3,6 +3,7 @@ cmake_minimum_required (VERSION 3.8)
 file(GLOB_RECURSE SOURCES src/*)
 
 add_executable(Editor ${SOURCES})
+target_code_coverage(Editor EXCLUDE test/*)
 
 target_sources(Editor PUBLIC ${SOURCES})
 target_include_directories(Editor PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
