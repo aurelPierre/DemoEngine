@@ -3,9 +3,9 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
-include(code-coverage.cmake) 
-
 project (DemoEngine VERSION 0.1)
+
+include(code-coverage.cmake) 
 
 # .lib / .a
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Build/${CMAKE_BUILD_TYPE}_${CMAKE_HOST_SYSTEM_PROCESSOR}/Libs")
