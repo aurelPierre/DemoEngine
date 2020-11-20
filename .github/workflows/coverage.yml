@@ -99,17 +99,10 @@ jobs:
           message(FATAL_ERROR "Bad exit status")
         endif()
 
-    - name: Generate coverage report
-      run: |
-        rm -rf coverage_report
-        lcov --directory ./ --capture --output-file lcov_tmp.info -b ./
-        lcov --extract lcov_tmp.info "$(pwd)/*" --output-file lcov.info
-        genhtml lcov.info -o coverage_report --frame --legend --demangle-cpp
-        
     - uses: actions/upload-artifact@v1
       with:
        name: Coverage results
-       path: coverage_report
+       path: ${{ steps.cmake_and_ninja.outputs.cmake_dir }}
        
     - uses: codecov/codecov-action@v1
       with:

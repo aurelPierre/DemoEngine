@@ -10,7 +10,13 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v -j${env.NUMBER_OF_PROCESSORS}",
       "ctestCommandArgs": "",
-      "variables": []
+      "variables": [
+        {
+          "name": "CODE_COVERAGE",
+          "value": "False",
+          "type": "BOOL"
+        }
+      ]
     },
     {
       "name": "x64-Clang-Debug",
@@ -22,7 +28,18 @@
       "buildCommandArgs": "-v -j${env.NUMBER_OF_PROCESSORS}",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "clang_cl_x64" ],
-      "variables": []
+      "variables": [
+        {
+          "name": "BUILD_SHARED_LIBS",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "CODE_COVERAGE",
+          "value": "False",
+          "type": "BOOL"
+        }
+      ]
     },
     {
       "name": "x64-Clang-Release",
