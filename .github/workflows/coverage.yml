@@ -80,6 +80,7 @@ jobs:
             -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
             -G Ninja
             -D CMAKE_MAKE_PROGRAM=${ninja_program}
+            -DCODE_COVERAGE=ON
           RESULT_VARIABLE result
         )
         if (NOT result EQUAL 0)
@@ -90,10 +91,9 @@ jobs:
       shell: cmake -P {0}
       run: |
         set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
-        set(ENV(CXXFLAGS) "-g -fprofile-arcs -ftest-coverage")
 
         execute_process(
-          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build
+          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build -DCODE_COVERAGE=ON
           RESULT_VARIABLE result
         )
         if (NOT result EQUAL 0)
