@@ -102,6 +102,20 @@ jobs:
           message(FATAL_ERROR "Bad exit status")
         endif()
 
+    - name: Run tests
+      shell: cmake -P {0}
+      run: |
+        include(ProcessorCount)
+        ProcessorCount(N)
+
+        execute_process(
+          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest -j ${N}
+          RESULT_VARIABLE result
+        )
+        if (NOT result EQUAL 0)
+          message(FATAL_ERROR "Running tests failed!")
+        endif()
+
     - uses: codecov/codecov-action@v1
       with:
         # token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
