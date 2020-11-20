@@ -89,16 +89,10 @@ jobs:
         endif()
 
     - name: Install missing package
-      shell: cmake -P {0}
+      if: contains(runner.os, 'Linux')
       run: |
-        if ("${{ runner.os }}" STREQUAL "Windows")
-        elseif ("${{ runner.os }}" STREQUAL "Linux")
-          execute_process(
-            COMMAND sudo apt-get -qq update
-            COMMAND sudo apt-get install libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev
-          )
-        elseif ("${{ runner.os }}" STREQUAL "macOS")
-        endif()
+        sudo apt-get -qq update
+        sudo apt-get install libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev
 
     - name: Configure
       shell: cmake -P {0}
