@@ -9,8 +9,7 @@ file(GLOB_RECURSE SOURCES src/*)
 add_library(Engine ${SOURCES})
 
 if(CODE_COVERAGE)
-	set_target_properties(Engine PROPERTIES LINK_FLAGS "-lgcov --coverage")
-	target_code_coverage(Engine EXCLUDE test/*)
+	target_link_libraries(Engine PUBLIC coverage_config)
 endif()
 
 target_sources(Engine PUBLIC ${SOURCES})
