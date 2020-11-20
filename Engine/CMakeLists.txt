@@ -6,8 +6,8 @@ cmake_minimum_required (VERSION 3.8)
 file(GLOB_RECURSE SOURCES src/*)
 
 # Engine
-add_executable(Engine ${SOURCES})
-target_code_coverage(Engine)
+add_library(Engine ${SOURCES})
+target_code_coverage(Engine EXCLUDE test/*)
 
 target_sources(Engine PUBLIC ${SOURCES})
 
@@ -139,3 +139,5 @@ else()
 	message(FATAL_ERROR "Build type: ${CMAKE_BUILD_TYPE} not supported!")
 
 endif()
+
+add_subdirectory(test)

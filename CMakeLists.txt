@@ -5,6 +5,9 @@ cmake_minimum_required (VERSION 3.8)
 
 project (DemoEngine VERSION 0.1)
 
+include(CTest)
+enable_testing()
+
 include(code-coverage.cmake) 
 
 # .lib / .a
@@ -105,3 +108,6 @@ target_include_directories(stb INTERFACE "ThirdParty/stb")
 
 # ENGINE
 add_subdirectory ("Engine")
+
+# EDITOR
+add_subdirectory ("Editor")

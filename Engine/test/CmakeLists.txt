@@ -1,0 +1,17 @@
+function(createTest NAME)
+	set(SAMPLE_NAME test-${NAME})
+	add_executable(${SAMPLE_NAME} src/${NAME}.cpp)
+
+	target_link_libraries(${SAMPLE_NAME} Engine)
+
+	set_target_properties(${SAMPLE_NAME} PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/Build/test/Engine/${SAMPLE_NAME})
+
+	add_test(
+		NAME ${SAMPLE_NAME}
+		COMMAND $<TARGET_FILE:${SAMPLE_NAME}> 
+		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/${SAMPLE_NAME})
+
+endfunction()
+
+createTest(dummy)
