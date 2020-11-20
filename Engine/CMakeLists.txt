@@ -7,6 +7,7 @@ file(GLOB_RECURSE SOURCES src/*)
 
 # Engine
 add_executable(Engine ${SOURCES})
+target_code_coverage(Engine)
 
 target_sources(Engine PUBLIC ${SOURCES})
 

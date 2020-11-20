@@ -3,6 +3,8 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
+include(code-coverage.cmake) 
+
 project (DemoEngine VERSION 0.1)
 
 # .lib / .a
