@@ -61,8 +61,7 @@ jobs:
       run: |
         sudo apt-get -qq update
         sudo apt-get install -y lcov
-        sudo apt-get install -y libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev libxml2-utils
-        pip install lcov_cobertura
+        sudo apt-get install -y libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev
 
     - name: Configure
       shell: cmake -P {0}
@@ -79,7 +78,7 @@ jobs:
             -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
             -G Ninja
             -D CMAKE_MAKE_PROGRAM=${ninja_program}
-            -D CODE_COVERAGE=ON
+            -D CODE_COVERAGE=OFF
           RESULT_VARIABLE result
         )
         if (NOT result EQUAL 0)
