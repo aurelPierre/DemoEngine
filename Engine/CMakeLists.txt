@@ -8,10 +8,6 @@ file(GLOB_RECURSE SOURCES src/*)
 # Engine
 add_library(Engine ${SOURCES})
 
-if(CODE_COVERAGE)
-	target_link_libraries(Engine PUBLIC coverage_config)
-endif()
-
 target_sources(Engine PUBLIC ${SOURCES})
 
 # Third Party
@@ -56,91 +52,96 @@ endif()
 target_compile_features(Engine PUBLIC c_std_11)
 target_compile_features(Engine PUBLIC cxx_std_17)
 
-# Warnings
-if(MSVC)
-	target_compile_options(Engine PRIVATE /W4)
+if(CODE_COVERAGE)
+	target_link_libraries(Engine PRIVATE coverage_config)
 else()
-	target_compile_options(Engine PRIVATE -Wall -Wextra)
-endif()
-
-# Multithreaded compilation.
-if(MSVC AND NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # Not allowed on Clang-cl for Visual Studio.
-	target_compile_options(Engine PRIVATE /MP)
-endif()
-
-# Exceptions handling.
-if(MSVC)
-	target_compile_options(Engine PRIVATE /EHsc)
-else()
-	target_compile_options(Engine PRIVATE -fexceptions)
-endif()
-
-# Advanced MSVC preprocessor required for Core::Debug
-# https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview
-if(MSVC AND NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # Not allowed on Clang-cl for Visual Studio.
-	target_compile_options(Engine PUBLIC /Zc:preprocessor)
-endif()
-
-
-
-# === Build Configs ===
-
-# Debug config.
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-
-	message("Build config: Debug")
-
-	# Disable code optimization.
+	# Warnings
 	if(MSVC)
-		target_compile_options(Engine PRIVATE /Od)
+		target_compile_options(Engine PRIVATE /W4)
 	else()
-		target_compile_options(Engine PRIVATE -Og)
+		target_compile_options(Engine PRIVATE -Wall -Wextra)
 	endif()
 
-	# Create multithreaded debug DLL.
-	if(MSVC)
-		target_compile_options(Engine PRIVATE /MDd)
+	# Multithreaded compilation.
+	if(MSVC AND NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # Not allowed on Clang-cl for Visual Studio.
+		target_compile_options(Engine PRIVATE /MP)
 	endif()
 
-	# Add Debug information.
+	# Exceptions handling.
 	if(MSVC)
-		target_compile_options(Engine PRIVATE /Zi)
+		target_compile_options(Engine PRIVATE /EHsc)
+	else()
+		target_compile_options(Engine PRIVATE -fexceptions)
+	endif()
 
-		if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # Not allowed on Clang-cl for Visual Studio.)
-			target_compile_options(Engine PRIVATE /Zf)
+	# Advanced MSVC preprocessor required for Core::Debug
+	# https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview
+	if(MSVC AND NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # Not allowed on Clang-cl for Visual Studio.
+		target_compile_options(Engine PUBLIC /Zc:preprocessor)
+	endif()
+
+
+
+	# === Build Configs ===
+
+	# Debug config.
+	if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+
+		message("Build config: Debug")
+
+		# Disable code optimization.
+		if(MSVC)
+			target_compile_options(Engine PRIVATE /Od)
+		else()
+			target_compile_options(Engine PRIVATE -Og)
 		endif()
-	else()
-		target_compile_options(Engine PRIVATE -g)
-	endif()
 
-# Release config.
-elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+		# Create multithreaded debug DLL.
+		if(MSVC)
+			target_compile_options(Engine PRIVATE /MDd)
+		endif()
+
+		# Add Debug information.
+		if(MSVC)
+			target_compile_options(Engine PRIVATE /Zi)
+
+			if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # Not allowed on Clang-cl for Visual Studio.)
+				target_compile_options(Engine PRIVATE /Zf)
+			endif()
+		else()
+			target_compile_options(Engine PRIVATE -g)
+		endif()
+
+	# Release config.
+	elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 	
-	message("Build config: Release")
+		message("Build config: Release")
 
-	# Disable RTTI: not for the moment
-	#if(MSVC)
-	#	target_compile_options(Engine PRIVATE /GR-)
-	#else()
-	#	target_compile_options(Engine PRIVATE -fno-rtti)
-	#endif()
+		# Disable RTTI: not for the moment
+		#if(MSVC)
+		#	target_compile_options(Engine PRIVATE /GR-)
+		#else()
+		#	target_compile_options(Engine PRIVATE -fno-rtti)
+		#endif()
 
-	# Maximum code optimization: O2. O3 may be unstable and build undefined behavior.
-	if(MSVC)
-		target_compile_options(Engine PRIVATE /O2)
+		# Maximum code optimization: O2. O3 may be unstable and build undefined behavior.
+		if(MSVC)
+			target_compile_options(Engine PRIVATE /O2)
+		else()
+			target_compile_options(Engine PRIVATE -O2)
+		endif()
+
+		# Create multithreaded DLL.
+		if(MSVC)
+			target_compile_options(Engine PRIVATE /MD)
+		endif()
+
 	else()
-		target_compile_options(Engine PRIVATE -O2)
+
+		message(FATAL_ERROR "Build type: ${CMAKE_BUILD_TYPE} not supported!")
+
 	endif()
-
-	# Create multithreaded DLL.
-	if(MSVC)
-		target_compile_options(Engine PRIVATE /MD)
-	endif()
-
-else()
-
-	message(FATAL_ERROR "Build type: ${CMAKE_BUILD_TYPE} not supported!")
-
 endif()
+
 
 add_subdirectory("tests")
