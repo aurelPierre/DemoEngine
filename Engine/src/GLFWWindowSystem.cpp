@@ -23,6 +23,8 @@ static void glfw_framebuffer_callback(GLFWwindow* window, int width, int height)
 
 GLFWWindowData*	GLFWWindowSystem::CreateWindow()
 {
+	glfwSetErrorCallback(glfw_error_callback);
+
 	if (!glfwInit())
 		return nullptr;
 
@@ -30,7 +32,6 @@ GLFWWindowData*	GLFWWindowSystem::CreateWindow()
 	_windowData._window = glfwCreateWindow(_windowData._width, _windowData._height, "Dear ImGui GLFW+Vulkan example", NULL, NULL);
 	
 	glfwSetWindowUserPointer(_windowData._window, this);
-	glfwSetErrorCallback(glfw_error_callback);
 	glfwSetFramebufferSizeCallback(_windowData._window, glfw_framebuffer_callback);
 
 	return &_windowData;
