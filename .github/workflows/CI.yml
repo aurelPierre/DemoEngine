@@ -17,9 +17,9 @@ jobs:
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           }
         - {
-            name: "Windows Latest MinGW", artifact: "Windows-MinGW.tar.xz",
+            name: "Windows Latest Clang", artifact: "Windows-Clang.tar.xz",
             os: windows-latest,
-            build_type: "Release", cc: "gcc", cxx: "g++"
+            build_type: "Release", cc: "clang", cxx: "clang++"
           }
         - {
             name: "Ubuntu Latest GCC", artifact: "Linux.tar.xz",
