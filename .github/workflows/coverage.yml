@@ -103,19 +103,9 @@ jobs:
         endif()
 
     - name: Run tests
-      shell: cmake -P {0}
       run: |
-        include(ProcessorCount)
-        ProcessorCount(N)
-
-        execute_process(
-          COMMAND cd build
-          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest -j ${N} --output-on-failure -VV
-          RESULT_VARIABLE result
-        )
-        if (NOT result EQUAL 0)
-          message(FATAL_ERROR "Running tests failed!")
-        endif()
+        cd build
+        ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest --output-on-failure -VV
 
     - name: Generate reports
       run: |
