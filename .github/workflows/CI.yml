@@ -17,20 +17,15 @@ jobs:
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           }
         - {
-            name: "Windows Latest Clang", artifact: "Windows-Clang.tar.xz",
+            name: "Windows Latest MinGW", artifact: "Windows-MinGW.tar.xz",
             os: windows-latest,
-            build_type: "Release", cc: "clangcl", cxx: "clangcl"
+            build_type: "Release", cc: "gcc", cxx: "g++"
           }
         - {
             name: "Ubuntu Latest GCC", artifact: "Linux.tar.xz",
             os: ubuntu-latest,
             build_type: "Release", cc: "gcc", cxx: "g++"
           }
-        #- {
-        #    name: "Ubuntu Latest Clang", artifact: "Linux.tar.xz",
-        #    os: ubuntu-latest,
-        #    build_type: "Release", cc: "clang", cxx: "clang++"
-        #  }
         #- {
         #    name: "macOS Latest Clang", artifact: "macOS.tar.xz",
         #    os: macos-latest,
