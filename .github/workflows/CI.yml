@@ -19,7 +19,7 @@ jobs:
         - {
             name: "Windows Latest Clang", artifact: "Windows-Clang.tar.xz",
             os: windows-latest,
-            build_type: "Release", cc: "clang", cxx: "clang++"
+            build_type: "Release", cc: "clang-cl", cxx: "clang-cl"
           }
         - {
             name: "Ubuntu Latest GCC", artifact: "Linux.tar.xz",
