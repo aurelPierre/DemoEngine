@@ -53,7 +53,7 @@ target_compile_features(Engine PUBLIC c_std_11)
 target_compile_features(Engine PUBLIC cxx_std_17)
 
 if(CODE_COVERAGE)
-	target_link_libraries(Engine PRIVATE coverage_config)
+	target_link_libraries(Engine PUBLIC coverage_config)
 else()
 	# Warnings
 	if(MSVC)

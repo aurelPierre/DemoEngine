@@ -6,7 +6,8 @@ int main(int, char**)
 {
 	{
 		GLFWWindowSystem glfwWindow;
-		//Context context;
+		GLFWWindowData* windowData = glfwWindow.CreateWindow();
+		glfwWindow.DeleteWindow();
 	}
 
 	return EXIT_SUCCESS;

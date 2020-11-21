@@ -11,7 +11,6 @@ target_include_directories(Editor PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(Editor PUBLIC Engine)
 
 if(CODE_COVERAGE)
-	target_link_libraries(Editor PRIVATE coverage_config)
 else()
 	# Warnings
 	if(MSVC)
