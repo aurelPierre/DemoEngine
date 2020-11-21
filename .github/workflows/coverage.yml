@@ -15,7 +15,7 @@ jobs:
         - {
             name: "Coverage", artifact: "Linux.tar.xz",
             os: ubuntu-latest,
-            build_type: "Debug", cc: "gcc", cxx: "g++"
+            build_type: "Release", cc: "gcc", cxx: "g++"
           }
 
     steps:
@@ -61,7 +61,7 @@ jobs:
       run: |
         sudo apt-get -qq update
         sudo apt-get install -y lcov
-        sudo apt-get install -y xorg libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev
+        sudo apt-get install -y libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev
 
     - name: Configure
       shell: cmake -P {0}
@@ -103,8 +103,6 @@ jobs:
 
     - name: Run tests
       run: |
-        export DISPLAY=:0
-        sudo nvidia-xconfig -a --use-display-device=none
         cd build
         ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest --output-on-failure -VV
 
