@@ -104,6 +104,7 @@ jobs:
     - name: Run tests
       run: |
         export DISPLAY=:0
+        sudo nvidia-xconfig -a --use-display-device=none
         cd build
         ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest --output-on-failure -VV
 
