@@ -5,6 +5,8 @@
 
 int main(int, char**)
 {
+	ez::LogSystem::_standardOutput = true;
+
 	{
 		GLFWWindowSystem glfwWindow;
 		GLFWWindowData* windowData = glfwWindow.CreateWindow();

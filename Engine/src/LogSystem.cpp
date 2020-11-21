@@ -17,6 +17,8 @@ namespace ez
 	bool				LogSystem::_autoScroll	= true;
 	LogFlags			LogSystem::_enabledType = ALL;
 
+	bool				LogSystem::_standardOutput = false;
+
 	constexpr glm::vec4 Log::Color()
 	{
 		switch (_logType)
@@ -195,21 +197,31 @@ namespace ez
 	{
 		if (_buffer.empty())
 			return;
-		std::time_t otime = time(0);
-		struct tm* newtime = localtime(&otime);
-		
-		std::stringstream ss;
-		ss << std::put_time(newtime, "%Y_%m_%d_%H_%M_%S");
 
-		std::ofstream file;
-		file.open(ss.str() + ".log");
-		if (file.is_open())
+		if (_standardOutput)
 		{
 			for (size_t i = 0; i < _buffer.size(); ++i)
-				file << _buffer[i].Text() << '\n';
-
-			file.flush();
+				std::cout << _buffer[i].Text() << '\n';
+			std::cout.flush();
 		}
-		file.close();
+		else
+		{
+			std::time_t otime = time(0);
+			struct tm* newtime = localtime(&otime);
+		
+			std::stringstream ss;
+			ss << std::put_time(newtime, "%Y_%m_%d_%H_%M_%S");
+
+			std::ofstream file;
+			file.open(ss.str() + ".log");
+			if (file.is_open())
+			{
+				for (size_t i = 0; i < _buffer.size(); ++i)
+					file << _buffer[i].Text() << '\n';
+
+				file.flush();
+			}
+			file.close();
+		}
 	}
 }

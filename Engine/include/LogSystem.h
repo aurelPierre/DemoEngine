@@ -45,6 +45,8 @@ namespace ez
 		static LogFlags				_enabledType;
 
 	public:
+		static bool					_standardOutput;
+
 		static void Clear();
 		static void AddLog(const LogFlags& type, const std::string& log);
 		static void Draw(bool* p_open = nullptr);
