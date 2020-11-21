@@ -61,7 +61,6 @@ jobs:
       run: |
         sudo apt-get -qq update
         sudo apt-get install -y lcov
-        sudo apt-get install -y xorg openbox
         sudo apt-get install -y libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev
 
     - name: Configure
@@ -104,6 +103,7 @@ jobs:
 
     - name: Run tests
       run: |
+        export DISPLAY=:0
         cd build
         ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest --output-on-failure -VV
 
