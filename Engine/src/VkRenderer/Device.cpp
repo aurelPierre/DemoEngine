@@ -49,13 +49,8 @@ Device::Device()
 		candidates.insert(std::make_pair(score, device));
 	}
 
-	// Check if the best candidate is suitable at all
-	if (candidates.rbegin()->first > 0) {
-		_physicalDevice = candidates.rbegin()->second;
-	}
-	else {
-		throw std::runtime_error("failed to find a suitable GPU!");
-	}
+	ASSERT(candidates.rbegin()->first > 0, "failed to find a suitable GPU!")
+	_physicalDevice = candidates.rbegin()->second;
 
 	vkGetPhysicalDeviceProperties(_physicalDevice, &_properties);
 	vkGetPhysicalDeviceFeatures(_physicalDevice, &_features);
@@ -92,7 +87,7 @@ uint32_t Device::FindMemoryType(const uint32_t typeFilter, const VkMemoryPropert
 		}
 	}
 
-	throw std::runtime_error("aucun type de memoire ne satisfait le buffer!");
+	ASSERT(false, "aucun type de memoire ne satisfait le buffer!")
 }
 
 VkFormat Device::FindDepthFormat() const
@@ -118,7 +113,7 @@ VkFormat Device::FindSupportedFormat(const std::vector<VkFormat>& candidates, co
 		}
 	}
 
-	throw std::runtime_error("failed to find supported format!");
+	ASSERT(false, "failed to find supported format!")
 }
 
 const LogicalDevice* LogicalDevice::_sInstance = nullptr;

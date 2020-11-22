@@ -14,9 +14,8 @@ Mesh::Mesh(const std::string kPath)
 	std::vector<tinyobj::material_t> materials;
 	std::string warn, err;
 
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, kPath.c_str())) {
-		throw std::runtime_error(warn + err);
-	}
+	bool loaded = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, kPath.c_str());
+	ASSERT(loaded, "Load obj " + kPath + "failed. Warn: " + warn + "; Err: " + err)
 
 	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 	for (const auto& shape : shapes) 

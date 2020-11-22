@@ -36,7 +36,7 @@ Context::Context()
 	err = vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 	VK_ASSERT(err, "error when enumerating instance layer properties");
 
-	for (const char* layerName : validationLayers) {
+	/*for (const char* layerName : validationLayers) {
 		bool layerFound = false;
 
 		for (const auto& layerProperties : availableLayers) {
@@ -46,13 +46,11 @@ Context::Context()
 			}
 		}
 
-		if (!layerFound) {
-			throw std::runtime_error("validation layers requested, but not available!");
-		}
+		ASSERT(layerFound, "validation layers " + std::string(layerName) + " requested, but not available!")
 	}
 
 	createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-	createInfo.ppEnabledLayerNames = validationLayers.data();
+	createInfo.ppEnabledLayerNames = validationLayers.data();*/
 
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
@@ -78,22 +76,18 @@ Context::Context()
 		createInfo.pUserData = nullptr; // Optional
 
 		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance, "vkCreateDebugUtilsMessengerEXT");
-		if (func != nullptr) {
-			VkResult err = func(_instance, &createInfo, _allocator, &_debugMessenger);
-			VK_ASSERT(err, "error when getting instance proc addr");
-		}
-		else {
-			throw std::runtime_error("validation layers requested, but not available!");
-		}
+		ASSERT(func != nullptr, "vkCreateDebugUtilsMessengerEXT requested, but not available!")
+
+		VkResult err = func(_instance, &createInfo, _allocator, &_debugMessenger);
+		VK_ASSERT(err, "error when getting instance proc addr");
 	}
 }
 
 Context::~Context()
 {
 	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance, "vkDestroyDebugUtilsMessengerEXT");
-	if (func != nullptr) {
-		func(_instance, _debugMessenger, _allocator);
-	}
+	ASSERT(func != nullptr, "vkDestroyDebugUtilsMessengerEXT requested, but not available!")
+	func(_instance, _debugMessenger, _allocator);
 
 	vkDestroyInstance(_instance, _allocator);
 }

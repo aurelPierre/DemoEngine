@@ -16,9 +16,7 @@ Texture::Texture(const std::string kTexturePath, const bool kUseSRGB)
 	stbi_uc* pixels = stbi_load(kTexturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
-	if (!pixels) {
-		throw std::runtime_error("failed to load texture image!");
-	}
+	ASSERT(pixels, "failed to load texture image " + kTexturePath + " !")
 
 	Buffer stagingBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 	stagingBuffer.Map(pixels, static_cast<size_t>(imageSize));
@@ -65,9 +63,8 @@ Texture::Texture(const std::string kTexturePath, const bool kUseSRGB)
 	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = 0.0f;
 
-	if (vkCreateSampler(LogicalDevice::Instance()._device, &samplerInfo, Context::Instance()._allocator, &_sampler) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create texture sampler!");
-	}
+	VkResult err = vkCreateSampler(LogicalDevice::Instance()._device, &samplerInfo, Context::Instance()._allocator, &_sampler);
+	VK_ASSERT(err, "failed to create texture sampler!")
 }
 
 Texture::~Texture()

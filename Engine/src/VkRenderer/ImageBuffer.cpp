@@ -164,7 +164,7 @@ void ImageBuffer::TransitionLayout(const Queue& kQueue, const VkImageLayout kOld
 		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
 	else {
-		throw std::invalid_argument("unsupported layout transition!");
+		ASSERT(false, "unsupported layout transition!")
 	}
 
 	vkCmdPipelineBarrier(
