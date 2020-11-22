@@ -28,6 +28,7 @@ GLFWWindowData*	GLFWWindowSystem::CreateWindow()
 	if (!glfwInit())
 		return nullptr;
 
+	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	_windowData._window = glfwCreateWindow(_windowData._width, _windowData._height, "Dear ImGui GLFW+Vulkan example", NULL, NULL);
 	
