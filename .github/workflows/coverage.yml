@@ -106,7 +106,6 @@ jobs:
         cd build
         Xvfb :99 &
         export DISPLAY=:99
-        ruby headless.rb
         ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/ctest --output-on-failure -VV
 
     - name: Generate reports
