@@ -16,7 +16,7 @@
 			std::abort(); \
 		}
 
-	#define VK_ASSERT(err, msg) ASSERT(err == VK_SUCCESS, msg)
+	#define VK_ASSERT(err, msg) ASSERT(err == VK_SUCCESS, "code: " + std::to_string(err) + "; msg: " + msg)
 #else
 	#define ASSERT(predicate, msg)
 	
