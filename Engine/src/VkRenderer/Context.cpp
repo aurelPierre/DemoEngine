@@ -36,7 +36,7 @@ Context::Context()
 	err = vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 	VK_ASSERT(err, "error when enumerating instance layer properties");
 
-	/*for (const char* layerName : validationLayers) {
+	for (const char* layerName : validationLayers) {
 		bool layerFound = false;
 
 		for (const auto& layerProperties : availableLayers) {
@@ -50,7 +50,7 @@ Context::Context()
 	}
 
 	createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-	createInfo.ppEnabledLayerNames = validationLayers.data();*/
+	createInfo.ppEnabledLayerNames = validationLayers.data();
 
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
