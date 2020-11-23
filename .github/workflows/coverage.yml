@@ -52,9 +52,9 @@ jobs:
         export CC=${{ matrix.config.cc }}
         export CXX=${{ matrix.config.cxx }}
         export VULKAN_SDK="${{ env.install_vulkan_sdk }}/${{ env.install_vulkan_version }}/x86_64"
-        export PATH=$ENV{VULKAN_SDK}/bin:$ENV{PATH}
-        export LD_LIBRARY_PATH=$ENV{VULKAN_SDK}/lib:$ENV{LD_LIBRARY_PATH}
-        export VK_LAYER_PATH=$ENV{VULKAN_SDK}/etc/explicit_layer.d
+        export PATH=$VULKAN_SDK/bin:$PATH
+        export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
+        export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
 
     - name: Configure
       shell: cmake -P {0}
