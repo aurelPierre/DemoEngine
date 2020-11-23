@@ -53,10 +53,7 @@ jobs:
         set(ENV{CC} ${{ matrix.config.cc }})
         set(ENV{CXX} ${{ matrix.config.cxx }})
         set(ENV{VULKAN_SDK} ${{ env.install_vulkan_sdk }}/${{ env.install_vulkan_version }}/x86_64)
-        set(ENV{PATH} ENV{$VULKAN_SDK}/bin:$PATH)
-
-        export VULKAN_SDK=""
-        export PATH=
+        set(ENV{PATH} ENV{VULKAN_SDK}/bin:ENV{PATH})
 
         execute_process(
           COMMAND cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja -D CODE_COVERAGE=ON
