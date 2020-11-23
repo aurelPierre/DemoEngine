@@ -47,16 +47,18 @@ jobs:
         mkdir -p "${{ env.install_vulkan_sdk }}"
         tar xfz vulkansdk.tar.gz -C "${{ env.install_vulkan_sdk }}"
 
+    - name: Configure env
+      run: |
+        export CC=${{ matrix.config.cc }}
+        export CXX=${{ matrix.config.cxx }}
+        export VULKAN_SDK="${{ env.install_vulkan_sdk }}/${{ env.install_vulkan_version }}/x86_64"
+        export PATH=$ENV{VULKAN_SDK}/bin:$ENV{PATH}
+        export LD_LIBRARY_PATH=$ENV{VULKAN_SDK}/lib:$ENV{LD_LIBRARY_PATH}
+        export VK_LAYER_PATH=$ENV{VULKAN_SDK}/etc/explicit_layer.d
+
     - name: Configure
       shell: cmake -P {0}
       run: |
-        set(ENV{CC} ${{ matrix.config.cc }})
-        set(ENV{CXX} ${{ matrix.config.cxx }})
-        set(ENV{VULKAN_SDK} ${{ env.install_vulkan_sdk }}/${{ env.install_vulkan_version }}/x86_64)
-        set(ENV{PATH} $ENV{VULKAN_SDK}/bin:$ENV{PATH})
-        set(ENV{LD_LIBRARY_PATH} $ENV{VULKAN_SDK}/lib:$ENV{LD_LIBRARY_PATH})
-        set(ENV{VK_LAYER_PATH} $ENV{VULKAN_SDK}/etc/explicit_layer.d)
-
         message(STATUS $ENV{VULKAN_SDK})
 
         execute_process(
