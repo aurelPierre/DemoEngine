@@ -47,7 +47,7 @@ jobs:
         mkdir -p "${{ env.install_vulkan_sdk }}"
         tar xfz vulkansdk.tar.gz -C "${{ env.install_vulkan_sdk }}"
 
-    - name: Configure env
+    - name: Configure
       run: |
         export CC=${{ matrix.config.cc }}
         export CXX=${{ matrix.config.cxx }}
@@ -56,18 +56,7 @@ jobs:
         export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
         export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
 
-    - name: Configure
-      shell: cmake -P {0}
-      run: |
-        message(STATUS $ENV{VULKAN_SDK})
-
-        execute_process(
-          COMMAND cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja -D CODE_COVERAGE=ON
-          RESULT_VARIABLE result
-        )
-        if (NOT result EQUAL 0)
-          message(FATAL_ERROR "Bad exit status")
-        endif()
+        cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja -D CODE_COVERAGE=ON
 
     - name: Compile instrumented
       shell: cmake -P {0}
