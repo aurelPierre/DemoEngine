@@ -54,6 +54,10 @@ jobs:
         set(ENV{CXX} ${{ matrix.config.cxx }})
         set(ENV{VULKAN_SDK} ${{ env.install_vulkan_sdk }}/${{ env.install_vulkan_version }}/x86_64)
         set(ENV{PATH} $ENV{VULKAN_SDK}/bin:$ENV{PATH})
+        set(ENV{LD_LIBRARY_PATH} $ENV{VULKAN_SDK}/lib:$ENV{LD_LIBRARY_PATH})
+        set(ENV{VK_LAYER_PATH} $ENV{VULKAN_SDK}/etc/explicit_layer.d)
+
+        message(STATUS $ENV{VULKAN_SDK})
 
         execute_process(
           COMMAND cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja -D CODE_COVERAGE=ON
