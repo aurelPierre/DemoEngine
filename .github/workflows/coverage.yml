@@ -9,7 +9,7 @@ jobs:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     env:
-      install_vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk"
+      install_vulkan_sdk: "~/vulkan_sdk"
       install_vulkan_version: "1.2.148.1"
     strategy:
       fail-fast: false
