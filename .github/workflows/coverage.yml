@@ -9,8 +9,8 @@ jobs:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     env:
-      vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/"
-      vulkan_version: "1.2.148.1"
+      install_vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/"
+      install_vulkan_version: "1.2.148.1"
     strategy:
       fail-fast: false
       matrix:
@@ -43,13 +43,12 @@ jobs:
       shell: bash
       run: |
         # Download Vulkan SDK
-        curl -LS -o vulkansdk.tar.gz \
-        https://sdk.lunarg.com/sdk/download/${{ env.vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.vulkan_version }}.tar.gz
+        curl -LS -o vulkansdk.tar.gz https://sdk.lunarg.com/sdk/download/${{ env.install_vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.install_vulkan_version }}.tar.gz
         # Create Vulkan SDK directory and extract
-        mkdir "${{ env.vulkan_sdk }}"
-        tar xfz vulkansdk.tar.gz -C "${{ env.vulkan_sdk }}"
-        export VULKAN_SDK="${{ env.inexor_vulkan_sdk }}/${{ env.inexor_vulkan_version }}/x86_64"
-          export PATH=$VULKAN_SDK/bin:$PATH
+        mkdir "${{ env.install_vulkan_sdk }}"
+        tar xfz vulkansdk.tar.gz -C "${{ env.install_vulkan_sdk }}"
+        export VULKAN_SDK="${{ env.install_vulkan_sdk }}/${{ env.install_vulkan_version }}/x86_64"
+        export PATH=$VULKAN_SDK/bin:$PATH
 
     - name: Configure
       shell: cmake -P {0}
