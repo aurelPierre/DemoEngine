@@ -46,6 +46,7 @@ jobs:
         # Create Vulkan SDK directory and extract
         mkdir -p "${{ env.install_vulkan_sdk }}"
         tar xfz vulkansdk.tar.gz -C "${{ env.install_vulkan_sdk }}"
+        ls -R ${{ env.install_vulkan_sdk }}
 
     - name: Configure
       shell: cmake -P {0}
