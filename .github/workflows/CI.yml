@@ -16,12 +16,14 @@ jobs:
         - {
             name: "Windows Latest MSVC", artifact: "Windows-MSVC.tar.xz",
             os: windows-latest,
-            build_type: "Release", cc: "cl", cxx: "cl"
+            build_type: "Release", cc: "cl", cxx: "cl",
+            cmake_configure_options: '-G "Visual Studio 16 2019" -A x64'
           }
         - {
             name: "Windows Latest MinGW", artifact: "Windows-MinGW.tar.xz",
             os: windows-latest,
-            build_type: "Release", cc: "gcc", cxx: "g++"
+            build_type: "Release", cc: "gcc", cxx: "g++",
+            cmake_configure_options: '-G Ninja'
           }
 
     steps:
@@ -56,7 +58,7 @@ jobs:
         $env:CXX="${{ matrix.config.cxx }}"
         $env:Path += ";${{ env.install_vulkan_sdk }}\;${{ env.install_vulkan_sdk }}\Bin\"
 
-        cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja
+        cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ${{ matrix.config.cmake_configure_options }}
 
     - name: Build
       shell: cmake -P {0}
