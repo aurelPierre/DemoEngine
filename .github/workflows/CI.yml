@@ -43,16 +43,13 @@ jobs:
         curl -LS -o vulkansdk.exe https://sdk.lunarg.com/sdk/download/${{ env.install_vulkan_version }}/windows/VulkanSDK-${{ env.install_vulkan_version }}-Installer.exe
         7z x vulkansdk.exe -o"${{ env.install_vulkan_sdk }}"
 
-    - name: PATH Vulkan SDK
-      shell: pwsh
-      run: |
-        $env:Path += ";${{ env.install_vulkan_sdk }}\;${{ env.install_vulkan_sdk }}\Bin\"
-
     - name: Configure
       shell: cmake -P {0}
       run: |
         set(ENV{CC} ${{ matrix.config.cc }})
         set(ENV{CXX} ${{ matrix.config.cxx }})
+        set(ENV(Path) $ENV{Path};${{ env.install_vulkan_sdk }}\;${{ env.install_vulkan_sdk }}\Bin\)
+
         if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
           execute_process(
             COMMAND "${{ matrix.config.environment_script }}" && set
@@ -65,10 +62,12 @@ jobs:
             endif()
           endforeach()
         endif()
+
         execute_process(
           COMMAND cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja
           RESULT_VARIABLE result
         )
+
         if (NOT result EQUAL 0)
           message(FATAL_ERROR "Bad exit status")
         endif()
