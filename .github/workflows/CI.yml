@@ -38,15 +38,7 @@ jobs:
     - name: Download Ninja and CMake
       uses: lukka/get-cmake@latest
 
-    - name: Cache vulkan
-      uses: actions/cache@v2
-      id: cache-vulkan
-      with:
-        path: ${{ env.install_vulkan_sdk }}
-        key: Vk-${{ runner.os }}-${{ env.install_vulkan_version }}
-
     - name: Install Vulkan SDK
-      if: steps.cache-vulkan.outputs.cache-hit != 'true'
       run: |
         curl -LS -o vulkansdk.exe https://sdk.lunarg.com/sdk/download/${{ env.install_vulkan_version }}/windows/VulkanSDK-${{ env.install_vulkan_version }}-Installer.exe
         7z x vulkansdk.exe -o"${{ env.install_vulkan_sdk }}"
