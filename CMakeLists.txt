@@ -60,35 +60,7 @@ if(CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif(CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 
 # Vulkan
-find_package(Vulkan)
-
-IF(WIN32)
-	IF (NOT Vulkan_FOUND)
-		find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan PATHS ${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/lib)
-		set(Vulkan_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/include)
-		IF (Vulkan_LIBRARY)
-			set(Vulkan_FOUND ON)
-			MESSAGE("Using bundled Vulkan library version")
-		ENDIF()
-	ENDIF()
-ELSEIF(LINUX)
-	IF (NOT Vulkan_FOUND)
-		find_library(Vulkan_LIBRARY NAMES vulkan HINTS "$ENV{VULKAN_SDK}/x86_64" "${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/x86_64" REQUIRED)
-		set(Vulkan_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ThirdParty/vulkan/include)
-		IF (Vulkan_LIBRARY)
-			set(Vulkan_FOUND ON)
-			MESSAGE("Using bundled Vulkan library version")
-		ENDIF()
-	ENDIF()
-ENDIF()
-
-
-IF (NOT Vulkan_FOUND)
-	message(FATAL_ERROR "Could not find Vulkan library!")
-ELSE()
-	message(STATUS ${Vulkan_LIBRARY})
-	message(STATUS ${Vulkan_INCLUDE_DIR})
-ENDIF()
+find_package(Vulkan REQUIRED)
 
 # GLFW
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)

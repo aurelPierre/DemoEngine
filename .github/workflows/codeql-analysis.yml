@@ -35,19 +35,34 @@ jobs:
         sudo apt-get -qq update
         sudo apt-get install -y libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev libxml2-utils
 
-    - name: Configure
-      shell: cmake -P {0}
-      run: |
-        set(ENV{CC} ${{ matrix.config.cc }})
-        set(ENV{CXX} ${{ matrix.config.cxx }})
+    - name: Cache vulkan
+      uses: actions/cache@latest
+      id: cache-vulkan
+      with:
+        path: ${{ env.install_vulkan_sdk }}
+        key: Vk-${{ runner.os }}-${{ env.install_vulkan_version }}
 
-        execute_process(
-          COMMAND cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja
-          RESULT_VARIABLE result
-        )
-        if (NOT result EQUAL 0)
-          message(FATAL_ERROR "Bad exit status")
-        endif()
+    - name: Install Vulkan SDK
+      if: steps.cache-vulkan.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        # Download Vulkan SDK
+        curl -LS -o vulkansdk.tar.gz https://sdk.lunarg.com/sdk/download/${{ env.install_vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.install_vulkan_version }}.tar.gz
+        # Create Vulkan SDK directory and extract
+        mkdir -p "${{ env.install_vulkan_sdk }}"
+        tar xfz vulkansdk.tar.gz -C "${{ env.install_vulkan_sdk }}"
+
+    - name: Configure
+      shell: bash
+      run: |
+        export CC=${{ matrix.config.cc }}
+        export CXX=${{ matrix.config.cxx }}
+        export VULKAN_SDK="${{ env.install_vulkan_sdk }}/${{ env.install_vulkan_version }}/x86_64"
+        export PATH=$VULKAN_SDK/bin:$PATH
+        export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
+        export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
+
+        cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja
       
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
