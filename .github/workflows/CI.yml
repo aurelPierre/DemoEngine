@@ -6,6 +6,9 @@ jobs:
   build:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
+    env:
+      install_vulkan_sdk: "$GITHUB_WORKSPACE/vulkan_sdk/"
+      install_vulkan_version: "1.2.148.1"
     strategy:
       fail-fast: false
       matrix:
@@ -50,6 +53,26 @@ jobs:
         sudo apt-get -qq update
         sudo apt-get install -y libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev
 
+    - name: Install Vulkan SDK
+      run: |
+        if ("${{ runner.os }}" STREQUAL "Windows"
+          curl -LS -o vulkansdk.exe https://vulkan.lunarg.com/sdk/download/${{ env.install_vulkan_version }}/windows/VulkanSDK-${{ env.install_vulkan_version }}-Installer.exe?Human=true
+          7z x vulkansdk.exe -o"${{ env.install_vulkan_sdk }}"
+
+          export PATH=$PATH";${{ env.install_vulkan_sdk }}\;${{ env.install_vulkan_sdk }}\Bin\"
+        else()
+          # Download Vulkan SDK
+          curl -LS -o vulkansdk.tar.gz https://sdk.lunarg.com/sdk/download/${{ env.install_vulkan_version }}/linux/vulkansdk-linux-x86_64-${{ env.install_vulkan_version }}.tar.gz
+          # Create Vulkan SDK directory and extract
+          mkdir -p "${{ env.install_vulkan_sdk }}"
+          tar xfz vulkansdk.tar.gz -C "${{ env.install_vulkan_sdk }}"
+
+          export VULKAN_SDK="${{ env.install_vulkan_sdk }}/${{ env.install_vulkan_version }}/x86_64"
+          export PATH=$VULKAN_SDK/bin:$PATH
+          export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
+          export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
+        endif()
+
     - name: Configure
       shell: cmake -P {0}
       run: |
@@ -68,7 +91,6 @@ jobs:
             endif()
           endforeach()
         endif()
-
 
         execute_process(
           COMMAND cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja
