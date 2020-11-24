@@ -37,7 +37,7 @@ jobs:
       uses: lukka/get-cmake@latest
 
     - name: Cache vulkan
-      uses: actions/cache@latest
+      uses: actions/cache@v2
       id: cache-vulkan
       with:
         path: ${{ env.install_vulkan_sdk }}
@@ -126,7 +126,7 @@ jobs:
         sudo apt-get install -y libxrandr-dev libx11-xcb-dev libxinerama-dev libxcursor-dev libxi-dev clang
 
     - name: Cache vulkan
-      uses: actions/cache@latest
+      uses: actions/cache@v2
       id: cache-vulkan
       with:
         path: ${{ env.install_vulkan_sdk }}
