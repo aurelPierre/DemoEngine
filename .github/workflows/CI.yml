@@ -29,7 +29,6 @@ jobs:
       uses: actions/checkout@master
 
     - name: Checkout submodules
-      shell: bash
       run: |
         sed -i'.back' 's/git@github.com:/https:\/\/github.com\//' .gitmodules
         git submodule update --init --recursive
@@ -38,17 +37,15 @@ jobs:
       uses: lukka/get-cmake@latest
 
     - name: Install Vulkan SDK
-      shell: pwsh
       run: |
         curl -LS -o vulkansdk.exe https://sdk.lunarg.com/sdk/download/${{ env.install_vulkan_version }}/windows/VulkanSDK-${{ env.install_vulkan_version }}-Installer.exe
         7z x vulkansdk.exe -o"${{ env.install_vulkan_sdk }}"
-        $env:Path += ";${{ env.inexor_vulkan_sdk }}\;${{ env.inexor_vulkan_sdk }}\Bin\"
 
     - name: Configure
-      shell: bash
       run: |
-        export CC=${{ matrix.config.cc }}
-        export CXX=${{ matrix.config.cxx }}
+        $env:CC="${{ matrix.config.cc }}"
+        $env:CXX="${{ matrix.config.cxx }}"
+        $env:Path += ";${{ env.inexor_vulkan_sdk }}\;${{ env.inexor_vulkan_sdk }}\Bin\"
 
         cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja
 
