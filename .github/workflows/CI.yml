@@ -43,14 +43,18 @@ jobs:
         curl -LS -o vulkansdk.exe https://sdk.lunarg.com/sdk/download/${{ env.install_vulkan_version }}/windows/VulkanSDK-${{ env.install_vulkan_version }}-Installer.exe
         7z x vulkansdk.exe -o"${{ env.install_vulkan_sdk }}"
 
+    - name: Configure msvc
+      if: contains(matrix.config.name, 'MSVC')
+      shell: cmd
+      run: |
+        "${{ matrix.config.environment_script }}"
+
     - name: Configure
       shell: pwsh
       run: |
         $env:CC="${{ matrix.config.cc }}"
         $env:CXX="${{ matrix.config.cxx }}"
         $env:Path += ";${{ env.install_vulkan_sdk }}\;${{ env.install_vulkan_sdk }}\Bin\"
-
-        CALL "${{ matrix.config.environment_script }}"
 
         cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja
 
