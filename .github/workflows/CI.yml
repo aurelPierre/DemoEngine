@@ -42,10 +42,11 @@ jobs:
         7z x vulkansdk.exe -o"${{ env.install_vulkan_sdk }}"
 
     - name: Configure
+      shell: pwsh
       run: |
         $env:CC="${{ matrix.config.cc }}"
         $env:CXX="${{ matrix.config.cxx }}"
-        $env:Path += ";${{ env.inexor_vulkan_sdk }}\;${{ env.inexor_vulkan_sdk }}\Bin\"
+        $env:Path += ";${{ env.install_vulkan_sdk }}\;${{ env.install_vulkan_sdk }}\Bin\"
 
         cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja
 
