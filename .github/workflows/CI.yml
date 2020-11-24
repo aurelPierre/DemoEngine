@@ -42,6 +42,10 @@ jobs:
       run: |
         curl -LS -o vulkansdk.exe https://sdk.lunarg.com/sdk/download/${{ env.install_vulkan_version }}/windows/VulkanSDK-${{ env.install_vulkan_version }}-Installer.exe
         7z x vulkansdk.exe -o"${{ env.install_vulkan_sdk }}"
+
+    - name: PATH Vulkan SDK
+      shell: pwsh
+      run: |
         $env:Path += ";${{ env.install_vulkan_sdk }}\;${{ env.install_vulkan_sdk }}\Bin\"
 
     - name: Configure
