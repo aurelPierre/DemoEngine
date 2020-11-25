@@ -45,9 +45,7 @@ jobs:
 
     - name: Configure msvc
       if: contains(matrix.config.name, 'MSVC')
-      shell: cmd
-      run: |
-        "${{ matrix.config.environment_script }}"
+      uses: ilammy/msvc-dev-cmd@v1
 
     - name: Configure
       shell: pwsh
@@ -56,7 +54,7 @@ jobs:
         $env:CXX="${{ matrix.config.cxx }}"
         $env:Path += ";${{ env.install_vulkan_sdk }}\;${{ env.install_vulkan_sdk }}\Bin\"
 
-        cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G "Visual Studio 16 2019" -A x64
+        cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -G Ninja
 
     - name: Build
       shell: cmake -P {0}
