@@ -1,6 +1,6 @@
 #include "VkRenderer/CommandBuffer.h"
 
-#include "VkRenderer/Core.h"
+#include "Core.h"
 
 CommandBuffer::CommandBuffer(const Queue& kQueue, const VkCommandBufferLevel kLevel)
 	: _commandPool { kQueue._commandPool }

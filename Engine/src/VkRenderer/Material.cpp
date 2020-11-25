@@ -2,7 +2,7 @@
 
 #include "VkRenderer/Context.h"
 
-#include "VkRenderer/Core.h"
+#include "Core.h"
 
 VkShaderModule loadShader(std::string path)
 {

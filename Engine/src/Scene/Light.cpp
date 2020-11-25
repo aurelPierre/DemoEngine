@@ -1,6 +1,6 @@
 #include "Scene/Light.h"
 
-Light::Light(const glm::vec3& pos, const float intensity, const glm::vec3& color, const float range)
+Light::Light(const Vec3& pos, const float intensity, const Vec3& color, const float range)
 	: _pos{ pos }, _intensity{ intensity}, _color{ color },
 		_range{ range }, _ubo{ sizeof(float) * 8, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT }
 {

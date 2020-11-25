@@ -3,7 +3,7 @@
 #include <unordered_map>
 
 #include "tiny_obj_loader.h"
-#include "VkRenderer/Core.h"
+#include "Core.h"
 
 Mesh::Mesh(const std::string kPath)
 {

@@ -4,7 +4,7 @@
 
 #include <backends/imgui_impl_vulkan.h>
 
-#include "VkRenderer/Core.h"
+#include "Core.h"
 #include "VkRenderer/Context.h"
 
 Viewport::Viewport(const VkFormat kFormat, const VkExtent2D kExtent)

@@ -6,7 +6,7 @@
 #include "VkRenderer/Swapchain.h"
 #include "VkRenderer/Texture.h"
 
-#include "VkRenderer/Core.h"
+#include "Core.h"
 
 #include "VkRenderer/Context.h"
 

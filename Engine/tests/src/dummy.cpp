@@ -1,6 +1,6 @@
 #include <cstdlib>
 
-#include "VkRenderer/Core.h"
+#include "Core.h"
 #include "GLFWWindowSystem.h"
 
 #include "VkRenderer/Context.h"

@@ -21,6 +21,11 @@ target_link_libraries(Engine PUBLIC stb)
 target_include_directories(Engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(Engine PUBLIC "${Vulkan_INCLUDE_DIR}")
 
+target_compile_definitions(Engine PRIVATE GLM_FORCE_RADIANS)
+target_compile_definitions(Engine PRIVATE GLM_FORCE_DEPTH_ZERO_TO_ONE)
+target_compile_definitions(Engine PRIVATE GLM_ENABLE_EXPERIMENTAL)
+
+target_compile_definitions(Engine PRIVATE STB_IMAGE_IMPLEMENTATION)
 
 # INSTALL
 #install(DIRECTORY include/	DESTINATION ${INSTALL_INCLUDE_DIR})

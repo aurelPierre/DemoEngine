@@ -2,24 +2,20 @@
 
 #include <vulkan/vulkan.h>
 
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/hash.hpp>
-
 #include <array>
 
 #include "Viewport.h"
 #include "Texture.h"
 #include "Buffer.h"
 
+#include "Wrappers/glm.h"
+
 struct Vertex
 {
-	glm::vec3 pos;
-	glm::vec2 uv;
-	glm::vec3 normal;
-	glm::vec3 tangent;
+	Vec3 pos;
+	Vec2 uv;
+	Vec3 normal;
+	Vec3 tangent;
 
 	static VkVertexInputBindingDescription& getBindingDescription() {
 		static VkVertexInputBindingDescription bindingDescription{};
@@ -65,9 +61,9 @@ struct Vertex
 namespace std {
 	template<> struct hash<Vertex> {
 		size_t operator()(Vertex const& vertex) const {
-			return ((hash<glm::vec3>()(vertex.pos) ^
-				(hash<glm::vec3>()(vertex.normal) << 1)) >> 1) ^
-				(hash<glm::vec2>()(vertex.uv) << 1);
+			return ((hash<Vec3>()(vertex.pos) ^
+				(hash<Vec3>()(vertex.normal) << 1)) >> 1) ^
+				(hash<Vec2>()(vertex.uv) << 1);
 		}
 	};
 }

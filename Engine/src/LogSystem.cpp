@@ -19,7 +19,7 @@ namespace ez
 
 	bool				LogSystem::_standardOutput = false;
 
-	constexpr glm::vec4 Log::Color()
+	constexpr Vec4 Log::Color()
 	{
 		switch (_logType)
 		{

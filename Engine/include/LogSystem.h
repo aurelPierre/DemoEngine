@@ -2,11 +2,11 @@
 
 #include "imgui.h"
 
-#include "glm/vec4.hpp"
-
 #include <string>
 #include <vector>
 #include <ctime>
+
+#include "Wrappers/glm.h"
 
 namespace ez
 {
@@ -30,7 +30,7 @@ namespace ez
 		const LogFlags			_logType;
 		const std::string		_logText;
 
-		constexpr glm::vec4		Color();
+		constexpr Vec4			Color();
 		constexpr const char*	Header();
 		std::string	Text();
 

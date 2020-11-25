@@ -1,4 +1,4 @@
-#include "VkRenderer/Core.h"
+#include "Core.h"
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

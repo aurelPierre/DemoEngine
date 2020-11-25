@@ -1,6 +1,6 @@
 #include "VkRenderer/Surface.h"
 
-#include "VkRenderer/Core.h"
+#include "Core.h"
 #include "VkRenderer/Context.h"
 #include "VkRenderer/Device.h"
 
