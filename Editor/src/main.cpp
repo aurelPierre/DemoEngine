@@ -31,11 +31,11 @@ int main(int, char**)
 
 	Viewport viewport(surface._colorFormat, { 512, 512 });
 
-	Texture color("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_BaseColor.png");
-	Texture metal("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Metallic.png");
-	Texture normal("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Normal.png");
-	Texture rough("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Roughness.png");
-	Texture aO("D:/Personal project/DemoEngine/Resources/Textures/HylianShield_Default_AmbientOcclusion.png");
+	Texture color("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Color.jpg");
+	Texture metal("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Metalness.jpg", Texture::Format::R);
+	Texture normal("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Normal.jpg");
+	Texture rough("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Roughness.jpg", Texture::Format::R);
+	Texture aO("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Displacement.jpg", Texture::Format::R);
 
 	Material mat(viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
@@ -93,8 +93,6 @@ int main(int, char**)
 			windowData->_shouldUpdate = false;
 		}
 
-		// Update
-		
 		ImGui::Begin("Demo");
 		float p[]{ cam._pos.x, cam._pos.y, cam._pos.z };
 		ImGui::InputFloat3("Camera pos:", p);

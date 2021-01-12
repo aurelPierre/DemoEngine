@@ -8,13 +8,17 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-Texture::Texture(const std::string kTexturePath, const bool kUseSRGB)
+Texture::Texture(const std::string kTexturePath, const Format kFormat)
 {
 	ASSERT(!kTexturePath.empty(), "kTexturePath is empty")
 
+	int reqComp = STBI_rgb_alpha;
+	if (kFormat == Format::R || kFormat == Format::SR)
+		reqComp = STBI_grey;
+
 	int texWidth = 0, texHeight = 0, texChannels = 0;
-	stbi_uc* pixels = stbi_load(kTexturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-	VkDeviceSize imageSize = texWidth * texHeight * 4;
+	stbi_uc* pixels = stbi_load(kTexturePath.c_str(), &texWidth, &texHeight, &texChannels, reqComp);
+	VkDeviceSize imageSize = texWidth * texHeight * (reqComp == STBI_grey ? 1 : 4);
 
 	ASSERT(pixels, "failed to load texture image " + kTexturePath + " !")
 
@@ -23,16 +27,12 @@ Texture::Texture(const std::string kTexturePath, const bool kUseSRGB)
 	
 	stbi_image_free(pixels);
 
-	VkFormat imageFormat = kUseSRGB ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM; // TODO: add R8G8B8 support
-	if (texChannels == 4)
-		imageFormat = kUseSRGB ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
-	else if(texChannels == 2)
-		imageFormat = kUseSRGB ? VK_FORMAT_R8G8_SRGB : VK_FORMAT_R8G8_UNORM;
-	else if (texChannels == 1)
-		imageFormat = kUseSRGB ? VK_FORMAT_R8_SRGB : VK_FORMAT_R8_UNORM;
+	VkFormat imageFormat = kFormat == Format::SRGBA ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+	if (reqComp == STBI_grey)
+		imageFormat = kFormat == Format::SR ? VK_FORMAT_R8_SRGB : VK_FORMAT_R8_UNORM;
 
 	ImageBuffer image(imageFormat, { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) },
-						VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	_image = std::move(image);
 
 	_image.TransitionLayout(LogicalDevice::Instance()._transferQueue, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -56,7 +56,7 @@ Texture::Texture(const std::string kTexturePath, const bool kUseSRGB)
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 
 	samplerInfo.compareEnable = VK_FALSE;
-	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
 
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.mipLodBias = 0.0f;

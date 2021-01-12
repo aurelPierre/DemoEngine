@@ -23,7 +23,7 @@ layout(location = 0) out vec4 outColor;
 
 const float PI = 3.14159265359;
 
-vec3 viewPos = vec3(2.0, 2.0, 2.0);
+vec3 viewPos = vec3(0.0, 2.0, 0.0);
 
 vec3 getNormalFromNormalMapping()
 {
@@ -82,8 +82,8 @@ vec3 pbrShading()
     float roughness = texture(roughnessMap, fragUV).r;
     float ao        = texture(aoMap, fragUV).r;
 
-	vec3 lightV = light._pos - fragPos;
-	vec3 camV = viewPos - fragPos;
+	vec3 lightV = normalize(light._pos - fragPos);
+	vec3 camV = normalize(viewPos - fragPos);
 
 	vec3 f0 = mix(vec3(0.16), albedo, metallic);
 
