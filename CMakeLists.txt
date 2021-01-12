@@ -7,8 +7,6 @@ project (DemoEngine VERSION 0.1)
 
 enable_testing()
 
-#include(code-coverage.cmake) 
-
 # .lib / .a
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Build/${CMAKE_BUILD_TYPE}_${CMAKE_HOST_SYSTEM_PROCESSOR}/Libs")
 
@@ -28,14 +26,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Build/${CMAKE_BUILD_TYPE
 
 #set(CMAKE_CXX_STANDARD 17)
 #set(CMAKE_CXX_STANDARD_REQUIRED True)
-
-
-
-#if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-#	set(CMAKE_CXX_FLAGS "-Xclang -std=c++17 /W3 /GX /MDd /Zi /Ob0 /Od /RTC1")
-#else()
-#	set(CMAKE_CXX_FLAGS "/std:c++17 /EHsc /W4")
-#endif()
 
 IF(UNIX AND NOT APPLE)
 	set(LINUX TRUE)
@@ -69,7 +59,9 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory("ThirdParty/glfw")
 
-add_definitions(-DGLFW_INCLUDE_NONE)
+if(CODE_COVERAGE)
+	add_definitions(-DGLFW_INCLUDE_NONE)
+endif()
 
 # GLM
 add_subdirectory("ThirdParty/glm")
@@ -79,6 +71,7 @@ file(GLOB SOURCES "ThirdParty/imgui/imgui.cpp"
 	"ThirdParty/imgui/imgui_demo.cpp"
 	"ThirdParty/imgui/imgui_draw.cpp"
 	"ThirdParty/imgui/imgui_widgets.cpp"
+	"ThirdParty/imgui/imgui_tables.cpp"
 	"ThirdParty/imgui/backends/imgui_impl_glfw.cpp"
 	"ThirdParty/imgui/backends/imgui_impl_vulkan.cpp")
 
