@@ -31,6 +31,21 @@ int main(int, char**)
 
 	Viewport viewport(surface._colorFormat, { 512, 512 });
 
+	Texture skyCubemap({ "D:/Personal project/DemoEngine/Resources/Textures/Cubemap/back.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/bottom.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/front.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/left.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/right.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/top.bmp" });
+
+	Material skyMaterial(viewport,
+		"D:/Personal project/DemoEngine/shaders/bin/skybox.vert.spv",
+		"D:/Personal project/DemoEngine/shaders/bin/skybox.frag.spv",
+		5);
+
+	Mesh skySphere("D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
+	skySphere._material = &skyMaterial;
+
 	Texture color("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Color.jpg");
 	Texture metal("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Metalness.jpg", Texture::Format::R);
 	Texture normal("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Normal.jpg");
@@ -48,15 +63,16 @@ int main(int, char**)
 	Scene scene{};
 	scene._viewports.emplace_back(&viewport);
 	scene._mesh.emplace_back(&mesh);
+	scene._mesh.emplace_back(&skySphere);
 
 	Camera cam(60.f, 0.1f, 256.f);
 	cam._pos = { 0.f, 2.f, 0.f };
 	cam.Update();
 	Light light({ 0.f, 3.f, 1.f }, 1.f, { 1.f, 1.f, 1.f }, 5.f);
 
-	Buffer modelBuf(sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-	glm::mat4 model(1.f);
-	modelBuf.Map(&model, sizeof(glm::mat4));
+	Buffer modelBuf(sizeof(Mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	Mat4 model(1.f);
+	modelBuf.Map(&model, sizeof(Mat4));
 
 	mat.UpdateDescriptors( cam._ubo, light._ubo, { &color, &metal, &normal, &rough, &aO }, modelBuf);
 
@@ -118,7 +134,7 @@ int main(int, char**)
 		cam.Update();
 
 		model = glm::rotate(model, deltaTime * glm::radians(20.0f), { 0.f, 0.f, 1.f });
-		modelBuf.Map(&model, sizeof(glm::mat4));
+		modelBuf.Map(&model, sizeof(Mat4));
 
 		// Draw
 		Draw(scene);

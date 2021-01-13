@@ -139,6 +139,7 @@ void Material::CreateDescriptors(const size_t kTextureSize)
 
 		VkResult err = vkCreateDescriptorSetLayout(LogicalDevice::Instance()._device, &objLayoutInfo,
 			Context::Instance()._allocator, &_objectsLayout);
+		VK_ASSERT(err, "error when creating descriptor set layout");
 
 		VkDescriptorSetAllocateInfo objAllocInfo{};
 		objAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;

@@ -4,6 +4,8 @@
 
 #include "ImageBuffer.h"
 
+#include <array>
+
 class Texture
 {
 public:
@@ -23,7 +25,12 @@ public:
 
 public:
 	Texture(const std::string kTexturePath, const Format kFormat = Format::RGBA);
+	Texture(const std::array<std::string, 6> kCubemapPath, const Format kFormat = Format::RGBA);
+
 	~Texture();
+
+private:
+	void CreateSampler();
 
 public:
 	const VkDescriptorImageInfo CreateDescriptorInfo() const;

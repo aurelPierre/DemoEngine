@@ -13,10 +13,12 @@ public:
 	VkImage			_image	= VK_NULL_HANDLE;
 	VkImageView		_view	= VK_NULL_HANDLE;
 
+	bool			_isCubemap = false;
+
 public:
 	ImageBuffer() = default;
 	ImageBuffer(const VkImage kImage, const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage);
-	ImageBuffer(const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage);
+	ImageBuffer(const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage, const bool kIsCubemap = false);
 
 	~ImageBuffer();
 

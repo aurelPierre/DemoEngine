@@ -39,6 +39,65 @@ Texture::Texture(const std::string kTexturePath, const Format kFormat)
 	_image.CopyBuffer(LogicalDevice::Instance()._transferQueue, stagingBuffer);
 	_image.TransitionLayout(LogicalDevice::Instance()._graphicsQueue, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+	CreateSampler();
+}
+
+Texture::Texture(const std::array<std::string, 6> kCubemapPath, const Format kFormat)
+{
+	int reqComp = STBI_rgb_alpha;
+	if (kFormat == Format::R || kFormat == Format::SR)
+		reqComp = STBI_grey;
+
+	VkDeviceSize cubemapSize = 0;
+	stbi_uc* pixels[6]{};
+
+	int cubeWidth = 0, cubeHeight = 0;
+	for (int i = 0; i < 6; ++i)
+	{
+		ASSERT(!kCubemapPath[i].empty(), "kTexturePath is empty")
+		int texWidth = 0, texHeight = 0, texChannels = 0;
+		pixels[i] = stbi_load(kCubemapPath[i].c_str(), &texWidth, &texHeight, &texChannels, reqComp);
+
+		ASSERT(pixels[i], "failed to load texture image " + kCubemapPath[i] + " !")
+		cubemapSize += texWidth * texHeight * (reqComp == STBI_grey ? 1 : 4);
+
+		ASSERT((texWidth == cubeWidth || cubeWidth == 0) || (texHeight == cubeHeight || cubeHeight == 0),
+			"texture " + kCubemapPath[i] + " is not the same size as previous cubemap texture")
+
+		cubeWidth = texWidth;
+		cubeHeight = texHeight;
+	}
+
+	Buffer stagingBuffer(cubemapSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	for (int i = 0; i < 6; ++i)
+	{
+		stagingBuffer.Map(pixels[i], static_cast<size_t>(cubemapSize / 6), static_cast<size_t>((cubemapSize / 6) * i));
+		stbi_image_free(pixels[i]);
+	}
+
+	VkFormat imageFormat = kFormat == Format::SRGBA ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+	if (reqComp == STBI_grey)
+		imageFormat = kFormat == Format::SR ? VK_FORMAT_R8_SRGB : VK_FORMAT_R8_UNORM;
+
+	ImageBuffer image(imageFormat, { static_cast<uint32_t>(cubeWidth), static_cast<uint32_t>(cubeHeight) },
+		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
+	_image = std::move(image);
+
+	_image.TransitionLayout(LogicalDevice::Instance()._transferQueue, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	_image.CopyBuffer(LogicalDevice::Instance()._transferQueue, stagingBuffer);
+	_image.TransitionLayout(LogicalDevice::Instance()._graphicsQueue, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	CreateSampler();
+}
+
+
+Texture::~Texture()
+{
+	vkDestroySampler(LogicalDevice::Instance()._device, _sampler, Context::Instance()._allocator);
+}
+
+void Texture::CreateSampler()
+{
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VK_FILTER_LINEAR;
@@ -65,11 +124,6 @@ Texture::Texture(const std::string kTexturePath, const Format kFormat)
 
 	VkResult err = vkCreateSampler(LogicalDevice::Instance()._device, &samplerInfo, Context::Instance()._allocator, &_sampler);
 	VK_ASSERT(err, "failed to create texture sampler!")
-}
-
-Texture::~Texture()
-{
-	vkDestroySampler(LogicalDevice::Instance()._device, _sampler, Context::Instance()._allocator);
 }
 
 const VkDescriptorImageInfo Texture::CreateDescriptorInfo() const

@@ -13,8 +13,8 @@ ImageBuffer::ImageBuffer(const VkImage kImage, const VkFormat kFormat, const VkE
 	CreateView(kFormat, kUsage);
 }
 
-ImageBuffer::ImageBuffer(const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage)
-	: _size{ kExtent }
+ImageBuffer::ImageBuffer(const VkFormat kFormat, const VkExtent2D& kExtent, const VkImageUsageFlags kUsage, const bool kIsCubemap)
+	: _size{ kExtent }, _isCubemap{ kIsCubemap }
 {
 	ASSERT(kExtent.width != 0u && kExtent.height != 0, "kExtent.width is 0 or kExtent.height is 0")
 
@@ -26,10 +26,13 @@ ImageBuffer::ImageBuffer(const VkFormat kFormat, const VkExtent2D& kExtent, cons
 	image.extent.height = _size.height;
 	image.extent.depth = 1;
 	image.mipLevels = 1;
-	image.arrayLayers = 1;
+	image.arrayLayers = _isCubemap ? 6 : 1;
 	image.samples = VK_SAMPLE_COUNT_1_BIT;
 	image.tiling = VK_IMAGE_TILING_OPTIMAL;
 	image.usage = kUsage;
+
+	if (_isCubemap)
+		image.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
 	VkResult err = vkCreateImage(LogicalDevice::Instance()._device, &image, Context::Instance()._allocator, &_image);
 	VK_ASSERT(err, "error when creating image");
@@ -103,8 +106,8 @@ void ImageBuffer::CreateView(const VkFormat kFormat, const VkImageUsageFlags kUs
 	colorAttachmentView.subresourceRange.baseMipLevel = 0;
 	colorAttachmentView.subresourceRange.levelCount = 1;
 	colorAttachmentView.subresourceRange.baseArrayLayer = 0;
-	colorAttachmentView.subresourceRange.layerCount = 1;
-	colorAttachmentView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	colorAttachmentView.subresourceRange.layerCount = _isCubemap ? 6 : 1;
+	colorAttachmentView.viewType = _isCubemap ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
 	colorAttachmentView.flags = 0;
 	colorAttachmentView.image = _image;
 
@@ -144,7 +147,7 @@ void ImageBuffer::TransitionLayout(const Queue& kQueue, const VkImageLayout kOld
 	barrier.subresourceRange.baseMipLevel = 0;
 	barrier.subresourceRange.levelCount = 1;
 	barrier.subresourceRange.baseArrayLayer = 0;
-	barrier.subresourceRange.layerCount = 1;
+	barrier.subresourceRange.layerCount = _isCubemap ? 6 : 1;
 
 	VkPipelineStageFlags sourceStage;
 	VkPipelineStageFlags destinationStage;
@@ -191,7 +194,7 @@ void ImageBuffer::CopyBuffer(const Queue& kQueue, const Buffer& kBuffer) const
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	region.imageSubresource.mipLevel = 0;
 	region.imageSubresource.baseArrayLayer = 0;
-	region.imageSubresource.layerCount = 1;
+	region.imageSubresource.layerCount = _isCubemap ? 6 : 1;
 
 	region.imageOffset = { 0, 0, 0 };
 	region.imageExtent = {
