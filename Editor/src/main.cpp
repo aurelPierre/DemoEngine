@@ -70,6 +70,8 @@ int main(int, char**)
 		DrawWindow("Scene", viewport, &light);
 	});*/
 
+	Vec2 mousePos;
+
 	ez::Timer time;
 	float deltaTime = 0.f;
 	while (!glfwWindow.UpdateInput() ) // TODO create window abstraction
@@ -93,11 +95,26 @@ int main(int, char**)
 			windowData->_shouldUpdate = false;
 		}
 
-		ImGui::Begin("Demo");
-		float p[]{ cam._pos.x, cam._pos.y, cam._pos.z };
-		ImGui::InputFloat3("Camera pos:", p);
-		cam._pos = { p[0], p[1], p[2] };
-		ImGui::End();
+		if (windowData->IsKeyDown(KEY_CODE::S))
+			cam._pos += cam._rot * Vec3{0.f, -1.f, 0.f} * deltaTime;
+		else if(windowData->IsKeyDown(KEY_CODE::W))
+			cam._pos += cam._rot * Vec3{ 0.f, 1.f, 0.f } * deltaTime;
+		else if (windowData->IsKeyDown(KEY_CODE::A))
+			cam._pos += cam._rot * Vec3{ -1.f, 0.f, 0.f } *deltaTime;
+		else if (windowData->IsKeyDown(KEY_CODE::D))
+			cam._pos += cam._rot * Vec3{ 1.f, 0.f, 0.f } *deltaTime;
+		else if (windowData->IsKeyDown(KEY_CODE::Q))
+			cam._pos += cam._rot * Vec3{ 0.f, 0.f, -1.f } *deltaTime;
+		else if (windowData->IsKeyDown(KEY_CODE::E))
+			cam._pos += cam._rot * Vec3{ 0.f, 0.f, 1.f } *deltaTime;
+
+		if (windowData->IsMouseDown(MOUSE_CODE::RIGHT))
+		{
+			Vec2 deltaPos = windowData->_mousePos - mousePos;
+			cam._rot *= Quat(Vec3{ deltaPos.y, 0, deltaPos.x } * deltaTime * -1.f);
+		}
+		mousePos = windowData->_mousePos;
+		
 		cam.Update();
 
 		model = glm::rotate(model, deltaTime * glm::radians(20.0f), { 0.f, 0.f, 1.f });

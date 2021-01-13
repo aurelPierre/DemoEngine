@@ -70,13 +70,15 @@ void Buffer::Clean()
 		vkDestroyBuffer(LogicalDevice::Instance()._device, _buffer, Context::Instance()._allocator);
 }
 
-void Buffer::Map(void* data, size_t size) const
+void Buffer::Map(void* data, size_t size, size_t offset) const
 {
 	ASSERT(data != nullptr, "data is nullptr")
 	ASSERT(size != 0u, "size is 0")
+	ASSERT(offset < _size, "offset >= _size, mapping unknown memory")
+	ASSERT((offset + size) <= _size, "(offset + size) > _size, mapping unknown memory")
 
 	void* memoryPtr = nullptr;
-	vkMapMemory(LogicalDevice::Instance()._device, _memory, 0, _size, 0, &memoryPtr);
+	vkMapMemory(LogicalDevice::Instance()._device, _memory, offset, size, 0, &memoryPtr);
 	memcpy(memoryPtr, data, size);
 	vkUnmapMemory(LogicalDevice::Instance()._device, _memory);
 }

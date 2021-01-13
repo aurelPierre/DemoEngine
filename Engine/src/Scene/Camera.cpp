@@ -1,7 +1,7 @@
 #include "Scene/Camera.h"
 
 Camera::Camera(const float fov, const float near, const float far)
-	: _fov{ fov }, _near{ near }, _far{ far }, _ubo{ sizeof(Mat4) * 2, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT }
+	: _fov{ fov }, _near{ near }, _far{ far }, _ubo{ sizeof(Mat4) * 2 + sizeof(Vec3), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT }
 {
 	Update();
 }
@@ -18,4 +18,5 @@ void Camera::Update() const
 	Mat4 data[]{ view, proj };
 
 	_ubo.Map(&data, sizeof(Mat4) * 2);
+	_ubo.Map((void*)&_pos, sizeof(Vec3), sizeof(Mat4) * 2);
 }

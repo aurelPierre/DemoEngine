@@ -4,6 +4,7 @@
 layout(set = 0, binding = 0) uniform Camera {
     mat4 _view;
     mat4 _proj;
+	vec3 _pos;
 } cam;
 
 layout(set = 2, binding = 0) uniform ModelData {
@@ -19,6 +20,7 @@ layout(location = 0) out vec3 fragPos;
 layout(location = 1) out vec2 fragUV;
 layout(location = 2) out vec3 fragNormal;
 layout(location = 3) out vec3 fragTangent;
+layout(location = 4) out vec3 fragCamPos;
 
 void main() 
 {
@@ -31,4 +33,6 @@ void main()
 	mat3 mNormal = transpose(inverse(mat3(model._model)));
 	fragNormal = mNormal * normalize(inNormal);
     fragTangent = mNormal * normalize(inTangent);
+	
+	fragCamPos = cam._pos;
 }

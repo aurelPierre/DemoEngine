@@ -27,7 +27,7 @@ private:
 	void Clean();
 
 public:
-	void Map(void* data, size_t size) const;
+	void Map(void* data, size_t size, size_t offset = 0) const;
 
 	void CopyBuffer(const Queue& kQueue, const Buffer& kSrcBuffer) const;
 
