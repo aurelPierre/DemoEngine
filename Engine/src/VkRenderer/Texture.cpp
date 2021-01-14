@@ -12,13 +12,9 @@ Texture::Texture(const std::string kTexturePath, const Format kFormat)
 {
 	ASSERT(!kTexturePath.empty(), "kTexturePath is empty")
 
-	int reqComp = STBI_rgb_alpha;
-	if (kFormat == Format::R || kFormat == Format::SR)
-		reqComp = STBI_grey;
-
 	int texWidth = 0, texHeight = 0, texChannels = 0;
-	stbi_uc* pixels = stbi_load(kTexturePath.c_str(), &texWidth, &texHeight, &texChannels, reqComp);
-	VkDeviceSize imageSize = texWidth * texHeight * (reqComp == STBI_grey ? 1 : 4);
+	stbi_uc* pixels = stbi_load(kTexturePath.c_str(), &texWidth, &texHeight, &texChannels, GetNumberChannels(kFormat));
+	VkDeviceSize imageSize = texWidth * texHeight * GetNumberChannels(kFormat);
 
 	ASSERT(pixels, "failed to load texture image " + kTexturePath + " !")
 
@@ -27,11 +23,7 @@ Texture::Texture(const std::string kTexturePath, const Format kFormat)
 	
 	stbi_image_free(pixels);
 
-	VkFormat imageFormat = kFormat == Format::SRGBA ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
-	if (reqComp == STBI_grey)
-		imageFormat = kFormat == Format::SR ? VK_FORMAT_R8_SRGB : VK_FORMAT_R8_UNORM;
-
-	ImageBuffer image(imageFormat, { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) },
+	ImageBuffer image(GetVkFormat(kFormat), { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) },
 		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	_image = std::move(image);
 
@@ -44,10 +36,6 @@ Texture::Texture(const std::string kTexturePath, const Format kFormat)
 
 Texture::Texture(const std::array<std::string, 6> kCubemapPath, const Format kFormat)
 {
-	int reqComp = STBI_rgb_alpha;
-	if (kFormat == Format::R || kFormat == Format::SR)
-		reqComp = STBI_grey;
-
 	VkDeviceSize cubemapSize = 0;
 	stbi_uc* pixels[6]{};
 
@@ -56,10 +44,10 @@ Texture::Texture(const std::array<std::string, 6> kCubemapPath, const Format kFo
 	{
 		ASSERT(!kCubemapPath[i].empty(), "kTexturePath is empty")
 		int texWidth = 0, texHeight = 0, texChannels = 0;
-		pixels[i] = stbi_load(kCubemapPath[i].c_str(), &texWidth, &texHeight, &texChannels, reqComp);
+		pixels[i] = stbi_load(kCubemapPath[i].c_str(), &texWidth, &texHeight, &texChannels, GetNumberChannels(kFormat));
 
 		ASSERT(pixels[i], "failed to load texture image " + kCubemapPath[i] + " !")
-		cubemapSize += texWidth * texHeight * (reqComp == STBI_grey ? 1 : 4);
+		cubemapSize += texWidth * texHeight * GetNumberChannels(kFormat);
 
 		ASSERT((texWidth == cubeWidth || cubeWidth == 0) || (texHeight == cubeHeight || cubeHeight == 0),
 			"texture " + kCubemapPath[i] + " is not the same size as previous cubemap texture")
@@ -75,11 +63,7 @@ Texture::Texture(const std::array<std::string, 6> kCubemapPath, const Format kFo
 		stbi_image_free(pixels[i]);
 	}
 
-	VkFormat imageFormat = kFormat == Format::SRGBA ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
-	if (reqComp == STBI_grey)
-		imageFormat = kFormat == Format::SR ? VK_FORMAT_R8_SRGB : VK_FORMAT_R8_UNORM;
-
-	ImageBuffer image(imageFormat, { static_cast<uint32_t>(cubeWidth), static_cast<uint32_t>(cubeHeight) },
+	ImageBuffer image(GetVkFormat(kFormat), { static_cast<uint32_t>(cubeWidth), static_cast<uint32_t>(cubeHeight) },
 		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
 	_image = std::move(image);
 
@@ -124,6 +108,22 @@ void Texture::CreateSampler()
 
 	VkResult err = vkCreateSampler(LogicalDevice::Instance()._device, &samplerInfo, Context::Instance()._allocator, &_sampler);
 	VK_ASSERT(err, "failed to create texture sampler!")
+}
+
+uint8_t Texture::GetNumberChannels(const Format kFormat) const
+{ 
+	return (static_cast<int>(kFormat) % 4) + 1; 
+};
+
+VkFormat Texture::GetVkFormat(const Format kFormat) const
+{
+	VkFormat imageFormat = kFormat == Format::SRGBA ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+	if (GetNumberChannels(kFormat) == 1)
+		imageFormat = kFormat == Format::SR ? VK_FORMAT_R8_SRGB : VK_FORMAT_R8_UNORM;
+	else if (GetNumberChannels(kFormat) == 2)
+		imageFormat = kFormat == Format::SRG ? VK_FORMAT_R8G8_SRGB : VK_FORMAT_R8G8_UNORM;
+
+	return imageFormat;
 }
 
 const VkDescriptorImageInfo Texture::CreateDescriptorInfo() const

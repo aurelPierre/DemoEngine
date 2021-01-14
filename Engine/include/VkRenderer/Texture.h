@@ -9,16 +9,16 @@
 class Texture
 {
 public:
-	// TODO support more format
-	// List of format supported at the moment
 	enum class Format
 	{
-		R,
-		SR,
-		RG,
-		SRG,
-		RGBA,
-		SRGBA
+		R = 0,
+		SR = R + 4,
+		RG = 1,
+		SRG = RG + 4,
+		//RGB = 2, // TODO support rgb
+		//SRGB = RGB,
+		RGBA = 3,
+		SRGBA = RGBA + 4
 	};
 
 public:
@@ -33,6 +33,9 @@ public:
 
 private:
 	void CreateSampler();
+
+	uint8_t GetNumberChannels(const Format kFormat) const;
+	VkFormat GetVkFormat(const Format kFormat) const;
 
 public:
 	const VkDescriptorImageInfo CreateDescriptorInfo() const;
