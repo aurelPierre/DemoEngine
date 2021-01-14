@@ -14,6 +14,10 @@ layout(set = 0, binding = 1) uniform LightData {
 	float _range;
 } light;
 
+layout(set = 0, binding = 2) uniform samplerCube skyboxCubeMap;
+layout(set = 0, binding = 3) uniform samplerCube irradianceCubeMap;
+layout(set = 0, binding = 4) uniform sampler2D lookupTableBRDF;
+
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec2 fragUV;
 layout(location = 2) in vec3 fragNormal;
@@ -118,7 +122,25 @@ vec3 pbrShading()
 		BRDF = (diffuse + specular) * cosTheta;
 	}
 
-	return (ambient + BRDF) * ComputeAttenuation(light._pos, light._range) * light._intensity;
+	// IBL
+	float cosAlpha = max(dot(camV, normal), 0.0);
+
+	vec3 kS = Fresnel(f0, cosAlpha, roughness);
+
+	vec3 refl = reflect(-camV, normal);
+	vec3 prefilteredColor = textureLod(skyboxCubeMap, refl, roughness).rgb;
+	vec2 envBRDF  = texture(lookupTableBRDF, vec2(cosAlpha, roughness)).rg;
+	vec3 specular = prefilteredColor * (kS * envBRDF.x + envBRDF.y);
+
+	// DIFFUSE
+	vec3 irradiance = texture(irradianceCubeMap, normal).xyz;
+
+	vec3 kD = (1.0 - kS) * (1.0 - metallic);
+	vec3 diffuse = kD * irradiance * albedo;
+
+	vec3 ibl = (diffuse + specular) * ao;
+
+	return (ambient + BRDF) * ComputeAttenuation(light._pos, light._range) * light._intensity + ibl;
 }
 
 void main() 

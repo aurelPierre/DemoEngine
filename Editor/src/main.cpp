@@ -46,6 +46,15 @@ int main(int, char**)
 			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/front.bmp",
 			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/back.bmp" });
 
+	Texture skyIrradianceCubemap({ "D:/Personal project/DemoEngine/Resources/Textures/Cubemap/left_irr.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/right_irr.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/top_irr.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/bottom_irr.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/front_irr.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/back_irr.bmp" });
+
+	Texture brdf("D:/Personal project/DemoEngine/Resources/Textures/brdf_lut.jpg");
+
 	Material skyMaterial(viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/skybox.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/skybox.frag.spv",
@@ -65,7 +74,9 @@ int main(int, char**)
 	Material mat(viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/shader.frag.spv",
-		{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1, &cam._ubo }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::BUFFER, 1, &light._ubo } },
+		{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1, &cam._ubo }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::BUFFER, 1, &light._ubo }, 
+			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &skyCubemap }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &skyIrradianceCubemap }, 
+			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &brdf }},
 		{ { 0, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &color }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &metal },
 			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &normal }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &rough },
 			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &aO }},

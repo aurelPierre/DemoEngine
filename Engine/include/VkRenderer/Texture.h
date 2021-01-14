@@ -15,6 +15,8 @@ public:
 	{
 		R,
 		SR,
+		RG,
+		SRG,
 		RGBA,
 		SRGBA
 	};
