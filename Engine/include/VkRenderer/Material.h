@@ -68,33 +68,58 @@ namespace std {
 	};
 }
 
+struct Bindings
+{
+	enum class Stage
+	{
+		VERTEX,
+		FRAGMENT
+	};
+
+	enum class Type
+	{
+		BUFFER,
+		SAMPLER
+	};
+
+	uint8_t		_binding	= 0;
+	Stage		_stage		= Stage::VERTEX;
+	Type		_type		= Type::BUFFER;
+	uint8_t		_count		= 1;
+
+	void*		_data		= nullptr;
+};
+
+typedef std::vector<Bindings> BindingsSet;
+
 class Material
 {
+	struct Set
+	{
+		BindingsSet				_bindingsSet;
+		VkDescriptorSetLayout	_layout			= VK_NULL_HANDLE;
+		VkDescriptorSet			_set			= VK_NULL_HANDLE;
+	};
+
 public:
 	VkPipelineLayout				_pipelineLayout		= VK_NULL_HANDLE;
 	VkPipeline						_pipeline			= VK_NULL_HANDLE;
 
-	VkDescriptorSetLayout			_globalLayout		= VK_NULL_HANDLE;
-	VkDescriptorSet					_globalSet			= VK_NULL_HANDLE;
-
-	VkDescriptorSetLayout			_materialLayout		= VK_NULL_HANDLE;
-	VkDescriptorSet					_materialSet		= VK_NULL_HANDLE;
-
-	VkDescriptorSetLayout			_objectsLayout		= VK_NULL_HANDLE;
-	VkDescriptorSet					_objectsSet			= VK_NULL_HANDLE;
+	std::vector<Set>				_sets;
 
 public:
 	Material(const Viewport& kViewport, const std::string kVertextShaderPath,
-		const std::string kFragmentShaderPath, const size_t kTextureSize);
+		const std::string kFragmentShaderPath, const std::vector<BindingsSet>& kSets, 
+		const VkCullModeFlagBits kCullMode = VK_CULL_MODE_BACK_BIT);
 	~Material();
 
 private:
-	void CreateDescriptors(const size_t kTextureSize);
+	void CreateDescriptors(const std::vector<BindingsSet>& kSets);
 	void CreatePipeline(const Viewport& kViewport, const std::string kVertextShaderPath,
-							const std::string kFragmentShaderPath);
+							const std::string kFragmentShaderPath, const VkCullModeFlagBits kCullMode);
 
 public:
-	void UpdateDescriptors(const Buffer& kCamera, const Buffer& kLight, const std::vector<Texture*>& kTextures, const Buffer& kModel) const;
+	void UpdateDescriptors() const;
 };
 
 VkShaderModule loadShader(std::string path);

@@ -62,7 +62,8 @@ ImageBuffer::~ImageBuffer()
 }
 
 ImageBuffer::ImageBuffer(ImageBuffer&& imageBuffer)
-	: _size{ imageBuffer._size }, _memory { imageBuffer._memory }, _image{ imageBuffer._image }, _view{ imageBuffer._view }
+	: _size{ imageBuffer._size }, _memory { imageBuffer._memory }, _image{ imageBuffer._image }, _view{ imageBuffer._view },
+		_isCubemap { imageBuffer._isCubemap }
 {
 	imageBuffer._memory = VK_NULL_HANDLE;
 	imageBuffer._image = VK_NULL_HANDLE;
@@ -77,6 +78,7 @@ ImageBuffer& ImageBuffer::operator=(ImageBuffer&& imageBuffer)
 	_memory = imageBuffer._memory;
 	_image = imageBuffer._image;
 	_view = imageBuffer._view;
+	_isCubemap = imageBuffer._isCubemap;
 
 	imageBuffer._memory = VK_NULL_HANDLE;
 	imageBuffer._image = VK_NULL_HANDLE;

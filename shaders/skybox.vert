@@ -14,7 +14,8 @@ layout(location = 0) out vec3 fragUVW;
 void main() 
 {
 	fragUVW = inPosition;
-	fragUVW.xy *= -1.0;
 
-    gl_Position = cam._proj * cam._view * vec4(inPosition.xyz, 1);
+	mat4 correctView = mat4(mat3(cam._view)); // Remove camera translation.
+    vec4 pos = cam._proj * correctView * vec4(inPosition.xyz, 1.0);
+    gl_Position = pos.xyww; 
 }
