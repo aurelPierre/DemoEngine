@@ -15,6 +15,8 @@
 #include "Scene/Mesh.h"
 #include "Scene/Scene.h"
 
+#include "Assets/AssetsMgr.h"
+
 int main(int, char**)
 {
 	GLFWWindowSystem		glfwWindow;
@@ -53,7 +55,9 @@ int main(int, char**)
 			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/front_irr.bmp",
 			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/back_irr.bmp" });
 
-	Texture brdf("D:/Personal project/DemoEngine/Resources/Textures/brdf_lut.jpg");
+	//Texture brdf("D:/Personal project/DemoEngine/Resources/Textures/brdf_lut.jpg");
+	AssetsMgr<Texture> txtMgr;
+	AssetsMgr<Texture>::load("brdf", "D:/Personal project/DemoEngine/Resources/Textures/brdf_lut.jpg");
 
 	Material skyMaterial(viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/skybox.vert.spv",
@@ -62,7 +66,7 @@ int main(int, char**)
 		{ 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &skyCubemap } } },
 		VK_CULL_MODE_FRONT_BIT);
 
-	Mesh skySphere("D:/Personal project/DemoEngine/Resources/Mesh/cube.obj");
+	Mesh skySphere("D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
 	skySphere._material = &skyMaterial;
 
 	Texture color("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Color.jpg");
@@ -76,7 +80,7 @@ int main(int, char**)
 		"D:/Personal project/DemoEngine/shaders/bin/shader.frag.spv",
 		{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1, &cam._ubo }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::BUFFER, 1, &light._ubo }, 
 			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &skyCubemap }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &skyIrradianceCubemap }, 
-			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &brdf }},
+			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &AssetsMgr<Texture>::get("brdf") }},
 		{ { 0, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &color }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &metal },
 			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &normal }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &rough },
 			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &aO }},
