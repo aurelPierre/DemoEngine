@@ -46,6 +46,8 @@ void LoadAssets()
 	AssetsMgr<Texture>::load("aO", "D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Displacement.jpg", Texture::Format::R);
 
 	AssetsMgr<Mesh>::load("sphere", "D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
+	AssetsMgr<Mesh>::load("cube", "D:/Personal project/DemoEngine/Resources/Mesh/cube.obj");
+	AssetsMgr<Mesh>::load("plane", "D:/Personal project/DemoEngine/Resources/Mesh/plane.obj");
 }
 
 int main(int, char**)
@@ -65,7 +67,7 @@ int main(int, char**)
 	Viewport viewport(surface._colorFormat, { 512, 512 });
 
 	Camera cam(60.f, 0.1f, 256.f);
-	cam._pos = { 0.f, 2.f, 0.f };
+	cam._pos = { 0.f, 1.f, -2.f };
 	Light light({ 0.f, 3.f, 1.f }, 1.f, { 1.f, 1.f, 1.f }, 5.f);
 
 	AssetsMgr<Texture> txtMgr;
@@ -92,8 +94,15 @@ int main(int, char**)
 		{ BindingsSet::Scope::ACTOR, {{ 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }} }
 		});
 
-	MaterialInstance skyMaterialInstance(AssetsMgr<Material>::get("skyboxMaterial"), { { &cam._ubo, &AssetsMgr<Texture>::get("skyboxCubemap") } });
+	AssetsMgr<Material>::load("grid", viewport,
+		"D:/Personal project/DemoEngine/shaders/bin/grid.vert.spv",
+		"D:/Personal project/DemoEngine/shaders/bin/grid.frag.spv",
+		std::vector<BindingsSet>{ { BindingsSet::Scope::GLOBAL, { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 } }} });
+	
+	MaterialInstance gridMat(AssetsMgr<Material>::get("grid"), { {&cam._ubo} });
+	Actor grid(AssetsMgr<Mesh>::get("plane"), gridMat);
 
+	MaterialInstance skyMaterialInstance(AssetsMgr<Material>::get("skyboxMaterial"), { { &cam._ubo, &AssetsMgr<Texture>::get("skyboxCubemap") } });
 	Actor skySphere(AssetsMgr<Mesh>::get("sphere"), skyMaterialInstance);
 
 	MaterialInstance matInstance1(AssetsMgr<Material>::get("mat"), 
@@ -101,13 +110,24 @@ int main(int, char**)
 		{ &AssetsMgr<Texture>::get("color"), &AssetsMgr<Texture>::get("metal"), &AssetsMgr<Texture>::get("normal"), &AssetsMgr<Texture>::get("rough"),
 		&AssetsMgr<Texture>::get("aO")} });
 
-	Actor mesh(AssetsMgr<Mesh>::get("sphere"), matInstance1);
+	MaterialInstance matInstance2(AssetsMgr<Material>::get("mat"),
+		{ { &cam._ubo, &light._ubo, &AssetsMgr<Texture>::get("skyboxCubemap"), &AssetsMgr<Texture>::get("skyboxIradianceCubemap"), &AssetsMgr<Texture>::get("brdf") },
+		{ &AssetsMgr<Texture>::get("color"), &AssetsMgr<Texture>::get("metal"), &AssetsMgr<Texture>::get("normal"), &AssetsMgr<Texture>::get("rough"),
+		&AssetsMgr<Texture>::get("aO")} });
 
+	Actor mesh(AssetsMgr<Mesh>::get("sphere"), matInstance1);
 	matInstance1.UpdateSet(2, { { &mesh._transform._buffer } });
+
+	Actor second(AssetsMgr<Mesh>::get("cube"), matInstance2);
+	matInstance2.UpdateSet(2, { { &second._transform._buffer } });
+
+	second._transform.Translate({ 0.f, 0.f, 2.5f });
 
 	Scene scene{};
 	scene._viewports.emplace_back(&viewport);
 	scene._actors.emplace_back(&mesh);
+	scene._actors.emplace_back(&second);
+	scene._actors.emplace_back(&grid);
 	scene._actors.emplace_back(&skySphere);
 
 	Vec2 mousePos;
@@ -136,22 +156,22 @@ int main(int, char**)
 		}
 
 		if (windowData->IsKeyDown(KEY_CODE::S))
-			cam._pos += cam._rot * Vec3{0.f, -1.f, 0.f} * deltaTime;
+			cam._pos += cam._rot * Vec3{0.f, 0.f, -1.f} * deltaTime;
 		else if(windowData->IsKeyDown(KEY_CODE::W))
-			cam._pos += cam._rot * Vec3{ 0.f, 1.f, 0.f } * deltaTime;
+			cam._pos += cam._rot * Vec3{ 0.f, 0.f, 1.f } * deltaTime;
 		else if (windowData->IsKeyDown(KEY_CODE::A))
 			cam._pos += cam._rot * Vec3{ -1.f, 0.f, 0.f } * deltaTime;
 		else if (windowData->IsKeyDown(KEY_CODE::D))
 			cam._pos += cam._rot * Vec3{ 1.f, 0.f, 0.f } * deltaTime;
 		else if (windowData->IsKeyDown(KEY_CODE::Q))
-			cam._pos += cam._rot * Vec3{ 0.f, 0.f, -1.f } * deltaTime;
+			cam._pos += cam._rot * Vec3{ 0.f, -1.f, 0.f } * deltaTime;
 		else if (windowData->IsKeyDown(KEY_CODE::E))
-			cam._pos += cam._rot * Vec3{ 0.f, 0.f, 1.f } * deltaTime;
+			cam._pos += cam._rot * Vec3{ 0.f, 1.f, 0.f } * deltaTime;
 
 		if (windowData->IsMouseDown(MOUSE_CODE::RIGHT))
 		{
 			Vec2 deltaPos = windowData->_mousePos - mousePos;
-			cam._rot *= Quat(Vec3{ deltaPos.y, 0, deltaPos.x } * deltaTime * -1.f);
+			cam._rot *= Quat(Vec3{ deltaPos.y, deltaPos.x, 0 } * deltaTime * -1.f);
 		}
 		mousePos = windowData->_mousePos;
 		

@@ -8,8 +8,8 @@ Camera::Camera(const float fov, const float near, const float far)
 
 void Camera::Update() const
 {
-	Vec3 cameraDir = _pos + glm::rotate(_rot, Vec3(0, 1, 0));
-	Vec3 cameraUp = glm::rotate(_rot, Vec3(0, 0, 1));
+	Vec3 cameraDir = _pos + glm::rotate(_rot, Vec3(0, 0, 1));
+	Vec3 cameraUp = glm::rotate(_rot, Vec3(0, -1, 0));
 	Mat4 view = glm::lookAt(_pos, cameraDir, cameraUp);
 
 	Mat4 proj = glm::perspective(glm::radians(_fov), (16.f / 9.f), _near, _far);
