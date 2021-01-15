@@ -11,7 +11,7 @@ public:
 	std::vector<Vertex>		_vertices;
 	std::vector<uint32_t>	_indices;
 
-	Material*				_material	= nullptr;
+	MaterialInstance*		_material	= nullptr;
 
 	Buffer					_indicesBuffer;
 	Buffer					_verticesBuffer;

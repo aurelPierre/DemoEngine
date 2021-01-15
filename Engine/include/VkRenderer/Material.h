@@ -86,26 +86,23 @@ struct Bindings
 	Stage		_stage		= Stage::VERTEX;
 	Type		_type		= Type::BUFFER;
 	uint8_t		_count		= 1;
-
-	void*		_data		= nullptr;
 };
 
 typedef std::vector<Bindings> BindingsSet;
 
 class Material
 {
-	struct Set
+	struct SetLayout
 	{
 		BindingsSet				_bindingsSet;
 		VkDescriptorSetLayout	_layout			= VK_NULL_HANDLE;
-		VkDescriptorSet			_set			= VK_NULL_HANDLE;
 	};
 
 public:
-	VkPipelineLayout				_pipelineLayout		= VK_NULL_HANDLE;
-	VkPipeline						_pipeline			= VK_NULL_HANDLE;
+	VkPipelineLayout		_pipelineLayout		= VK_NULL_HANDLE;
+	VkPipeline				_pipeline			= VK_NULL_HANDLE;
 
-	std::vector<Set>				_sets;
+	std::vector<SetLayout>	_setsLayout;
 
 public:
 	Material(const Viewport& kViewport, const std::string kVertextShaderPath,
@@ -117,9 +114,17 @@ private:
 	void CreateDescriptors(const std::vector<BindingsSet>& kSets);
 	void CreatePipeline(const Viewport& kViewport, const std::string kVertextShaderPath,
 							const std::string kFragmentShaderPath, const VkCullModeFlagBits kCullMode);
+};
+
+class MaterialInstance
+{
+public:
+	const Material* kMaterial;
+	std::vector<VkDescriptorSet> _sets;
 
 public:
-	void UpdateDescriptors() const;
+	MaterialInstance(const Material& kMaterial, const std::vector<std::vector<void*>>& kData);
+	~MaterialInstance();
 };
 
 VkShaderModule loadShader(std::string path);

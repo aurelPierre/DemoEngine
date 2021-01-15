@@ -62,12 +62,14 @@ int main(int, char**)
 	Material skyMaterial(viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/skybox.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/skybox.frag.spv",
-		{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1, &cam._ubo }, 
-		{ 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &skyCubemap } } },
+		{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, 
+		{ 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 } } },
 		VK_CULL_MODE_FRONT_BIT);
 
+	MaterialInstance skyMaterialInstance(skyMaterial, { { &cam._ubo, &skyCubemap } });
+
 	Mesh skySphere("D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
-	skySphere._material = &skyMaterial;
+	skySphere._material = &skyMaterialInstance;
 
 	Texture color("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Color.jpg");
 	Texture metal("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Metalness.jpg", Texture::Format::R);
@@ -78,17 +80,20 @@ int main(int, char**)
 	Material mat(viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/shader.frag.spv",
-		{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1, &cam._ubo }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::BUFFER, 1, &light._ubo }, 
-			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &skyCubemap }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &skyIrradianceCubemap }, 
-			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &AssetsMgr<Texture>::get("brdf") }},
-		{ { 0, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &color }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &metal },
-			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &normal }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &rough },
-			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1, &aO }},
-		{ { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1, &modelBuf }, }
+		{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::BUFFER, 1 }, 
+			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, 
+			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }},
+		{ { 0, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 },
+			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 },
+			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }},
+		{ { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, }
 		});
 
+	MaterialInstance matInstance(mat, { { &cam._ubo, &light._ubo, &skyCubemap, &skyIrradianceCubemap, &AssetsMgr<Texture>::get("brdf") },
+		{ &color, &metal, &normal, &rough, &aO}, { &modelBuf } });
+
 	Mesh mesh("D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
-	mesh._material = &mat;
+	mesh._material = &matInstance;
 
 	Scene scene{};
 	scene._viewports.emplace_back(&viewport);
