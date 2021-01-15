@@ -14,6 +14,7 @@
 #include "Scene/Light.h"
 #include "Scene/Mesh.h"
 #include "Scene/Scene.h"
+#include "Scene/Actor.h"
 
 #include "Assets/AssetsMgr.h"
 
@@ -43,6 +44,8 @@ void LoadAssets()
 	AssetsMgr<Texture>::load("normal", "D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Normal.jpg");
 	AssetsMgr<Texture>::load("rough", "D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Roughness.jpg", Texture::Format::R);
 	AssetsMgr<Texture>::load("aO", "D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Displacement.jpg", Texture::Format::R);
+
+	AssetsMgr<Mesh>::load("sphere", "D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
 }
 
 int main(int, char**)
@@ -65,62 +68,47 @@ int main(int, char**)
 	cam._pos = { 0.f, 2.f, 0.f };
 	Light light({ 0.f, 3.f, 1.f }, 1.f, { 1.f, 1.f, 1.f }, 5.f);
 
-	Buffer modelBuf(sizeof(Mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-	Mat4 model(1.f);
-	modelBuf.Map(&model, sizeof(Mat4));
-
 	AssetsMgr<Texture> txtMgr;
 	AssetsMgr<Material> matMgr;
+	AssetsMgr<Mesh> meshMgr;
 
 	LoadAssets();
 
 	AssetsMgr<Material>::load("skyboxMaterial", viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/skybox.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/skybox.frag.spv",
-		std::vector<BindingsSet>{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 },
-		{ 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 } } },
+		std::vector<BindingsSet>{ { BindingsSet::Scope::GLOBAL, { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 } }} },
 		VK_CULL_MODE_FRONT_BIT);
 
 	AssetsMgr<Material>::load("mat", viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/shader.frag.spv",
-		std::vector<BindingsSet>{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::BUFFER, 1 },
+		std::vector<BindingsSet>{ { BindingsSet::Scope::GLOBAL, { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::BUFFER, 1 },
 			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 },
-			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }},
-		{ { 0, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 },
+			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 } }},
+		{ BindingsSet::Scope::MATERIAL, {{ 0, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 },
 			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 },
-			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }},
-		{ { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, }
+			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }} },
+		{ BindingsSet::Scope::ACTOR, {{ 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }} }
 		});
 
 	MaterialInstance skyMaterialInstance(AssetsMgr<Material>::get("skyboxMaterial"), { { &cam._ubo, &AssetsMgr<Texture>::get("skyboxCubemap") } });
 
-	Mesh skySphere("D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
-	skySphere._material = &skyMaterialInstance;
+	Actor skySphere(AssetsMgr<Mesh>::get("sphere"), skyMaterialInstance);
 
 	MaterialInstance matInstance1(AssetsMgr<Material>::get("mat"), 
 		{ { &cam._ubo, &light._ubo, &AssetsMgr<Texture>::get("skyboxCubemap"), &AssetsMgr<Texture>::get("skyboxIradianceCubemap"), &AssetsMgr<Texture>::get("brdf") },
 		{ &AssetsMgr<Texture>::get("color"), &AssetsMgr<Texture>::get("metal"), &AssetsMgr<Texture>::get("normal"), &AssetsMgr<Texture>::get("rough"),
-		&AssetsMgr<Texture>::get("aO")},
-		{ &modelBuf } });
+		&AssetsMgr<Texture>::get("aO")} });
 
-	Mesh mesh("D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
-	mesh._material = &matInstance1;
+	Actor mesh(AssetsMgr<Mesh>::get("sphere"), matInstance1);
+
+	matInstance1.UpdateSet(2, { { &mesh._transform._buffer } });
 
 	Scene scene{};
 	scene._viewports.emplace_back(&viewport);
-	scene._mesh.emplace_back(&mesh);
-	scene._mesh.emplace_back(&skySphere);
-
-	/*static bool camWindow = true;
-	imGui._globalFunctions.emplace_back([&viewport, &cam]() {
-		DrawWindow("Scene", viewport, &cam);
-	});
-
-	static bool lightWindow = true;
-	imGui._globalFunctions.emplace_back([&viewport, &light]() {
-		DrawWindow("Scene", viewport, &light);
-	});*/
+	scene._actors.emplace_back(&mesh);
+	scene._actors.emplace_back(&skySphere);
 
 	Vec2 mousePos;
 
@@ -152,13 +140,13 @@ int main(int, char**)
 		else if(windowData->IsKeyDown(KEY_CODE::W))
 			cam._pos += cam._rot * Vec3{ 0.f, 1.f, 0.f } * deltaTime;
 		else if (windowData->IsKeyDown(KEY_CODE::A))
-			cam._pos += cam._rot * Vec3{ -1.f, 0.f, 0.f } *deltaTime;
+			cam._pos += cam._rot * Vec3{ -1.f, 0.f, 0.f } * deltaTime;
 		else if (windowData->IsKeyDown(KEY_CODE::D))
-			cam._pos += cam._rot * Vec3{ 1.f, 0.f, 0.f } *deltaTime;
+			cam._pos += cam._rot * Vec3{ 1.f, 0.f, 0.f } * deltaTime;
 		else if (windowData->IsKeyDown(KEY_CODE::Q))
-			cam._pos += cam._rot * Vec3{ 0.f, 0.f, -1.f } *deltaTime;
+			cam._pos += cam._rot * Vec3{ 0.f, 0.f, -1.f } * deltaTime;
 		else if (windowData->IsKeyDown(KEY_CODE::E))
-			cam._pos += cam._rot * Vec3{ 0.f, 0.f, 1.f } *deltaTime;
+			cam._pos += cam._rot * Vec3{ 0.f, 0.f, 1.f } * deltaTime;
 
 		if (windowData->IsMouseDown(MOUSE_CODE::RIGHT))
 		{
@@ -169,8 +157,7 @@ int main(int, char**)
 		
 		cam.Update();
 
-		model = glm::rotate(model, deltaTime * glm::radians(20.0f), { 0.f, 0.f, 1.f });
-		modelBuf.Map(&model, sizeof(Mat4));
+		mesh._transform.Rotate(Quat(deltaTime * glm::radians(10.0f) * Vec3{ 0.f, 0.f, 1.f }));
 
 		// Draw
 		Draw(scene);

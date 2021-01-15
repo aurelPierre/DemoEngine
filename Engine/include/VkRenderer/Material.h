@@ -88,7 +88,19 @@ struct Bindings
 	uint8_t		_count		= 1;
 };
 
-typedef std::vector<Bindings> BindingsSet;
+struct BindingsSet
+{
+	enum class Scope
+	{
+		GLOBAL,
+		MATERIAL,
+		ACTOR
+	};
+
+	Scope _scope	= Scope::MATERIAL;
+
+	std::vector<Bindings> _bindings;
+};
 
 class Material
 {
@@ -119,12 +131,17 @@ private:
 class MaterialInstance
 {
 public:
-	const Material* kMaterial;
+	const Material* _kMaterial;
 	std::vector<VkDescriptorSet> _sets;
 
 public:
 	MaterialInstance(const Material& kMaterial, const std::vector<std::vector<void*>>& kData);
 	~MaterialInstance();
+
+public:
+	void Bind(const CommandBuffer& commandBuffer) const;
+
+	void UpdateSet(const uint8_t kSetIndex, const std::vector<void*>& kData) const;
 };
 
 VkShaderModule loadShader(std::string path);

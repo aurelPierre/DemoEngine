@@ -121,13 +121,8 @@ Mesh::Mesh(const std::string kPath)
 	}
 }
 
-void Mesh::Draw(const CommandBuffer& commandBuffer)
+void Mesh::Draw(const CommandBuffer& commandBuffer) const
 {
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _material->kMaterial->_pipeline);
-
-	for(size_t i =0; i < _material->_sets.size(); ++i)
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _material->kMaterial->_pipelineLayout, i, 1, &_material->_sets[i], 0, nullptr);
-
 	vkCmdBindIndexBuffer(commandBuffer, _indicesBuffer, 0, VK_INDEX_TYPE_UINT32);
 	VkDeviceSize offset[]{ 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &_verticesBuffer._buffer, offset);

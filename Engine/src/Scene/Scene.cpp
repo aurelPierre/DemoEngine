@@ -1,7 +1,5 @@
 #include "Scene/Scene.h"
 
-
-
 #include <chrono>
 
 #include "ImGuiSystem.h"
@@ -42,7 +40,7 @@ void Draw(const Scene& scene)
 		scene._viewports[i]->StartDraw();
 
 		// foreach mesh draw
-		for (size_t j = 0; j < scene._mesh.size(); ++j)
+		for (size_t j = 0; j < scene._actors.size(); ++j)
 		{
 			/*ImGui::BeginGroup();
 			ImGui::Text("Model");
@@ -51,7 +49,7 @@ void Draw(const Scene& scene)
 
 			//ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(rUp[0], rUp[1], rUp[2]));
 
-			scene._mesh[j]->Draw(scene._viewports[i]->_commandBuffer);
+			scene._actors[j]->Draw(scene._viewports[i]->_commandBuffer);
 		}
 
 		scene._viewports[i]->EndDraw();

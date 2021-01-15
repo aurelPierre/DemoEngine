@@ -2,12 +2,12 @@
 
 #include <vector>
 
-#include "Scene/Mesh.h"
+#include "Scene/Actor.h"
 #include "VkRenderer/Viewport.h"
 
 struct Scene
 {
-	std::vector<Mesh*>		_mesh;
+	std::vector<Actor*>		_actors;
 	std::vector<Viewport*>	_viewports;
 };
 

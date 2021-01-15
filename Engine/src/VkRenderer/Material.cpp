@@ -62,13 +62,13 @@ void Material::CreateDescriptors(const std::vector<BindingsSet>& kSets)
 	{
 		_setsLayout[i]._bindingsSet = kSets[i];
 
-		std::vector<VkDescriptorSetLayoutBinding> layoutBinding{ kSets[i].size() };
-		for (size_t j = 0; j < kSets[i].size(); ++j)
+		std::vector<VkDescriptorSetLayoutBinding> layoutBinding{ kSets[i]._bindings.size() };
+		for (size_t j = 0; j < kSets[i]._bindings.size(); ++j)
 		{
-			layoutBinding[j].descriptorType = kSets[i][j]._type == Bindings::Type::BUFFER ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			layoutBinding[j].binding = kSets[i][j]._binding;
-			layoutBinding[j].stageFlags = kSets[i][j]._stage == Bindings::Stage::VERTEX ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
-			layoutBinding[j].descriptorCount = kSets[i][j]._count;
+			layoutBinding[j].descriptorType = kSets[i]._bindings[j]._type == Bindings::Type::BUFFER ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			layoutBinding[j].binding = kSets[i]._bindings[j]._binding;
+			layoutBinding[j].stageFlags = kSets[i]._bindings[j]._stage == Bindings::Stage::VERTEX ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
+			layoutBinding[j].descriptorCount = kSets[i]._bindings[j]._count;
 		}
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
@@ -218,9 +218,9 @@ void Material::CreatePipeline(const Viewport& kViewport, const std::string kVert
 }
 
 MaterialInstance::MaterialInstance(const Material& kMaterial, const std::vector<std::vector<void*>>& kData)
-	: kMaterial{ &kMaterial }, _sets { kData.size() }
+	: _kMaterial{ &kMaterial }, _sets { _kMaterial->_setsLayout.size() }
 {
-	for (size_t i = 0; i < kData.size(); ++i)
+	for (size_t i = 0; i < _kMaterial->_setsLayout.size(); ++i)
 	{
 		VkDescriptorSetAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -230,35 +230,54 @@ MaterialInstance::MaterialInstance(const Material& kMaterial, const std::vector<
 
 		VkResult err = vkAllocateDescriptorSets(LogicalDevice::Instance()._device, &allocInfo, &_sets[i]);
 		VK_ASSERT(err, "error when allocating descriptor sets");
-
-		for (size_t j = 0; j < kMaterial._setsLayout[i]._bindingsSet.size(); ++j)
-		{
-			VkWriteDescriptorSet descriptorSet{};
-			descriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorSet.dstSet = _sets[i];
-			descriptorSet.dstBinding = kMaterial._setsLayout[i]._bindingsSet[j]._binding;
-			descriptorSet.descriptorCount = kMaterial._setsLayout[i]._bindingsSet[j]._count;
-
-			if (kMaterial._setsLayout[i]._bindingsSet[j]._type == Bindings::Type::BUFFER)
-			{
-				descriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				VkDescriptorBufferInfo camBufferInfo = static_cast<Buffer*>(kData[i][j])->CreateDescriptorInfo();
-				descriptorSet.pBufferInfo = &camBufferInfo;
-			}
-			else
-			{
-				descriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				VkDescriptorImageInfo imageInfo = static_cast<Texture*>(kData[i][j])->CreateDescriptorInfo();
-				descriptorSet.pImageInfo = &imageInfo;
-			}
-
-			vkUpdateDescriptorSets(LogicalDevice::Instance()._device, 1, &descriptorSet, 0, nullptr);
-		}
 	}
+
+	for (size_t i = 0; i < kData.size(); ++i)
+		UpdateSet(i, kData[i]);
 }
 
 MaterialInstance::~MaterialInstance()
 {
 	for (size_t i = 0; i < _sets.size(); ++i)
-		vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_sets[i]);
+	{
+		VkResult err = vkFreeDescriptorSets(LogicalDevice::Instance()._device, LogicalDevice::Instance()._descriptorPool, 1, &_sets[i]);
+		VK_ASSERT(err, "error when freeing descriptor sets");
+	}
+}
+
+void MaterialInstance::Bind(const CommandBuffer& commandBuffer) const
+{
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _kMaterial->_pipeline);
+
+	for (size_t i = 0; i < _sets.size(); ++i)
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _kMaterial->_pipelineLayout, i, 1, &_sets[i], 0, nullptr);
+}
+
+void MaterialInstance::UpdateSet(const uint8_t kSetIndex, const std::vector<void*>& kData) const
+{
+	ASSERT(kSetIndex < _kMaterial->_setsLayout.size(), "index is out of size")
+
+	for (size_t j = 0; j < _kMaterial->_setsLayout[kSetIndex]._bindingsSet._bindings.size(); ++j)
+	{
+		VkWriteDescriptorSet descriptorSet{};
+		descriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorSet.dstSet = _sets[kSetIndex];
+		descriptorSet.dstBinding = _kMaterial->_setsLayout[kSetIndex]._bindingsSet._bindings[j]._binding;
+		descriptorSet.descriptorCount = _kMaterial->_setsLayout[kSetIndex]._bindingsSet._bindings[j]._count;
+
+		if (_kMaterial->_setsLayout[kSetIndex]._bindingsSet._bindings[j]._type == Bindings::Type::BUFFER)
+		{
+			descriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			VkDescriptorBufferInfo camBufferInfo = static_cast<Buffer*>(kData[j])->CreateDescriptorInfo();
+			descriptorSet.pBufferInfo = &camBufferInfo;
+		}
+		else
+		{
+			descriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			VkDescriptorImageInfo imageInfo = static_cast<Texture*>(kData[j])->CreateDescriptorInfo();
+			descriptorSet.pImageInfo = &imageInfo;
+		}
+
+		vkUpdateDescriptorSets(LogicalDevice::Instance()._device, 1, &descriptorSet, 0, nullptr);
+	}
 }

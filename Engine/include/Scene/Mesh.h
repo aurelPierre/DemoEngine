@@ -11,8 +11,6 @@ public:
 	std::vector<Vertex>		_vertices;
 	std::vector<uint32_t>	_indices;
 
-	MaterialInstance*		_material	= nullptr;
-
 	Buffer					_indicesBuffer;
 	Buffer					_verticesBuffer;
 
@@ -21,6 +19,6 @@ public:
 	~Mesh() = default;
 
 public:
-	void Draw(const CommandBuffer& commandBuffer);
+	void Draw(const CommandBuffer& commandBuffer) const;
 
 };
