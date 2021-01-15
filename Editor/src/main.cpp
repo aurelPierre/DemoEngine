@@ -17,6 +17,34 @@
 
 #include "Assets/AssetsMgr.h"
 
+void LoadAssets()
+{
+	AssetsMgr<Texture>::load("skyboxCubemap", 
+		std::array<std::string, 6>{ "D:/Personal project/DemoEngine/Resources/Textures/Cubemap/left.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/right.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/top.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/bottom.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/front.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/back.bmp" });
+
+	AssetsMgr<Texture>::load("skyboxIradianceCubemap", 
+		std::array<std::string, 6>{ "D:/Personal project/DemoEngine/Resources/Textures/Cubemap/left_irr.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/right_irr.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/top_irr.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/bottom_irr.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/front_irr.bmp",
+			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/back_irr.bmp" });
+
+	AssetsMgr<Texture>::load("brdf", "D:/Personal project/DemoEngine/Resources/Textures/brdf_lut.jpg");
+	
+
+	AssetsMgr<Texture>::load("color", "D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Color.jpg");
+	AssetsMgr<Texture>::load("metal", "D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Metalness.jpg", Texture::Format::R);
+	AssetsMgr<Texture>::load("normal", "D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Normal.jpg");
+	AssetsMgr<Texture>::load("rough", "D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Roughness.jpg", Texture::Format::R);
+	AssetsMgr<Texture>::load("aO", "D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Displacement.jpg", Texture::Format::R);
+}
+
 int main(int, char**)
 {
 	GLFWWindowSystem		glfwWindow;
@@ -41,47 +69,23 @@ int main(int, char**)
 	Mat4 model(1.f);
 	modelBuf.Map(&model, sizeof(Mat4));
 
-	Texture skyCubemap({ "D:/Personal project/DemoEngine/Resources/Textures/Cubemap/left.bmp",
-			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/right.bmp",
-			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/top.bmp",
-			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/bottom.bmp",
-			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/front.bmp",
-			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/back.bmp" });
-
-	Texture skyIrradianceCubemap({ "D:/Personal project/DemoEngine/Resources/Textures/Cubemap/left_irr.bmp",
-			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/right_irr.bmp",
-			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/top_irr.bmp",
-			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/bottom_irr.bmp",
-			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/front_irr.bmp",
-			"D:/Personal project/DemoEngine/Resources/Textures/Cubemap/back_irr.bmp" });
-
-	//Texture brdf("D:/Personal project/DemoEngine/Resources/Textures/brdf_lut.jpg");
 	AssetsMgr<Texture> txtMgr;
-	AssetsMgr<Texture>::load("brdf", "D:/Personal project/DemoEngine/Resources/Textures/brdf_lut.jpg");
+	AssetsMgr<Material> matMgr;
 
-	Material skyMaterial(viewport,
+	LoadAssets();
+
+	AssetsMgr<Material>::load("skyboxMaterial", viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/skybox.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/skybox.frag.spv",
-		{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, 
+		std::vector<BindingsSet>{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 },
 		{ 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 } } },
 		VK_CULL_MODE_FRONT_BIT);
 
-	MaterialInstance skyMaterialInstance(skyMaterial, { { &cam._ubo, &skyCubemap } });
-
-	Mesh skySphere("D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
-	skySphere._material = &skyMaterialInstance;
-
-	Texture color("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Color.jpg");
-	Texture metal("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Metalness.jpg", Texture::Format::R);
-	Texture normal("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Normal.jpg");
-	Texture rough("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Roughness.jpg", Texture::Format::R);
-	Texture aO("D:/Personal project/DemoEngine/Resources/Textures/Metal007_2K_Displacement.jpg", Texture::Format::R);
-
-	Material mat(viewport,
+	AssetsMgr<Material>::load("mat", viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/shader.frag.spv",
-		{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::BUFFER, 1 }, 
-			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, 
+		std::vector<BindingsSet>{ { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::BUFFER, 1 },
+			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 },
 			{ 4, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }},
 		{ { 0, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 },
 			{ 2, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 }, { 3, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 },
@@ -89,11 +93,19 @@ int main(int, char**)
 		{ { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, }
 		});
 
-	MaterialInstance matInstance(mat, { { &cam._ubo, &light._ubo, &skyCubemap, &skyIrradianceCubemap, &AssetsMgr<Texture>::get("brdf") },
-		{ &color, &metal, &normal, &rough, &aO}, { &modelBuf } });
+	MaterialInstance skyMaterialInstance(AssetsMgr<Material>::get("skyboxMaterial"), { { &cam._ubo, &AssetsMgr<Texture>::get("skyboxCubemap") } });
+
+	Mesh skySphere("D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
+	skySphere._material = &skyMaterialInstance;
+
+	MaterialInstance matInstance1(AssetsMgr<Material>::get("mat"), 
+		{ { &cam._ubo, &light._ubo, &AssetsMgr<Texture>::get("skyboxCubemap"), &AssetsMgr<Texture>::get("skyboxIradianceCubemap"), &AssetsMgr<Texture>::get("brdf") },
+		{ &AssetsMgr<Texture>::get("color"), &AssetsMgr<Texture>::get("metal"), &AssetsMgr<Texture>::get("normal"), &AssetsMgr<Texture>::get("rough"),
+		&AssetsMgr<Texture>::get("aO")},
+		{ &modelBuf } });
 
 	Mesh mesh("D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
-	mesh._material = &matInstance;
+	mesh._material = &matInstance1;
 
 	Scene scene{};
 	scene._viewports.emplace_back(&viewport);

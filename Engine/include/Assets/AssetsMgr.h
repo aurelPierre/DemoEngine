@@ -13,7 +13,7 @@ public:
 	template<typename... Args>
 	static void load(std::string key, Args&&... parameters)
 	{
-		_instance->_data.try_emplace(key, std::forward<Args...>(parameters...));
+		_instance->_data.try_emplace(key, std::forward<Args>(parameters)...);
 	}
 
 	static T& get(std::string key)
