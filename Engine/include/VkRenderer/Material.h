@@ -12,13 +12,21 @@
 
 struct Vertex
 {
+	enum DataFlag
+	{
+		POSITION = 1 << 0,
+		UV = 1 << 1,
+		NORMAL = 1 << 2,
+		TANGENT = 1 << 3
+	};
+
 	Vec3 pos;
 	Vec2 uv;
 	Vec3 normal;
 	Vec3 tangent;
 
-	static VkVertexInputBindingDescription& getBindingDescription() {
-		static VkVertexInputBindingDescription bindingDescription{};
+	static VkVertexInputBindingDescription getBindingDescription(int kDataFlags) {
+		VkVertexInputBindingDescription bindingDescription{};
 
 		bindingDescription.binding = 0;
 		bindingDescription.stride = sizeof(Vertex);
@@ -27,28 +35,33 @@ struct Vertex
 		return bindingDescription;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 4>& getAttributeDescriptions() {
-		static std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
+	static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions(int kDataFlags) {
+		std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
 
-		attributeDescriptions[0].binding = 0;
-		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[0].offset = offsetof(Vertex, pos);
+		uint8_t locationNb = 0;
+		if (kDataFlags & DataFlag::POSITION)
+		{
+			attributeDescriptions.push_back({ locationNb, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos) });
+			locationNb++;
+		}
 
-		attributeDescriptions[1].binding = 0;
-		attributeDescriptions[1].location = 1;
-		attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[1].offset = offsetof(Vertex, uv);
+		if (kDataFlags & DataFlag::UV)
+		{
+			attributeDescriptions.push_back({ locationNb, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) });
+			locationNb++;
+		}
 
-		attributeDescriptions[2].binding = 0;
-		attributeDescriptions[2].location = 2;
-		attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[2].offset = offsetof(Vertex, normal);
+		if (kDataFlags & DataFlag::NORMAL)
+		{
+			attributeDescriptions.push_back({ locationNb, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) });
+			locationNb++;
+		}
 
-		attributeDescriptions[3].binding = 0;
-		attributeDescriptions[3].location = 3;
-		attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[3].offset = offsetof(Vertex, tangent);
+		if (kDataFlags & DataFlag::TANGENT)
+		{
+			attributeDescriptions.push_back({ locationNb, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent) });
+			locationNb++;
+		}
 
 		return attributeDescriptions;
 	}
@@ -119,13 +132,17 @@ public:
 public:
 	Material(const Viewport& kViewport, const std::string kVertextShaderPath,
 		const std::string kFragmentShaderPath, const std::vector<BindingsSet>& kSets, 
-		const VkCullModeFlagBits kCullMode = VK_CULL_MODE_BACK_BIT);
+		const VkCullModeFlagBits kCullMode = VK_CULL_MODE_BACK_BIT,
+		const int kVertexDataFlags = Vertex::POSITION | Vertex::UV | Vertex::NORMAL | Vertex::TANGENT,
+		const bool kWireframe = false);
 	~Material();
 
 private:
 	void CreateDescriptors(const std::vector<BindingsSet>& kSets);
 	void CreatePipeline(const Viewport& kViewport, const std::string kVertextShaderPath,
-							const std::string kFragmentShaderPath, const VkCullModeFlagBits kCullMode);
+							const std::string kFragmentShaderPath, const VkCullModeFlagBits kCullMode,
+							const int kVertexDataFlags = Vertex::POSITION | Vertex::UV | Vertex::NORMAL | Vertex::TANGENT,
+							const bool kWireframe = false);
 };
 
 class MaterialInstance

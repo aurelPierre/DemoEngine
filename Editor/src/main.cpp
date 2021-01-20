@@ -80,7 +80,7 @@ int main(int, char**)
 		"D:/Personal project/DemoEngine/shaders/bin/skybox.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/skybox.frag.spv",
 		std::vector<BindingsSet>{ { BindingsSet::Scope::GLOBAL, { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::SAMPLER, 1 } }} },
-		VK_CULL_MODE_FRONT_BIT);
+		VK_CULL_MODE_FRONT_BIT, Vertex::POSITION);
 
 	AssetsMgr<Material>::load("mat", viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/shader.vert.spv",
@@ -97,8 +97,14 @@ int main(int, char**)
 	AssetsMgr<Material>::load("grid", viewport,
 		"D:/Personal project/DemoEngine/shaders/bin/grid.vert.spv",
 		"D:/Personal project/DemoEngine/shaders/bin/grid.frag.spv",
-		std::vector<BindingsSet>{ { BindingsSet::Scope::GLOBAL, { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 } }} });
+		std::vector<BindingsSet>{ { BindingsSet::Scope::GLOBAL, { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 } }} }, VK_CULL_MODE_BACK_BIT, Vertex::POSITION);
 	
+	AssetsMgr<Material>::load("gizmo", viewport,
+		"D:/Personal project/DemoEngine/shaders/bin/gizmo.vert.spv",
+		"D:/Personal project/DemoEngine/shaders/bin/gizmo.frag.spv",
+		std::vector<BindingsSet>{ { BindingsSet::Scope::GLOBAL, { { 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 } }}, 
+		{ BindingsSet::Scope::ACTOR, {{ 0, Bindings::Stage::VERTEX, Bindings::Type::BUFFER, 1 }, { 1, Bindings::Stage::FRAGMENT, Bindings::Type::BUFFER, 1 }} } }, VK_CULL_MODE_BACK_BIT, Vertex::POSITION, true);
+
 	MaterialInstance gridMat(AssetsMgr<Material>::get("grid"), { {&cam._ubo} });
 	Actor grid(AssetsMgr<Mesh>::get("plane"), gridMat);
 
@@ -121,14 +127,25 @@ int main(int, char**)
 	Actor second(AssetsMgr<Mesh>::get("cube"), matInstance2);
 	matInstance2.UpdateSet(2, { { &second._transform._buffer } });
 
+	MaterialInstance gizmoMat(AssetsMgr<Material>::get("gizmo"), { { &cam._ubo } });
+
+	Buffer colorBuffer(sizeof(Vec3), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	Vec3 col{ 1.0f, 0.f, 0.f };
+	colorBuffer.Map(&col, sizeof(Vec3));
+
+	Actor gizmo(AssetsMgr<Mesh>::get("cube"), gizmoMat);
+	gizmoMat.UpdateSet(1, { { &gizmo._transform._buffer }, { &colorBuffer } });
+
 	second._transform.Translate({ 0.f, 0.f, 2.5f });
+	gizmo._transform.Translate({ 0.f, 3.f, 1.f });
 
 	Scene scene{};
 	scene._viewports.emplace_back(&viewport);
 	scene._actors.emplace_back(&mesh);
 	scene._actors.emplace_back(&second);
-	scene._actors.emplace_back(&grid);
+	scene._actors.emplace_back(&gizmo);
 	scene._actors.emplace_back(&skySphere);
+	scene._actors.emplace_back(&grid);
 
 	Vec2 mousePos;
 
@@ -177,7 +194,7 @@ int main(int, char**)
 		
 		cam.Update();
 
-		mesh._transform.Rotate(Quat(deltaTime * glm::radians(10.0f) * Vec3{ 0.f, 0.f, 1.f }));
+		mesh._transform.Rotate(Quat(deltaTime * glm::radians(10.0f) * Vec3{ 0.f, 1.f, 0.f }));
 
 		// Draw
 		Draw(scene);

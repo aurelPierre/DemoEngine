@@ -37,14 +37,15 @@ VkPipelineShaderStageCreateInfo createShader(VkShaderModule shaderModule, VkShad
 
 Material::Material(const Viewport& kViewport, const std::string kVertextShaderPath,
 						const std::string kFragmentShaderPath, const std::vector<BindingsSet>& kSets,
-						const VkCullModeFlagBits kCullMode)
+						const VkCullModeFlagBits kCullMode, const int kVertexDataFlags,
+						const bool kWireframe)
 	: _setsLayout{ kSets.size() }
 {
 	ASSERT(!kVertextShaderPath.empty(), "kVertextShaderPath is empty")
 	ASSERT(!kFragmentShaderPath.empty(), "kFragmentShaderPath is empty")
 
 	CreateDescriptors(kSets);
-	CreatePipeline(kViewport, kVertextShaderPath, kFragmentShaderPath, kCullMode);
+	CreatePipeline(kViewport, kVertextShaderPath, kFragmentShaderPath, kCullMode, kVertexDataFlags, kWireframe);
 }
 
 Material::~Material()
@@ -82,7 +83,8 @@ void Material::CreateDescriptors(const std::vector<BindingsSet>& kSets)
 }
 
 void Material::CreatePipeline(const Viewport& kViewport, const std::string kVertextShaderPath,
-								const std::string kFragmentShaderPath, const VkCullModeFlagBits kCullMode)
+								const std::string kFragmentShaderPath, const VkCullModeFlagBits kCullMode, const int kVertexDataFlags,
+								const bool kWireframe)
 {
 	std::vector<VkDescriptorSetLayout> setLayouts{ _setsLayout.size() };
 	for (size_t i = 0; i < _setsLayout.size(); ++i)
@@ -101,13 +103,13 @@ void Material::CreatePipeline(const Viewport& kViewport, const std::string kVert
 	// Rendering
 	VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo{};
 	pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	pipelineInputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	pipelineInputAssemblyStateCreateInfo.topology = kWireframe ? VK_PRIMITIVE_TOPOLOGY_LINE_STRIP : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	pipelineInputAssemblyStateCreateInfo.flags = 0;
 	pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 
 	VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo{};
 	pipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	pipelineRasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+	pipelineRasterizationStateCreateInfo.polygonMode = kWireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
 	pipelineRasterizationStateCreateInfo.cullMode = kCullMode;
 	pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pipelineRasterizationStateCreateInfo.flags = 0;
@@ -116,12 +118,12 @@ void Material::CreatePipeline(const Viewport& kViewport, const std::string kVert
 
 	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState{};
 	pipelineColorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	pipelineColorBlendAttachmentState.blendEnable = VK_FALSE;
+	pipelineColorBlendAttachmentState.blendEnable = VK_TRUE;
 	pipelineColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	pipelineColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	pipelineColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
-	pipelineColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	pipelineColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	pipelineColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	pipelineColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	pipelineColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo{};
@@ -196,12 +198,17 @@ void Material::CreatePipeline(const Viewport& kViewport, const std::string kVert
 	/*err = vkCreatePipelineCache(kLogicalDevice._device, &pipelineCacheCreateInfo, _contextData._allocator, &_windowData._pipelineCache);
 	VK_ASSERT(err);*/
 
+	// TODO
+	auto flemme = Vertex::getBindingDescription(kVertexDataFlags);
+	auto flemme2 = Vertex::getAttributeDescriptions(kVertexDataFlags);
+
+
 	VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo{};
 	pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
-	pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = &Vertex::getBindingDescription();
-	pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = Vertex::getAttributeDescriptions().size();
-	pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = Vertex::getAttributeDescriptions().data();
+	pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = &flemme;
+	pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = flemme2.size();
+	pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = flemme2.data();
 
 	pipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
 

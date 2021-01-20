@@ -34,7 +34,7 @@ void main()
 	vec3 p = gridPlane[gl_VertexIndex].xyz;
 
 	near = 0.1;
-	far = 512.0;
+	far = 256.0;
 
 	view = cam._view;
 	proj = cam._proj;
