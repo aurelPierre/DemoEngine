@@ -110,7 +110,7 @@ void Material::CreatePipeline(const Viewport& kViewport, const std::string kVert
 	VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo{};
 	pipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	pipelineRasterizationStateCreateInfo.polygonMode = kWireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
-	pipelineRasterizationStateCreateInfo.cullMode = kCullMode;
+	pipelineRasterizationStateCreateInfo.cullMode = kWireframe ? VK_CULL_MODE_NONE : kCullMode;
 	pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pipelineRasterizationStateCreateInfo.flags = 0;
 	pipelineRasterizationStateCreateInfo.depthClampEnable = VK_FALSE;

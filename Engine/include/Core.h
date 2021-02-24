@@ -13,7 +13,7 @@
 		{ \
 			LOG(ez::ASSERT, std::string(__FILE__) + ':' + std::to_string(__LINE__) + "\n\t" + std::string(msg) + '\n') \
 			ez::LogSystem::Save(); \
-			std::abort(); \
+			std::exit(-1); \
 		}
 
 	#define VK_ASSERT(err, msg) ASSERT(err == VK_SUCCESS, "code: " + std::to_string(err) + "; msg: " + msg)

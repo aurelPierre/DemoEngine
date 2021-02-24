@@ -14,7 +14,7 @@ Mesh::Mesh(const std::string kPath)
 	std::vector<tinyobj::material_t> materials;
 	std::string warn, err;
 
-	bool loaded = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, kPath.c_str());
+	bool loaded = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, kPath.c_str(), nullptr, false);
 	ASSERT(loaded, "Load obj " + kPath + "failed. Warn: " + warn + "; Err: " + err)
 
 	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
@@ -25,7 +25,7 @@ Mesh::Mesh(const std::string kPath)
 		{
 			size_t fv = shape.mesh.num_face_vertices[i];
 			if(fv > 3)
-				LOG(ez::WARNING, "Mesh " + kPath + "have a face with more than 3 vertices, tangent might be wrong")
+				LOG(ez::WARNING, "Mesh " + kPath + " have a face with more than 3 vertices, tangent might be wrong")
 
 			for (size_t j = 0; j < fv; ++j)
 			{

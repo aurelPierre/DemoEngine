@@ -17,5 +17,5 @@ void main()
 
 	mat4 correctView = mat4(mat3(cam._view)); // Remove camera translation.
     vec4 pos = cam._proj * correctView * vec4(inPosition.xyz, 1.0);
-    gl_Position = pos.xyww; 
+    gl_Position = pos.xyww;
 }

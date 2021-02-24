@@ -48,6 +48,8 @@ void LoadAssets()
 	AssetsMgr<Mesh>::load("sphere", "D:/Personal project/DemoEngine/Resources/Mesh/sphere.obj");
 	AssetsMgr<Mesh>::load("cube", "D:/Personal project/DemoEngine/Resources/Mesh/cube.obj");
 	AssetsMgr<Mesh>::load("plane", "D:/Personal project/DemoEngine/Resources/Mesh/plane.obj");
+
+	AssetsMgr<Mesh>::load("cubeSq", "D:/Personal project/DemoEngine/Resources/Mesh/cubeSq2.obj");
 }
 
 int main(int, char**)
@@ -133,7 +135,7 @@ int main(int, char**)
 	Vec3 col{ 1.0f, 0.f, 0.f };
 	colorBuffer.Map(&col, sizeof(Vec3));
 
-	Actor gizmo(AssetsMgr<Mesh>::get("cube"), gizmoMat);
+	Actor gizmo(AssetsMgr<Mesh>::get("cubeSq"), gizmoMat);
 	gizmoMat.UpdateSet(1, { { &gizmo._transform._buffer }, { &colorBuffer } });
 
 	second._transform.Translate({ 0.f, 0.f, 2.5f });
@@ -188,7 +190,11 @@ int main(int, char**)
 		if (windowData->IsMouseDown(MOUSE_CODE::RIGHT))
 		{
 			Vec2 deltaPos = windowData->_mousePos - mousePos;
-			cam._rot *= Quat(Vec3{ deltaPos.y, deltaPos.x, 0 } * deltaTime * -1.f);
+			if (fabs(deltaPos.x) > fabs(deltaPos.y))
+				deltaPos.y = 0;
+			else
+				deltaPos.x = 0;
+			cam._rot *= Quat(Vec3{ deltaPos.y, deltaPos.x, 0 } * deltaTime);
 		}
 		mousePos = windowData->_mousePos;
 		
